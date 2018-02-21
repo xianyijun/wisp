@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author xianyijun
@@ -22,6 +23,27 @@ public class ClientHousekeepingService implements ChannelEventListener {
     private ScheduledExecutorService scheduledExecutorService = Executors
             .newSingleThreadScheduledExecutor(new WispThreadFactory("ClientHousekeepingScheduledThread"));
 
+
+
+    public void start() {
+
+        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ClientHousekeepingService.this.scanExceptionChannel();
+                } catch (Throwable e) {
+                    log.error("Error occurred when scan not active client channels.", e);
+                }
+            }
+        }, 1000 * 10, 1000 * 10, TimeUnit.MILLISECONDS);
+    }
+
+    private void scanExceptionChannel() {
+        this.brokerController.getProducerManager().scanNotActiveChannel();
+        this.brokerController.getConsumerManager().scanNotActiveChannel();
+        this.brokerController.getFilterServerManager().scanNotActiveChannel();
+    }
 
     @Override
     public void onChannelConnect(String remoteAddr, Channel channel) {

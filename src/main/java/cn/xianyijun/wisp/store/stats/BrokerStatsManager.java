@@ -43,6 +43,9 @@ public class BrokerStatsManager {
     }
 
 
+    public void start() {
+    }
+
     public enum StatsType {
         SEND_SUCCESS,
         SEND_FAILURE,

@@ -54,6 +54,9 @@ public class BrokerOuter {
         this.remotingClient.registerRPCHook(rpcHook);
     }
 
+    public void start() {
+        this.remotingClient.start();
+    }
 
     public void updateNameServerAddressList(final String addressListStr) {
         List<String> lst = new ArrayList<>();

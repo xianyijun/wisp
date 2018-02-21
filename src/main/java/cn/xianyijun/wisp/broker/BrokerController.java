@@ -121,7 +121,7 @@ public class BrokerController {
     private boolean updateMasterHAServerAddrPeriodically = false;
     private BrokerStats brokerStats;
     private InetSocketAddress storeHost;
-    private FastFailureBroker brokerFastFailure;
+    private FastFailureBroker fastFailureBroker;
 
     private Configuration configuration;
 
@@ -161,7 +161,7 @@ public class BrokerController {
         this.brokerStatsManager = new BrokerStatsManager(this.brokerConfig.getBrokerClusterName());
         this.setStoreHost(new InetSocketAddress(this.getBrokerConfig().getBrokerIP1(), this.getNettyServerConfig().getListenPort()));
 
-        this.brokerFastFailure = new FastFailureBroker(this);
+        this.fastFailureBroker = new FastFailureBroker(this);
 
         this.configuration = new Configuration(
                 BrokerPathConfigHelper.getBrokerConfigPath(),
@@ -212,8 +212,6 @@ public class BrokerController {
                     this.sendThreadPoolQueue,
                     new WispThreadFactory("ProduceMessageThread_"));
 
-
-
             this.queryMessageExecutor = new BrokerFixedThreadPoolExecutor(
                     this.brokerConfig.getQueryMessageThreadPoolNums(),
                     this.brokerConfig.getQueryMessageThreadPoolNums(),
@@ -223,8 +221,7 @@ public class BrokerController {
                     new WispThreadFactory("QueryMessageThread_"));
 
             this.adminBrokerExecutor =
-                    Executors.newFixedThreadPool(this.brokerConfig.getAdminBrokerThreadPoolNums(), new WispThreadFactory(
-                            "AdminBrokerThread_"));
+                    Executors.newFixedThreadPool(this.brokerConfig.getAdminBrokerThreadPoolNums(), new WispThreadFactory("AdminBrokerThread_"));
 
             this.clientManageExecutor = new ThreadPoolExecutor(
                     this.brokerConfig.getClientManageThreadPoolNums(),
@@ -376,8 +373,52 @@ public class BrokerController {
 
     }
 
-    public void start() {
+    public void start() throws Exception{
+        if (this.messageStore != null) {
+            this.messageStore.start();
+        }
 
+        if (this.remotingServer != null) {
+            this.remotingServer.start();
+        }
+
+        if (this.fastRemotingServer != null) {
+            this.fastRemotingServer.start();
+        }
+
+        if (this.brokerOuter != null) {
+            this.brokerOuter.start();
+        }
+
+        if (this.pullRequestHoldService != null) {
+            this.pullRequestHoldService.start();
+        }
+
+        if (this.clientHousekeepingService != null) {
+            this.clientHousekeepingService.start();
+        }
+
+        if (this.filterServerManager != null) {
+            this.filterServerManager.start();
+        }
+
+        this.registerBrokerAll(true, false);
+
+        this.scheduledExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                BrokerController.this.registerBrokerAll(true, false);
+            } catch (Throwable e) {
+                log.error("registerBrokerAll Exception", e);
+            }
+        }, 1000 * 10, 1000 * 30, TimeUnit.MILLISECONDS);
+
+        if (this.brokerStatsManager != null) {
+            this.brokerStatsManager.start();
+        }
+
+        if (this.fastFailureBroker != null) {
+            this.fastFailureBroker.start();
+        }
     }
 
 
