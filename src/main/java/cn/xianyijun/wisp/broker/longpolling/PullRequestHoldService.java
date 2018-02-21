@@ -26,7 +26,7 @@ public class PullRequestHoldService extends ServiceThread{
 
     @Override
     public String getServiceName() {
-        return null;
+        return PullRequestHoldService.class.getSimpleName();
     }
 
     @Override
