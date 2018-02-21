@@ -1,6 +1,7 @@
 package cn.xianyijun.wisp.remoting.protocol;
 
 import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
+import cn.xianyijun.wisp.exception.RemotingCommandException;
 import cn.xianyijun.wisp.remoting.CommandCustomHeader;
 import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Getter;
@@ -42,6 +43,26 @@ public class RemotingCommand {
     private String remark;
     private LanguageCode language = LanguageCode.JAVA;
 
+
+    private static final Map<Class, String> CANONICAL_NAME_CACHE = new HashMap<>();
+    private static final String STRING_CANONICAL_NAME = String.class.getCanonicalName();
+    private static final String DOUBLE_CANONICAL_NAME_1 = Double.class.getCanonicalName();
+    private static final String DOUBLE_CANONICAL_NAME_2 = double.class.getCanonicalName();
+    private static final String INTEGER_CANONICAL_NAME_1 = Integer.class.getCanonicalName();
+    private static final String INTEGER_CANONICAL_NAME_2 = int.class.getCanonicalName();
+    private static final String LONG_CANONICAL_NAME_1 = Long.class.getCanonicalName();
+    private static final String LONG_CANONICAL_NAME_2 = long.class.getCanonicalName();
+    private static final String BOOLEAN_CANONICAL_NAME_1 = Boolean.class.getCanonicalName();
+    private static final String BOOLEAN_CANONICAL_NAME_2 = boolean.class.getCanonicalName();
+
+
+    public static RemotingCommand createRequestCommand(int code, CommandCustomHeader customHeader) {
+        RemotingCommand cmd = new RemotingCommand();
+        cmd.setCode(code);
+        cmd.customHeader = customHeader;
+        setCmdVersion(cmd);
+        return cmd;
+    }
 
     private static byte[] markProtocolType(int source, SerializeType type) {
         byte[] result = new byte[4];
@@ -259,4 +280,74 @@ public class RemotingCommand {
         }
     }
 
+    public CommandCustomHeader decodeCommandCustomHeader(
+            Class<? extends CommandCustomHeader> classHeader) {
+
+        CommandCustomHeader objectHeader;
+        try {
+            objectHeader = classHeader.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            return null;
+        }
+        if (this.extFields != null) {
+
+            Field[] fields = getClazzFields(classHeader);
+            for (Field field : fields) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    String fieldName = field.getName();
+                    if (!fieldName.startsWith("this")) {
+                        try {
+                            String value = this.extFields.get(fieldName);
+                            if (null == value) {
+                                continue;
+                            }
+
+                            field.setAccessible(true);
+                            String type = getCanonicalName(field.getType());
+                            Object valueParsed;
+
+                            if (type.equals(STRING_CANONICAL_NAME)) {
+                                valueParsed = value;
+                            } else if (type.equals(INTEGER_CANONICAL_NAME_1) || type.equals(INTEGER_CANONICAL_NAME_2)) {
+                                valueParsed = Integer.parseInt(value);
+                            } else if (type.equals(LONG_CANONICAL_NAME_1) || type.equals(LONG_CANONICAL_NAME_2)) {
+                                valueParsed = Long.parseLong(value);
+                            } else if (type.equals(BOOLEAN_CANONICAL_NAME_1) || type.equals(BOOLEAN_CANONICAL_NAME_2)) {
+                                valueParsed = Boolean.parseBoolean(value);
+                            } else if (type.equals(DOUBLE_CANONICAL_NAME_1) || type.equals(DOUBLE_CANONICAL_NAME_2)) {
+                                valueParsed = Double.parseDouble(value);
+                            } else {
+                                throw new RemotingCommandException("the custom field <" + fieldName + "> type is not supported");
+                            }
+
+                            field.set(objectHeader, valueParsed);
+
+                        } catch (Throwable e) {
+                            log.error("Failed field [{}] decoding", fieldName, e);
+                        }
+                    }
+                }
+            }
+        }
+        return objectHeader;
+    }
+
+    private String getCanonicalName(Class clazz) {
+        String name = CANONICAL_NAME_CACHE.get(clazz);
+
+        if (name == null) {
+            name = clazz.getCanonicalName();
+            synchronized (CANONICAL_NAME_CACHE) {
+                CANONICAL_NAME_CACHE.put(clazz, name);
+            }
+        }
+        return name;
+    }
+
+    public void addExtField(String key, String value) {
+        if (null == extFields) {
+            extFields = new HashMap<>();
+        }
+        extFields.put(key, value);
+    }
 }

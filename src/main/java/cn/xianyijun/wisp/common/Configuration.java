@@ -25,6 +25,11 @@ public class Configuration {
 
     private Properties allConfigs = new Properties();
 
+    public Configuration(String storePath, Object... configObjects) {
+        this(configObjects);
+        this.storePath = storePath;
+    }
+
     public Configuration(Object... configObjects) {
         if (configObjects == null || configObjects.length == 0) {
             return;

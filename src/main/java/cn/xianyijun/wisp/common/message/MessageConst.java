@@ -1,0 +1,61 @@
+package cn.xianyijun.wisp.common.message;
+
+import java.util.HashSet;
+
+/**
+ * @author xianyijun
+ */
+public class MessageConst {
+
+    public static final String PROPERTY_KEYS = "KEYS";
+    public static final String PROPERTY_TAGS = "TAGS";
+    public static final String PROPERTY_WAIT_STORE_MSG_OK = "WAIT";
+    public static final String PROPERTY_DELAY_TIME_LEVEL = "DELAY";
+    public static final String PROPERTY_RETRY_TOPIC = "RETRY_TOPIC";
+    public static final String PROPERTY_REAL_TOPIC = "REAL_TOPIC";
+    public static final String PROPERTY_REAL_QUEUE_ID = "REAL_QID";
+    public static final String PROPERTY_TRANSACTION_PREPARED = "TRAN_MSG";
+    public static final String PROPERTY_PRODUCER_GROUP = "PGROUP";
+    public static final String PROPERTY_MIN_OFFSET = "MIN_OFFSET";
+    public static final String PROPERTY_MAX_OFFSET = "MAX_OFFSET";
+    public static final String PROPERTY_BUYER_ID = "BUYER_ID";
+    public static final String PROPERTY_ORIGIN_MESSAGE_ID = "ORIGIN_MESSAGE_ID";
+    public static final String PROPERTY_TRANSFER_FLAG = "TRANSFER_FLAG";
+    public static final String PROPERTY_CORRECTION_FLAG = "CORRECTION_FLAG";
+    public static final String PROPERTY_MQ2_FLAG = "MQ2_FLAG";
+    public static final String PROPERTY_RECONSUME_TIME = "RECONSUME_TIME";
+    public static final String PROPERTY_MSG_REGION = "MSG_REGION";
+    public static final String PROPERTY_TRACE_SWITCH = "TRACE_ON";
+    public static final String PROPERTY_UNIQUE_CLIENT_MESSAGE_ID_KEYIDX = "UNIQUE_KEY";
+    public static final String PROPERTY_MAX_RECONSUME_TIMES = "MAX_RECONSUME_TIMES";
+    public static final String PROPERTY_CONSUME_START_TIMESTAMP = "CONSUME_START_TIME";
+
+    public static final String KEY_SEPARATOR = " ";
+
+    public static final HashSet<String> STRING_HASH_SET = new HashSet<String>();
+
+    static {
+        STRING_HASH_SET.add(PROPERTY_TRACE_SWITCH);
+        STRING_HASH_SET.add(PROPERTY_MSG_REGION);
+        STRING_HASH_SET.add(PROPERTY_KEYS);
+        STRING_HASH_SET.add(PROPERTY_TAGS);
+        STRING_HASH_SET.add(PROPERTY_WAIT_STORE_MSG_OK);
+        STRING_HASH_SET.add(PROPERTY_DELAY_TIME_LEVEL);
+        STRING_HASH_SET.add(PROPERTY_RETRY_TOPIC);
+        STRING_HASH_SET.add(PROPERTY_REAL_TOPIC);
+        STRING_HASH_SET.add(PROPERTY_REAL_QUEUE_ID);
+        STRING_HASH_SET.add(PROPERTY_TRANSACTION_PREPARED);
+        STRING_HASH_SET.add(PROPERTY_PRODUCER_GROUP);
+        STRING_HASH_SET.add(PROPERTY_MIN_OFFSET);
+        STRING_HASH_SET.add(PROPERTY_MAX_OFFSET);
+        STRING_HASH_SET.add(PROPERTY_BUYER_ID);
+        STRING_HASH_SET.add(PROPERTY_ORIGIN_MESSAGE_ID);
+        STRING_HASH_SET.add(PROPERTY_TRANSFER_FLAG);
+        STRING_HASH_SET.add(PROPERTY_CORRECTION_FLAG);
+        STRING_HASH_SET.add(PROPERTY_MQ2_FLAG);
+        STRING_HASH_SET.add(PROPERTY_RECONSUME_TIME);
+        STRING_HASH_SET.add(PROPERTY_UNIQUE_CLIENT_MESSAGE_ID_KEYIDX);
+        STRING_HASH_SET.add(PROPERTY_MAX_RECONSUME_TIMES);
+        STRING_HASH_SET.add(PROPERTY_CONSUME_START_TIMESTAMP);
+    }
+}

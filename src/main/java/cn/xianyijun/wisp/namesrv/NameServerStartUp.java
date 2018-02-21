@@ -29,6 +29,7 @@ public class NameServerStartUp {
     }
 
     private static void doMain(String[] args) {
+        System.setProperty(MixAll.WISP_HOME_PROPERTY,"/Users/xianyijun/code/git/wisp/");
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
         try {
             Options options = ServerUtils.buildCommandlineOptions(new Options());
@@ -67,7 +68,7 @@ public class NameServerStartUp {
             MixAll.properties2Object(ServerUtils.commandLine2Properties(commandLine), nameServerConfig);
 
             if (nameServerConfig.getWispHome() == null){
-                log.info("Please set the {} variable in your environment to match the location of the RocketMQ installation%n", MixAll.WISP_HOME_ENV);
+                log.info("Please set the {} variable in your environment to match the location of the wisp installation\n", MixAll.WISP_HOME_ENV);
                 System.exit(-2);
             }
 
