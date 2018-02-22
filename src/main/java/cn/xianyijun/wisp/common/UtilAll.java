@@ -3,6 +3,7 @@ package cn.xianyijun.wisp.common;
 import cn.xianyijun.wisp.utils.StringUtils;
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.Calendar;
 
 /**
@@ -83,4 +84,12 @@ public class UtilAll {
         return -1;
     }
 
+
+    public static String offset2FileName(final long offset) {
+        final NumberFormat nf = NumberFormat.getInstance();
+        nf.setMinimumIntegerDigits(20);
+        nf.setMaximumFractionDigits(0);
+        nf.setGroupingUsed(false);
+        return nf.format(offset);
+    }
 }

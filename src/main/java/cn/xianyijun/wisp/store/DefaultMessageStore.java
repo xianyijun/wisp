@@ -3,19 +3,26 @@ package cn.xianyijun.wisp.store;
 import cn.xianyijun.wisp.common.BrokerConfig;
 import cn.xianyijun.wisp.common.message.MessageExt;
 import cn.xianyijun.wisp.common.message.MessageExtBatch;
+import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.store.config.MessageStoreConfig;
+import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
+import cn.xianyijun.wisp.store.index.IndexService;
 import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author xianyijun
  */
 @Getter
+@Slf4j
 public class DefaultMessageStore implements MessageStore {
 
     private final MessageStoreConfig messageStoreConfig;
@@ -23,6 +30,18 @@ public class DefaultMessageStore implements MessageStore {
     private final BrokerStatsManager brokerStatsManager;
     private final MessageArrivingListener messageArrivingListener;
     private final BrokerConfig brokerConfig;
+
+    private final LinkedList<CommitLogDispatcher> dispatcherList;
+
+    private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
+
+    private final IndexService indexService;
+
+    private final RunningFlags runningFlags = new RunningFlags();
+
+    private StoreCheckpoint storeCheckpoint;
+
+    private final TransientStorePool transientStorePool;
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig, final BrokerStatsManager brokerStatsManager,
                                final MessageArrivingListener messageArrivingListener, final BrokerConfig brokerConfig) throws IOException {
@@ -32,6 +51,15 @@ public class DefaultMessageStore implements MessageStore {
         this.brokerConfig = brokerConfig;
         this.messageStoreConfig = messageStoreConfig;
         this.brokerStatsManager = brokerStatsManager;
+        this.indexService = new IndexService(this);
+
+        this.consumeQueueTable = new ConcurrentHashMap<>(32);
+
+        this.dispatcherList = new LinkedList<>();
+        this.dispatcherList.addLast(new CommitLogDispatcherBuildConsumeQueue());
+        this.dispatcherList.addLast(new CommitLogDispatcherBuildIndex());
+
+        this.transientStorePool = new TransientStorePool(messageStoreConfig);
     }
 
     @Override
@@ -236,11 +264,77 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public LinkedList<CommitLogDispatcher> getDispatcherList() {
-        return null;
+        return dispatcherList;
     }
 
     @Override
     public ConsumeQueue getConsumeQueue(String topic, int queueId) {
         return null;
+    }
+
+    public void putMessagePositionInfo(DispatchRequest dispatchRequest) {
+        ConsumeQueue cq = this.findConsumeQueue(dispatchRequest.getTopic(), dispatchRequest.getQueueId());
+        cq.putMessagePositionInfoWrapper(dispatchRequest);
+    }
+
+    public ConsumeQueue findConsumeQueue(String topic, int queueId) {
+        ConcurrentMap<Integer, ConsumeQueue> map = consumeQueueTable.get(topic);
+        if (null == map) {
+            ConcurrentMap<Integer, ConsumeQueue> newMap = new ConcurrentHashMap<Integer, ConsumeQueue>(128);
+            ConcurrentMap<Integer, ConsumeQueue> oldMap = consumeQueueTable.putIfAbsent(topic, newMap);
+            if (oldMap != null) {
+                map = oldMap;
+            } else {
+                map = newMap;
+            }
+        }
+
+        ConsumeQueue logic = map.get(queueId);
+        if (null == logic) {
+            ConsumeQueue newLogic = new ConsumeQueue(
+                    topic,
+                    queueId,
+                    StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()),
+                    this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(),
+                    this);
+            ConsumeQueue oldLogic = map.putIfAbsent(queueId, newLogic);
+            if (oldLogic != null) {
+                logic = oldLogic;
+            } else {
+                logic = newLogic;
+            }
+        }
+
+        return logic;
+    }
+
+
+    class CommitLogDispatcherBuildConsumeQueue implements CommitLogDispatcher {
+
+        @Override
+        public void dispatch(DispatchRequest request) {
+            final int tranType = MessageSysFlag.getTransactionValue(request.getSysFlag());
+            switch (tranType) {
+                case MessageSysFlag.TRANSACTION_NOT_TYPE:
+                case MessageSysFlag.TRANSACTION_COMMIT_TYPE:
+                    DefaultMessageStore.this.putMessagePositionInfo(request);
+                    break;
+                case MessageSysFlag.TRANSACTION_PREPARED_TYPE:
+                case MessageSysFlag.TRANSACTION_ROLLBACK_TYPE:
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    class CommitLogDispatcherBuildIndex implements CommitLogDispatcher {
+
+        @Override
+        public void dispatch(DispatchRequest request) {
+            if (DefaultMessageStore.this.messageStoreConfig.isMessageIndexEnable()) {
+                DefaultMessageStore.this.indexService.buildIndex(request);
+            }
+        }
     }
 }

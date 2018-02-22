@@ -9,6 +9,7 @@ import java.util.Set;
 
 /**
  * The interface Message store.
+ * @author xianyijun
  */
 public interface MessageStore {
 

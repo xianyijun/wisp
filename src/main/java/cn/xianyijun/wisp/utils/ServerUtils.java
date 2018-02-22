@@ -9,6 +9,9 @@ import org.apache.commons.cli.ParseException;
 
 import java.util.Properties;
 
+/**
+ * @author xianyijun
+ */
 public class ServerUtils {
 
     public static Options buildCommandlineOptions(final Options options) {

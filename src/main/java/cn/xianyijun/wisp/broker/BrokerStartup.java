@@ -40,6 +40,7 @@ public class BrokerStartup {
     }
 
     private static BrokerController createBrokerController(String[] args) {
+        System.setProperty(MixAll.WISP_HOME_PROPERTY,"/Users/xianyijun/code/git/wisp/");
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
 
         if (null == System.getProperty(NettySystemConfig.WISP_REMOTING_SOCKET_SNDBUF_SIZE)) {
