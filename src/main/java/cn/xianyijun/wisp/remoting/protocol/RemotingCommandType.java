@@ -2,9 +2,10 @@ package cn.xianyijun.wisp.remoting.protocol;
 
 /**
  * The enum Remoting command type.
+ *
  * @author xianyijun
  */
-public enum  RemotingCommandType {
+public enum RemotingCommandType {
     /**
      * Request command remoting command type.
      */

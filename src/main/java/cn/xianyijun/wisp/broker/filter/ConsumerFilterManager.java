@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author xianyijun
  */
 @Slf4j
-public class ConsumerFilterManager extends AbstractConfigManager{
+public class ConsumerFilterManager extends AbstractConfigManager {
     private static final long MS_24_HOUR = 24 * 3600 * 1000;
 
     private transient BrokerController brokerController;

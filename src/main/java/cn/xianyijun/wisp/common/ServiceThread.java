@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Getter
-public abstract class ServiceThread implements Runnable{
+public abstract class ServiceThread implements Runnable {
 
     private static final long JOIN_TIME = 90 * 1000;
     protected final Thread thread;

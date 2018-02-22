@@ -39,7 +39,7 @@ public class Configuration {
         }
     }
 
-    public void registerConfig(Object configObject){
+    public void registerConfig(Object configObject) {
         try {
             readWriteLock.writeLock().lockInterruptibly();
             try {
@@ -48,26 +48,26 @@ public class Configuration {
                 merge(registerProps, this.allConfigs);
 
                 configObjectList.add(configObject);
-            }finally {
+            } finally {
                 readWriteLock.writeLock().unlock();
             }
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             log.error("[Configuration] registerConfig failure , ex: {}", e);
         }
     }
 
     public void registerConfig(Properties config) {
-        if (config == null){
+        if (config == null) {
             return;
         }
         try {
             readWriteLock.writeLock().lockInterruptibly();
             try {
                 merge(config, this.allConfigs);
-            }finally {
+            } finally {
                 readWriteLock.writeLock().unlock();
             }
-        }catch (InterruptedException e){
+        } catch (InterruptedException e) {
             log.error("[Configuration] registerConfig failure , ex: {}", e);
         }
     }

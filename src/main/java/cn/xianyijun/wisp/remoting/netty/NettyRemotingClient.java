@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutorService;
  */
 @Slf4j
 @Getter
-public class NettyRemotingClient extends AbstractNettyRemoting implements RemotingClient{
+public class NettyRemotingClient extends AbstractNettyRemoting implements RemotingClient {
 
     private final NettyClientConfig nettyClientConfig;
 

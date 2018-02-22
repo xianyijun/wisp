@@ -51,23 +51,7 @@ import static cn.xianyijun.wisp.remoting.netty.TlsSystemConfig.tlsTestModeEnable
 @Slf4j
 public class TlsHelper {
 
-    /**
-     * The interface Decryption strategy.
-     */
-    public interface DecryptionStrategy {
-        /**
-         * Decrypt private key input stream.
-         *
-         * @param privateKeyEncryptPath the private key encrypt path
-         * @param forClient             the for client
-         * @return input stream
-         * @throws IOException the io exception
-         */
-        InputStream decryptPrivateKey(String privateKeyEncryptPath, boolean forClient) throws IOException;
-    }
-
     private static DecryptionStrategy decryptionStrategy = (privateKeyEncryptPath, forClient) -> new FileInputStream(privateKeyEncryptPath);
-
 
     /**
      * Register decryption strategy.
@@ -221,6 +205,21 @@ public class TlsHelper {
         }
 
         return ClientAuth.NONE;
+    }
+
+    /**
+     * The interface Decryption strategy.
+     */
+    public interface DecryptionStrategy {
+        /**
+         * Decrypt private key input stream.
+         *
+         * @param privateKeyEncryptPath the private key encrypt path
+         * @param forClient             the for client
+         * @return input stream
+         * @throws IOException the io exception
+         */
+        InputStream decryptPrivateKey(String privateKeyEncryptPath, boolean forClient) throws IOException;
     }
 
 }

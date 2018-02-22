@@ -16,9 +16,8 @@ import java.util.concurrent.ConcurrentMap;
 @RequiredArgsConstructor
 @Getter
 public class ConsumerManager {
-    private final ConsumerIdsChangeListener consumerIdsChangeListener;
-
     private static final long CHANNEL_EXPIRED_TIMEOUT = 1000 * 120;
+    private final ConsumerIdsChangeListener consumerIdsChangeListener;
     private final ConcurrentMap<String, ConsumerGroupInfo> consumerTable =
             new ConcurrentHashMap<>(1024);
 

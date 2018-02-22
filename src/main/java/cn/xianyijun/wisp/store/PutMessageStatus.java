@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.store;
 
-public enum  PutMessageStatus {
+public enum PutMessageStatus {
     PUT_OK,
     FLUSH_DISK_TIMEOUT,
     FLUSH_SLAVE_TIMEOUT,

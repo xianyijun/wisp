@@ -35,33 +35,28 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public abstract class AbstractNettyRemoting {
 
-    /**
-     * The Semaphore one way.
-     */
-    private final Semaphore semaphoreOneWay;
-
-    /**
-     * The Semaphore async.
-     */
-    private final Semaphore semaphoreAsync;
-
-    /**
-     * The Response table.
-     */
-    private final ConcurrentMap<Integer, ResponseFuture> responseTable = new ConcurrentHashMap<>(256);
-
-    /**
-     * The Default request processor.
-     */
-    Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
-
+    protected final NettyEventExecutor nettyEventExecutor = new NettyEventExecutor();
     /**
      * The Processor table.
      */
     final HashMap<Integer, Pair<NettyRequestProcessor, ExecutorService>> processorTable =
             new HashMap<>(64);
-
-    protected final NettyEventExecutor nettyEventExecutor = new NettyEventExecutor();
+    /**
+     * The Semaphore one way.
+     */
+    private final Semaphore semaphoreOneWay;
+    /**
+     * The Semaphore async.
+     */
+    private final Semaphore semaphoreAsync;
+    /**
+     * The Response table.
+     */
+    private final ConcurrentMap<Integer, ResponseFuture> responseTable = new ConcurrentHashMap<>(256);
+    /**
+     * The Default request processor.
+     */
+    Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
 
 
     /**
@@ -111,6 +106,7 @@ public abstract class AbstractNettyRemoting {
     public void putNettyEvent(final NettyEvent event) {
         this.nettyEventExecutor.putNettyEvent(event);
     }
+
     /**
      * Do invoke async.
      *

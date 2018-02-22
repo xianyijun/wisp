@@ -37,9 +37,9 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
 
     @Override
     public void decode(String jsonString) {
-        if (!StringUtils.isEmpty(jsonString)){
+        if (!StringUtils.isEmpty(jsonString)) {
             ConsumerOffsetManager obj = RemotingSerializable.fromJson(jsonString, ConsumerOffsetManager.class);
-            if (obj != null){
+            if (obj != null) {
                 this.offsetTable = obj.offsetTable;
             }
         }

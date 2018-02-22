@@ -8,7 +8,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum  SerializeType {
+public enum SerializeType {
     /**
      * Json serialize type.
      */

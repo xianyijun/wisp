@@ -10,8 +10,8 @@ import lombok.Data;
  */
 @Data
 public class MessageExtBrokerInner extends ExtMessage {
-        private String propertiesString;
-        private long tagsCode;
+    private String propertiesString;
+    private long tagsCode;
 
     public static long tagsString2tagsCode(final TopicFilterType filter, final String tags) {
         if (StringUtils.isEmpty(tags)) {

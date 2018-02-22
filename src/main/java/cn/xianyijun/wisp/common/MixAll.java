@@ -19,24 +19,18 @@ import java.util.Properties;
  */
 @Slf4j
 public class MixAll {
-    private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "jmenv.tbsite.net";
-
     public static final String DEFAULT_CHARSET = "UTF-8";
-
     public static final long MASTER_ID = 0L;
     public static final String WISP_HOME_ENV = "WISP_HOME";
     public static final String WISP_HOME_PROPERTY = "wisp.home.dir";
     public static final String NAME_SERVER_ADDR_PROPERTY = "wisp.name.server.addr";
     public static final String NAME_SERVER_ADDR_ENV = "NAME_SERVER_ADDR";
     public static final String DEFAULT_TRACE_REGION_ID = "DefaultRegion";
-    public static final String WS_DOMAIN_NAME = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
     public static final String WS_DOMAIN_SUBGROUP = System.getProperty("wisp.name.server.domain.subgroup", "nsaddr");
-
     public static final String SELF_TEST_TOPIC = "SELF_TEST_TOPIC";
     public static final String DEFAULT_TOPIC = "TBW102";
     public static final String BENCHMARK_TOPIC = "BenchmarkTest";
     public static final String OFFSET_MOVED_EVENT = "OFFSET_MOVED_EVENT";
-
     public static final String TOOLS_CONSUMER_GROUP = "TOOLS_CONSUMER";
     public static final String FILTER_SERVER_CONSUMER_GROUP = "FILTER_SERVER_CONSUMER";
     public static final String SELF_TEST_CONSUMER_GROUP = "SELF_TEST_C_GROUP";
@@ -44,12 +38,11 @@ public class MixAll {
     public static final String CID_ONS_API_PULL_GROUP = "CID_ONS_API_PULL";
     public static final String CID_ONS_API_PERMISSION_GROUP = "CID_ONS_API_PERMISSION";
     public static final String CID_ONS_API_OWNER_GROUP = "CID_ONS_API_OWNER_GROUP";
-
     public static final String RETRY_GROUP_TOPIC_PREFIX = "%RETRY%";
-
     public static final String CID_RMQ_SYS_PREFIX = "CID_RMQ_SYS_";
-
     public static final String DLQ_GROUP_TOPIC_PREFIX = "%DLQ%";
+    private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "jmenv.tbsite.net";
+    public static final String WS_DOMAIN_NAME = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
 
     public static void properties2Object(final Properties properties, final Object object) {
         Method[] methods = object.getClass().getMethods();

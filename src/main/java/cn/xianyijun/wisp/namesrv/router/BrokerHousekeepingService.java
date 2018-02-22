@@ -6,7 +6,7 @@ import io.netty.channel.Channel;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class BrokerHousekeepingService implements ChannelEventListener{
+public class BrokerHousekeepingService implements ChannelEventListener {
     private final NameServerController controller;
 
     @Override

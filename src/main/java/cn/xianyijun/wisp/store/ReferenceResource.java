@@ -12,6 +12,8 @@ public abstract class ReferenceResource {
 
     protected volatile boolean available = true;
 
+    private volatile long firstShutdownTimestamp = 0;
+
     public void release() {
         long value = this.refCount.decrementAndGet();
         if (value > 0) {
@@ -35,6 +37,23 @@ public abstract class ReferenceResource {
         return false;
     }
 
+
+    public void shutdown(final long intervalForcibly) {
+        if (this.available) {
+            this.available = false;
+            this.firstShutdownTimestamp = System.currentTimeMillis();
+            this.release();
+        } else if (this.getRefCount() > 0) {
+            if ((System.currentTimeMillis() - this.firstShutdownTimestamp) >= intervalForcibly) {
+                this.refCount.set(-1000 - this.getRefCount());
+                this.release();
+            }
+        }
+    }
+
+    public long getRefCount() {
+        return this.refCount.get();
+    }
 
     /**
      * Cleanup boolean.

@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.broker.client;
 
 /**
  * The interface Consumer ids change listener.
+ *
  * @author xianyijun
  */
 public interface ConsumerIdsChangeListener {

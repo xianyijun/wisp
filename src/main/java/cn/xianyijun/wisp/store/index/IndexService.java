@@ -10,10 +10,15 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ * @author xianyijun
+ */
 @Slf4j
 @Getter
 public class IndexService {
@@ -32,6 +37,38 @@ public class IndexService {
         this.indexNum = store.getMessageStoreConfig().getMaxIndexNum();
         this.storePath =
                 StorePathConfigHelper.getStorePathIndex(store.getMessageStoreConfig().getStorePathRootDir());
+    }
+
+    public boolean load(final boolean lastExitOK) {
+        File dir = new File(this.storePath);
+        File[] files = dir.listFiles();
+        if (files != null) {
+            Arrays.sort(files);
+            for (File file : files) {
+                try {
+                    IndexFile f = new IndexFile(file.getPath(), this.hashSlotNum, this.indexNum, 0, 0);
+                    f.load();
+
+                    if (!lastExitOK) {
+                        if (f.getEndTimestamp() > this.defaultMessageStore.getStoreCheckpoint()
+                                .getIndexMsgTimestamp()) {
+                            f.destroy(0);
+                            continue;
+                        }
+                    }
+
+                    log.info("load index file OK, " + f.getFileName());
+                    this.indexFileList.add(f);
+                } catch (IOException e) {
+                    log.error("load file {} error", file, e);
+                    return false;
+                } catch (NumberFormatException e) {
+                    log.error("load file {} error", file, e);
+                }
+            }
+        }
+
+        return true;
     }
 
     public void buildIndex(DispatchRequest req) {
@@ -53,14 +90,14 @@ public class IndexService {
                     break;
                 case MessageSysFlag.TRANSACTION_ROLLBACK_TYPE:
                     return;
-                    default:
-                        break;
+                default:
+                    break;
             }
 
-            if (req.getUniqKey() != null) {
-                indexFile = putKey(indexFile, msg, buildKey(topic, req.getUniqKey()));
+            if (req.getUniqueKey() != null) {
+                indexFile = putKey(indexFile, msg, buildKey(topic, req.getUniqueKey()));
                 if (indexFile == null) {
-                    log.error("putKey error commitlog {} uniqkey {}", req.getCommitLogOffset(), req.getUniqKey());
+                    log.error("putKey error commitLog {} commitLog {}", req.getCommitLogOffset(), req.getUniqueKey());
                     return;
                 }
             }
@@ -72,7 +109,7 @@ public class IndexService {
                     if (key.length() > 0) {
                         indexFile = putKey(indexFile, msg, buildKey(topic, key));
                         if (indexFile == null) {
-                            log.error("putKey error commitlog {} uniqkey {}", req.getCommitLogOffset(), req.getUniqKey());
+                            log.error("putKey error commitLog {} commitLog {}", req.getCommitLogOffset(), req.getUniqueKey());
                             return;
                         }
                     }
@@ -102,10 +139,10 @@ public class IndexService {
         return topic + "#" + key;
     }
 
-    public IndexFile retryGetAndCreateIndexFile() {
+    private IndexFile retryGetAndCreateIndexFile() {
         IndexFile indexFile = null;
 
-        for (int times = 0; null == indexFile && times < MAX_TRY_IDX_CREATE; times++) {
+        for (int times = 0; times < MAX_TRY_IDX_CREATE; times++) {
             indexFile = this.getAndCreateLastIndexFile();
             if (null != indexFile) {
                 break;
@@ -127,7 +164,7 @@ public class IndexService {
         return indexFile;
     }
 
-    public IndexFile getAndCreateLastIndexFile() {
+    private IndexFile getAndCreateLastIndexFile() {
         IndexFile indexFile = null;
         IndexFile prevIndexFile = null;
         long lastUpdateEndPhyOffset = 0;

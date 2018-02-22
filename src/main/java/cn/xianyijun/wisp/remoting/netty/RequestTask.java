@@ -24,7 +24,7 @@ public class RequestTask implements Runnable {
 
     @Override
     public void run() {
-        if (!this.stopRun){
+        if (!this.stopRun) {
             this.runnable.run();
         }
     }

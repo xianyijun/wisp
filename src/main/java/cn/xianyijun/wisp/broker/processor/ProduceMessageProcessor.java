@@ -9,11 +9,11 @@ import cn.xianyijun.wisp.common.TopicConfig;
 import cn.xianyijun.wisp.common.TopicFilterType;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.constant.PermName;
+import cn.xianyijun.wisp.common.message.ExtBatchMessage;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.MessageAccessor;
 import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
-import cn.xianyijun.wisp.common.message.ExtMessage;
-import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
@@ -77,15 +77,15 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
                     response = this.produceMessage(ctx, request, mqTraceContext, requestHeader);
                 }
 
-                this.executeSendMessageHookAfter(response,mqTraceContext);
+                this.executeSendMessageHookAfter(response, mqTraceContext);
                 return response;
         }
     }
 
     private RemotingCommand produceMessage(final ChannelHandlerContext ctx,
-                                        final RemotingCommand request,
-                                        final ProduceMessageContext produceMessageContext,
-                                        final ProduceMessageRequestHeader requestHeader) throws RemotingCommandException {
+                                           final RemotingCommand request,
+                                           final ProduceMessageContext produceMessageContext,
+                                           final ProduceMessageRequestHeader requestHeader) throws RemotingCommandException {
 
         final RemotingCommand response = RemotingCommand.createResponseCommand(ProduceMessageResponseHeader.class);
         final ProduceMessageResponseHeader responseHeader = (ProduceMessageResponseHeader) response.getCustomHeader();

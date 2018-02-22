@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.broker.client;
 
-public enum  ConsumerGroupEvent {
+public enum ConsumerGroupEvent {
 
     /**
      * Some consumers in the group are changed.

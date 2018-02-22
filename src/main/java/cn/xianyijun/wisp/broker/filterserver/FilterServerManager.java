@@ -26,10 +26,8 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class FilterServerManager {
-    private final BrokerController brokerController;
-
     private static final long FILTER_SERVER_MAX_IDLE_TIME_MILLS = 30000;
-
+    private final BrokerController brokerController;
     private final ConcurrentMap<Channel, FilterServerInfo> filterServerTable =
             new ConcurrentHashMap<>(16);
 
@@ -83,7 +81,7 @@ public class FilterServerManager {
         }
 
         return String.format("sh %s/bin/startfsrv.sh %s", this.brokerController.getBrokerConfig().getWispHome(),
-                    config);
+                config);
     }
 
     public void createFilterServer() {

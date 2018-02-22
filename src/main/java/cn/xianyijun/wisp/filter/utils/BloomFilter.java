@@ -14,11 +14,6 @@ public class BloomFilter {
     private int k;
     private int m;
 
-    public static BloomFilter createByFn(int f, int n) {
-        return new BloomFilter(f, n);
-    }
-
-
     private BloomFilter(int f, int n) {
         if (f < 1 || f >= 100) {
             throw new IllegalArgumentException("f must be greater or equal than 1 and less than 100");
@@ -39,6 +34,10 @@ public class BloomFilter {
 
         this.m = (int) Math.ceil(this.n * logMN(2, 1 / errorRate) * logMN(2, Math.E));
         this.m = (int) (Byte.SIZE * Math.ceil(this.m / (Byte.SIZE * 1.0)));
+    }
+
+    public static BloomFilter createByFn(int f, int n) {
+        return new BloomFilter(f, n);
     }
 
     private double logMN(double m, double n) {

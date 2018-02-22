@@ -21,20 +21,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @NoArgsConstructor
 @Slf4j
 @Getter
-public class MappedFile extends ReferenceResource{
+public class MappedFile extends ReferenceResource {
     public static final int OS_PAGE_SIZE = 1024 * 4;
-
-    private TransientStorePool transientStorePool = null;
-    private ByteBuffer writeBuffer = null;
-
     private static final AtomicLong TOTAL_MAPPED_VIRTUAL_MEMORY = new AtomicLong(0);
-
     private static final AtomicInteger TOTAL_MAPPED_FILES = new AtomicInteger(0);
     protected final AtomicInteger wrotePosition = new AtomicInteger(0);
     protected final AtomicInteger committedPosition = new AtomicInteger(0);
     private final AtomicInteger flushedPosition = new AtomicInteger(0);
-
-
+    private TransientStorePool transientStorePool = null;
+    private ByteBuffer writeBuffer = null;
     private String fileName;
     private long fileFromOffset;
     private File file;
@@ -54,6 +49,16 @@ public class MappedFile extends ReferenceResource{
     public MappedFile(final String fileName, final int fileSize,
                       final TransientStorePool transientStorePool) throws IOException {
         init(fileName, fileSize, transientStorePool);
+    }
+
+    public static void ensureDirOK(final String dirName) {
+        if (dirName != null) {
+            File f = new File(dirName);
+            if (!f.exists()) {
+                boolean result = f.mkdirs();
+                log.info(dirName + " mkdir " + (result ? "OK" : "Failed"));
+            }
+        }
     }
 
     private void init(final String fileName, final int fileSize,
@@ -91,24 +96,31 @@ public class MappedFile extends ReferenceResource{
         }
     }
 
+    public boolean destroy(final long intervalForcibly) {
+        this.shutdown(intervalForcibly);
+
+        if (this.isCleanupOver()) {
+            try {
+                this.fileChannel.close();
+                log.info("close file channel " + this.fileName + " OK");
+
+                boolean result = this.file.delete();
+                log.info("delete file[REF: {} ]  {} {} W: {}  M: {}", this.getRefCount(), this.fileName, result ? " OK " : " Failed", this.getWrotePosition(), this.getFlushedPosition());
+            } catch (Exception e) {
+                log.warn("close file channel " + this.fileName + " Failed. ", e);
+            }
+
+            return true;
+        } else {
+            log.warn("destroy mapped file[REF:" + this.getRefCount() + "] " + this.fileName
+                    + " Failed. cleanupOver: " + this.cleanupOver);
+        }
+
+        return false;
+    }
 
     public ByteBuffer sliceByteBuffer() {
         return this.mappedByteBuffer.slice();
-    }
-
-
-    public void setWrotePosition(int pos) {
-        this.wrotePosition.set(pos);
-    }
-
-    private static void ensureDirOK(final String dirName) {
-        if (dirName != null) {
-            File f = new File(dirName);
-            if (!f.exists()) {
-                boolean result = f.mkdirs();
-                log.info(dirName + " mkdir " + (result ? "OK" : "Failed"));
-            }
-        }
     }
 
     public int getReadPosition() {
@@ -118,6 +130,20 @@ public class MappedFile extends ReferenceResource{
     public int getWrotePosition() {
         return wrotePosition.get();
     }
+
+    public void setWrotePosition(int pos) {
+        this.wrotePosition.set(pos);
+    }
+
+    public void setFlushedPosition(int pos) {
+        this.flushedPosition.set(pos);
+    }
+
+
+    public void setCommittedPosition(int pos) {
+        this.committedPosition.set(pos);
+    }
+
     public boolean isFull() {
         return this.fileSize == this.wrotePosition.get();
     }
@@ -152,8 +178,23 @@ public class MappedFile extends ReferenceResource{
             this.wrotePosition.addAndGet(length);
             return true;
         }
-
         return false;
+    }
+
+
+    public SelectMappedBufferResult selectMappedBuffer(int pos) {
+        int readPosition = getReadPosition();
+        if (pos < readPosition && pos >= 0) {
+            if (this.hold()) {
+                ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+                byteBuffer.position(pos);
+                int size = readPosition - pos;
+                ByteBuffer byteBufferNew = byteBuffer.slice();
+                byteBufferNew.limit(size);
+                return new SelectMappedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
+            }
+        }
+        return null;
     }
 
     @Override

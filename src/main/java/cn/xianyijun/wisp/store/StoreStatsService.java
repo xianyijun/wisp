@@ -15,7 +15,7 @@ public class StoreStatsService extends ServiceThread {
     private static final int FREQUENCY_OF_SAMPLING = 1000;
 
     private static final int MAX_RECORDS_OF_SAMPLING = 60 * 10;
-    private static final String[] PUT_MESSAGE_ENTIRE_TIME_MAX_DESC = new String[] {
+    private static final String[] PUT_MESSAGE_ENTIRE_TIME_MAX_DESC = new String[]{
             "[<=0ms]", "[0~10ms]", "[10~50ms]", "[50~100ms]", "[100~200ms]", "[200~500ms]", "[500ms~1s]", "[1~2s]", "[2~3s]", "[3~4s]", "[4~5s]", "[5~10s]", "[10s~]",
     };
 
@@ -28,10 +28,8 @@ public class StoreStatsService extends ServiceThread {
             new ConcurrentHashMap<>(128);
     private final Map<String, AtomicLong> putMessageTopicSizeTotal =
             new ConcurrentHashMap<>(128);
-
-    private volatile AtomicLong[] putMessageDistributeTime;
-
     private final AtomicLong getMessageTransferedMsgCount = new AtomicLong(0);
+    private volatile AtomicLong[] putMessageDistributeTime;
 
     public StoreStatsService() {
         this.initPutMessageDistributeTime();

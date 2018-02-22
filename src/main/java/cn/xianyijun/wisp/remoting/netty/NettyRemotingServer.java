@@ -50,34 +50,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author xianyijun
  */
 @Slf4j
-public class NettyRemotingServer extends AbstractNettyRemoting implements RemotingServer{
-
-    private final ServerBootstrap serverBootstrap;
-
-    private final NettyServerConfig nettyServerConfig;
-
-    private int port = 0;
-
-    /**
-     * The Ssl context.
-     */
-    protected SslContext sslContext;
-
-    private final ChannelEventListener channelEventListener;
-
-    private final ExecutorService publicExecutor;
-
-    private final EventLoopGroup eventLoopGroupSelector;
-
-    private final EventLoopGroup eventLoopGroupBoss;
-
-    private RPCHook rpcHook;
-
-    private DefaultEventExecutorGroup defaultEventExecutorGroup;
+public class NettyRemotingServer extends AbstractNettyRemoting implements RemotingServer {
 
     private static final String HANDSHAKE_HANDLER_NAME = "handshakeHandler";
     private static final String TLS_HANDLER_NAME = "sslHandler";
     private static final String FILE_REGION_ENCODER_NAME = "fileRegionEncoder";
+    private final ServerBootstrap serverBootstrap;
+    private final NettyServerConfig nettyServerConfig;
+    private final ChannelEventListener channelEventListener;
+    private final ExecutorService publicExecutor;
+    private final EventLoopGroup eventLoopGroupSelector;
+    private final EventLoopGroup eventLoopGroupBoss;
+    /**
+     * The Ssl context.
+     */
+    protected SslContext sslContext;
+    private int port = 0;
+    private RPCHook rpcHook;
+    private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
     /**
      * Instantiates a new Netty remoting server.
@@ -207,7 +197,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
 
     @Override
     public void invokeOneWay(Channel channel, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
-        this.doInvokeOneWay(channel, request , timeoutMillis);
+        this.doInvokeOneWay(channel, request, timeoutMillis);
     }
 
     @Override
@@ -285,9 +275,8 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
      */
     class HandshakeHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
-        private final TlsMode tlsMode;
-
         private static final byte HANDSHAKE_MAGIC_CODE = 0x16;
+        private final TlsMode tlsMode;
 
         /**
          * Instantiates a new Handshake handler.

@@ -29,13 +29,13 @@ public class NameServerStartUp {
     }
 
     private static void doMain(String[] args) {
-        System.setProperty(MixAll.WISP_HOME_PROPERTY,"/Users/xianyijun/code/git/wisp/");
+        System.setProperty(MixAll.WISP_HOME_PROPERTY, "/Users/xianyijun/code/git/wisp/");
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
         try {
             Options options = ServerUtils.buildCommandlineOptions(new Options());
             CommandLine commandLine = ServerUtils.parseCmdLine("nameServer", args, buildCommandlineOptions(options), new PosixParser());
 
-            if (commandLine == null){
+            if (commandLine == null) {
                 System.exit(-1);
                 return;
             }
@@ -44,9 +44,9 @@ public class NameServerStartUp {
             NettyServerConfig nettyServerConfig = new NettyServerConfig();
             nettyServerConfig.setListenPort(9876);
 
-            if (commandLine.hasOption("c")){
+            if (commandLine.hasOption("c")) {
                 String file = commandLine.getOptionValue("c");
-                if (file != null){
+                if (file != null) {
                     InputStream in = new BufferedInputStream(new FileInputStream(file));
                     properties = new Properties();
                     properties.load(in);
@@ -54,7 +54,7 @@ public class NameServerStartUp {
                     MixAll.properties2Object(properties, nettyServerConfig);
 
                     nameServerConfig.setConfigStorePath(file);
-                    log.info("[NameServerStartUp] doMain load properties finish , file :{}",file);
+                    log.info("[NameServerStartUp] doMain load properties finish , file :{}", file);
                     in.close();
                 }
             }
@@ -67,7 +67,7 @@ public class NameServerStartUp {
 
             MixAll.properties2Object(ServerUtils.commandLine2Properties(commandLine), nameServerConfig);
 
-            if (nameServerConfig.getWispHome() == null){
+            if (nameServerConfig.getWispHome() == null) {
                 log.info("Please set the {} variable in your environment to match the location of the wisp installation\n", MixAll.WISP_HOME_ENV);
                 System.exit(-2);
             }
@@ -90,8 +90,8 @@ public class NameServerStartUp {
 
             controller.start();
 
-        }catch (Throwable t){
-            log.error("[NameServerStartUp] doMain failure, t:{} ",t);
+        } catch (Throwable t) {
+            log.error("[NameServerStartUp] doMain failure, t:{} ", t);
             System.exit(-1);
         }
     }

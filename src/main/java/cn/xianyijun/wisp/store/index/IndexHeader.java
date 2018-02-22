@@ -16,16 +16,13 @@ import java.util.concurrent.atomic.AtomicLong;
 @Slf4j
 public class IndexHeader {
     public static final int INDEX_HEADER_SIZE = 40;
-    private final ByteBuffer byteBuffer;
-
     private static int beginTimestampIndex = 0;
     private static int endTimestampIndex = 8;
     private static int beginPhyoffsetIndex = 16;
     private static int endPhyoffsetIndex = 24;
     private static int hashSlotcountIndex = 32;
     private static int indexCountIndex = 36;
-
-
+    private final ByteBuffer byteBuffer;
     private AtomicLong beginTimestamp = new AtomicLong(0);
     private AtomicLong endTimestamp = new AtomicLong(0);
     private AtomicLong beginPhyOffset = new AtomicLong(0);
@@ -34,6 +31,20 @@ public class IndexHeader {
 
     private AtomicInteger indexCount = new AtomicInteger(1);
 
+
+    public void load() {
+        this.beginTimestamp.set(byteBuffer.getLong(beginTimestampIndex));
+        this.endTimestamp.set(byteBuffer.getLong(endTimestampIndex));
+        this.beginPhyOffset.set(byteBuffer.getLong(beginPhyoffsetIndex));
+        this.endPhyOffset.set(byteBuffer.getLong(endPhyoffsetIndex));
+
+        this.hashSlotCount.set(byteBuffer.getInt(hashSlotcountIndex));
+        this.indexCount.set(byteBuffer.getInt(indexCountIndex));
+
+        if (this.indexCount.get() <= 0) {
+            this.indexCount.set(1);
+        }
+    }
 
     public long getBeginTimestamp() {
         return beginTimestamp.get();

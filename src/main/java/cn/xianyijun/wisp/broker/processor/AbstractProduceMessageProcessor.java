@@ -30,14 +30,14 @@ import java.util.Random;
  */
 @Slf4j
 @Getter
-public abstract class AbstractProduceMessageProcessor implements NettyRequestProcessor{
+public abstract class AbstractProduceMessageProcessor implements NettyRequestProcessor {
 
     protected final static int DLQ_NUMS_PER_GROUP = 1;
     protected final BrokerController brokerController;
     protected final Random random = new Random(System.currentTimeMillis());
+    protected final SocketAddress storeHost;
     @Setter
     private List<ProduceMessageHook> produceMessageHookList;
-    protected final SocketAddress storeHost;
 
     public AbstractProduceMessageProcessor(final BrokerController brokerController) {
         this.brokerController = brokerController;
@@ -50,7 +50,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
     protected ProduceMessageRequestHeader parseRequestHeader(RemotingCommand request) {
         ProduceMessageRequestHeader requestHeader = null;
 
-        switch (request.getCode()){
+        switch (request.getCode()) {
             case RequestCode.SEND_BATCH_MESSAGE:
             case RequestCode.SEND_MESSAGE:
                 requestHeader =
@@ -164,7 +164,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
     }
 
     void executeSendMessageHookAfter(final RemotingCommand response, final ProduceMessageContext context) {
-        if (!hasProduceMessageHook()){
+        if (!hasProduceMessageHook()) {
             return;
         }
         for (ProduceMessageHook hook : this.produceMessageHookList) {

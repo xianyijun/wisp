@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  * @author xianyijun
  */
 @Slf4j
-public class NettyEncoder  extends MessageToByteEncoder<RemotingCommand> {
+public class NettyEncoder extends MessageToByteEncoder<RemotingCommand> {
     @Override
     protected void encode(ChannelHandlerContext channelHandlerContext, RemotingCommand remotingCommand, ByteBuf byteBuf) throws Exception {
         try {

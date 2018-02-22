@@ -28,6 +28,21 @@ public class TopAddressing {
         this.unitName = unitName;
     }
 
+    private static String clearNewLine(final String str) {
+        String newString = str.trim();
+        int index = newString.indexOf("\r");
+        if (index != -1) {
+            return newString.substring(0, index);
+        }
+
+        index = newString.indexOf("\n");
+        if (index != -1) {
+            return newString.substring(0, index);
+        }
+
+        return newString;
+    }
+
     public final String fetchNameServerAddr() {
         return fetchNameServerAddr(true, 3000);
     }
@@ -61,21 +76,6 @@ public class TopAddressing {
             log.warn(errorMsg);
         }
         return null;
-    }
-
-    private static String clearNewLine(final String str) {
-        String newString = str.trim();
-        int index = newString.indexOf("\r");
-        if (index != -1) {
-            return newString.substring(0, index);
-        }
-
-        index = newString.indexOf("\n");
-        if (index != -1) {
-            return newString.substring(0, index);
-        }
-
-        return newString;
     }
 
 }

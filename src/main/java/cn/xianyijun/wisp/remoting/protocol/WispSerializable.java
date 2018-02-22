@@ -61,7 +61,7 @@ public class WispSerializable {
     }
 
     private static byte[] mapSerialize(HashMap<String, String> map) {
-        if (null == map || map.isEmpty()){
+        if (null == map || map.isEmpty()) {
             return null;
         }
 
@@ -152,7 +152,7 @@ public class WispSerializable {
     }
 
     private static HashMap<String, String> mapDeserialize(byte[] bytes) {
-        if (bytes == null || bytes.length <= 0){
+        if (bytes == null || bytes.length <= 0) {
             return null;
         }
 

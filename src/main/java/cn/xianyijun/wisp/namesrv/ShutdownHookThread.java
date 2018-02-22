@@ -9,10 +9,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author xianyijun
  */
 @Slf4j
-public class ShutdownHookThread extends Thread{
+public class ShutdownHookThread extends Thread {
+    private final Callable callback;
     private volatile boolean hasShutdown = false;
     private AtomicInteger shutdownTimes = new AtomicInteger(0);
-    private final Callable callback;
 
     public ShutdownHookThread(Callable callback) {
         super("ShutdownHook");

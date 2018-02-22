@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.store;
 
-import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,6 +9,7 @@ import java.util.Set;
 
 /**
  * The interface Message store.
+ *
  * @author xianyijun
  */
 public interface MessageStore {

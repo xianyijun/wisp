@@ -198,7 +198,7 @@ public class BrokerController {
 
         result = result && this.messageStore.load();
 
-        if (result){
+        if (result) {
             this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.clientHousekeepingService);
             NettyServerConfig fastConfig = (NettyServerConfig) this.nettyServerConfig.clone();
             fastConfig.setListenPort(nettyServerConfig.getListenPort() - 2);
@@ -373,7 +373,7 @@ public class BrokerController {
 
     }
 
-    public void start() throws Exception{
+    public void start() throws Exception {
         if (this.messageStore != null) {
             this.messageStore.start();
         }

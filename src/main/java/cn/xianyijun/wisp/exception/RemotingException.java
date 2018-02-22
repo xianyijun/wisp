@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.exception;
 
-public class RemotingException extends Exception{
+public class RemotingException extends Exception {
     public RemotingException(String message) {
         super(message);
     }

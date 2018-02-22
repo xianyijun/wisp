@@ -24,7 +24,6 @@ public class ClientHousekeepingService implements ChannelEventListener {
             .newSingleThreadScheduledExecutor(new WispThreadFactory("ClientHousekeepingScheduledThread"));
 
 
-
     public void start() {
 
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {

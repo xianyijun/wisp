@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.store;
 
-public enum  AppendMessageStatus {
+public enum AppendMessageStatus {
     PUT_OK,
     END_OF_FILE,
     MESSAGE_SIZE_EXCEEDED,

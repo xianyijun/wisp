@@ -1,11 +1,13 @@
 package cn.xianyijun.wisp.common;
 
+import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
 /**
  * The type Config manager.
+ *
  * @author xianyijun
  */
 @Slf4j
@@ -21,8 +23,8 @@ public abstract class AbstractConfigManager {
         try {
             fileName = this.configFilePath();
             String jsonString = MixAll.file2String(fileName);
-
-            if (null == jsonString || jsonString.length() == 0) {
+            log.info("{} invoke load , fileName :{} , jsonString : {} ", this.getClass().getSimpleName(), fileName, jsonString);
+            if (StringUtils.isEmpty(jsonString)) {
                 return this.loadBak();
             } else {
                 this.decode(jsonString);

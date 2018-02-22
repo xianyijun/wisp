@@ -29,8 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
 @Getter
 public class TopicConfigManager extends AbstractConfigManager {
 
-    private transient BrokerController brokerController;
-
+    private static final long LOCK_TIMEOUT_MILLIS = 3000;
     private final Set<String> systemTopicList = new HashSet<>();
 
     private final ConcurrentMap<String, TopicConfig> topicConfigTable =
@@ -39,7 +38,7 @@ public class TopicConfigManager extends AbstractConfigManager {
     private final DataVersion dataVersion = new DataVersion();
 
     private transient final Lock lockTopicConfigTable = new ReentrantLock();
-    private static final long LOCK_TIMEOUT_MILLIS = 3000;
+    private transient BrokerController brokerController;
 
 
     public TopicConfigManager(BrokerController brokerController) {
@@ -151,7 +150,7 @@ public class TopicConfigManager extends AbstractConfigManager {
 
 
     public TopicConfig createTopicInProduceMessageMethod(final String topic, final String defaultTopic,
-                                                      final String remoteAddress, final int clientDefaultTopicQueueNums, final int topicSysFlag) {
+                                                         final String remoteAddress, final int clientDefaultTopicQueueNums, final int topicSysFlag) {
         TopicConfig topicConfig = null;
         boolean createNew = false;
 

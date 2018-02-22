@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.exception;
 
-public class RemotingSendRequestException extends RemotingException{
+public class RemotingSendRequestException extends RemotingException {
 
     public RemotingSendRequestException(String addr) {
         this(addr, null);

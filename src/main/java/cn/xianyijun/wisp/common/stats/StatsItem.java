@@ -30,6 +30,32 @@ public class StatsItem {
     private final String statsKey;
     private final ScheduledExecutorService scheduledExecutorService;
 
+    private static StatsSnapshot computeStatsData(final LinkedList<CallSnapshot> csList) {
+        StatsSnapshot statsSnapshot = new StatsSnapshot();
+        synchronized (csList) {
+            double tps = 0;
+            double avgpt = 0;
+            long sum = 0;
+            if (!csList.isEmpty()) {
+                CallSnapshot first = csList.getFirst();
+                CallSnapshot last = csList.getLast();
+                sum = last.getValue() - first.getValue();
+                tps = (sum * 1000.0d) / (last.getTimestamp() - first.getTimestamp());
+
+                long timesDiff = last.getTimes() - first.getTimes();
+                if (timesDiff > 0) {
+                    avgpt = (sum * 1.0d) / timesDiff;
+                }
+            }
+
+            statsSnapshot.setSum(sum);
+            statsSnapshot.setTps(tps);
+            statsSnapshot.setAvgpt(avgpt);
+        }
+
+        return statsSnapshot;
+    }
+
     public void samplingInSeconds() {
         synchronized (this.csListMinute) {
             this.csListMinute.add(new CallSnapshot(System.currentTimeMillis(), this.times.get(), this.value
@@ -89,33 +115,6 @@ public class StatsItem {
                 ss.getTps(),
                 ss.getAvgpt()));
     }
-
-    private static StatsSnapshot computeStatsData(final LinkedList<CallSnapshot> csList) {
-        StatsSnapshot statsSnapshot = new StatsSnapshot();
-        synchronized (csList) {
-            double tps = 0;
-            double avgpt = 0;
-            long sum = 0;
-            if (!csList.isEmpty()) {
-                CallSnapshot first = csList.getFirst();
-                CallSnapshot last = csList.getLast();
-                sum = last.getValue() - first.getValue();
-                tps = (sum * 1000.0d) / (last.getTimestamp() - first.getTimestamp());
-
-                long timesDiff = last.getTimes() - first.getTimes();
-                if (timesDiff > 0) {
-                    avgpt = (sum * 1.0d) / timesDiff;
-                }
-            }
-
-            statsSnapshot.setSum(sum);
-            statsSnapshot.setTps(tps);
-            statsSnapshot.setAvgpt(avgpt);
-        }
-
-        return statsSnapshot;
-    }
-
 
     public StatsSnapshot getStatsDataInMinute() {
         return computeStatsData(this.csListMinute);

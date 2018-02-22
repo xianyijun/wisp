@@ -4,6 +4,7 @@ import java.util.Map;
 
 /**
  * The interface Message arriving listener.
+ *
  * @author xianyijun
  */
 public interface MessageArrivingListener {

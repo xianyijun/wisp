@@ -1,7 +1,6 @@
 package cn.xianyijun.wisp.utils;
 
 import cn.xianyijun.wisp.common.MixAll;
-import cn.xianyijun.wisp.common.RemotingHelper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -18,7 +17,7 @@ import java.io.Writer;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class IOTinyUtils {
 
-    public static  String toString(InputStream input, String encoding) throws IOException {
+    public static String toString(InputStream input, String encoding) throws IOException {
         return (null == encoding) ? toString(new InputStreamReader(input, MixAll.DEFAULT_CHARSET)) : toString(new InputStreamReader(
                 input, encoding));
     }

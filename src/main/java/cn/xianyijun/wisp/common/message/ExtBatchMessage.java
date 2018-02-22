@@ -10,9 +10,9 @@ import java.nio.ByteBuffer;
 @Data
 public class ExtBatchMessage extends ExtMessage {
 
+    private ByteBuffer encodedBuff;
+
     public ByteBuffer wrap() {
         return ByteBuffer.wrap(getBody(), 0, getBody().length);
     }
-
-    private ByteBuffer encodedBuff;
 }

@@ -20,12 +20,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Slf4j
 @Getter
-public class SubscriptionGroupManager extends AbstractConfigManager{
+public class SubscriptionGroupManager extends AbstractConfigManager {
 
-    private transient BrokerController brokerController;
     private final DataVersion dataVersion = new DataVersion();
     private final ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable =
             new ConcurrentHashMap<>(1024);
+    private transient BrokerController brokerController;
 
     public SubscriptionGroupManager(BrokerController brokerController) {
         this.brokerController = brokerController;

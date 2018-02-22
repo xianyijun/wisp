@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @author xianyijun
  */
-public interface RemotingClient extends RemotingService{
+public interface RemotingClient extends RemotingService {
     /**
      * Update name server address list.
      *

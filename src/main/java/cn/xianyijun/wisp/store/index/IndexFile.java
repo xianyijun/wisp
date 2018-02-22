@@ -51,6 +51,16 @@ public class IndexFile {
         }
     }
 
+
+    public void load() {
+        this.indexHeader.load();
+    }
+
+    public boolean destroy(final long intervalForcibly) {
+        return this.mappedFile.destroy(intervalForcibly);
+    }
+
+
     public boolean putKey(final String key, final long phyOffset, final long storeTimestamp) {
         if (this.indexHeader.getIndexCount() < this.indexNum) {
             int keyHash = indexKeyHashMethod(key);
@@ -137,6 +147,7 @@ public class IndexFile {
             log.info("flush index file eclipse time(ms) " + (System.currentTimeMillis() - beginTime));
         }
     }
+
     public boolean isWriteFull() {
         return this.indexHeader.getIndexCount() >= this.indexNum;
     }

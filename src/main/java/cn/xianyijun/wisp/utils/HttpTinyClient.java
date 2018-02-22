@@ -18,7 +18,7 @@ import java.util.List;
 public class HttpTinyClient {
     public static int STATUS_OK = 200;
 
-    public static  HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
+    public static HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
                                      String encoding, long readTimeoutMs) throws IOException {
         String encodedContent = encodingParams(paramValues, encoding);
         url += (null == encodedContent) ? "" : ("?" + encodedContent);
@@ -113,7 +113,7 @@ public class HttpTinyClient {
     }
 
     @RequiredArgsConstructor
-    public static  class HttpResult {
+    public static class HttpResult {
         final public int code;
         final public String content;
     }

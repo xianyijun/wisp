@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public enum  LanguageCode {
+public enum LanguageCode {
     JAVA((byte) 0),
     CPP((byte) 1),
     DOTNET((byte) 2),

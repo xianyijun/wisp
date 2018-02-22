@@ -1,5 +1,7 @@
 package cn.xianyijun.wisp.common.message;
 
+import cn.xianyijun.wisp.common.TopicFilterType;
+import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import lombok.Data;
 
 import java.net.SocketAddress;
@@ -28,4 +30,12 @@ public class ExtMessage extends Message {
     private int reConsumeTimes;
 
     private long preparedTransactionOffset;
+
+
+    public static TopicFilterType parseTopicFilterType(final int sysFlag) {
+        if ((sysFlag & MessageSysFlag.MULTI_TAGS_FLAG) == MessageSysFlag.MULTI_TAGS_FLAG) {
+            return TopicFilterType.MULTI_TAG;
+        }
+        return TopicFilterType.SINGLE_TAG;
+    }
 }

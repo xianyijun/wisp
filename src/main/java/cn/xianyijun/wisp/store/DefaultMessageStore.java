@@ -1,16 +1,18 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.BrokerConfig;
-import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.store.config.MessageStoreConfig;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
 import cn.xianyijun.wisp.store.index.IndexService;
+import cn.xianyijun.wisp.store.schedule.ScheduleMessageService;
 import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,15 +35,17 @@ public class DefaultMessageStore implements MessageStore {
 
     private final LinkedList<CommitLogDispatcher> dispatcherList;
 
+    private final CommitLog commitLog;
+
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
 
     private final IndexService indexService;
 
     private final RunningFlags runningFlags = new RunningFlags();
-
-    private StoreCheckpoint storeCheckpoint;
-
     private final TransientStorePool transientStorePool;
+    private final ScheduleMessageService scheduleMessageService;
+    private final AllocateMappedFileService allocateMappedFileService;
+    private StoreCheckpoint storeCheckpoint;
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig, final BrokerStatsManager brokerStatsManager,
                                final MessageArrivingListener messageArrivingListener, final BrokerConfig brokerConfig) throws IOException {
@@ -51,8 +55,9 @@ public class DefaultMessageStore implements MessageStore {
         this.brokerConfig = brokerConfig;
         this.messageStoreConfig = messageStoreConfig;
         this.brokerStatsManager = brokerStatsManager;
-        this.indexService = new IndexService(this);
 
+        this.allocateMappedFileService = new AllocateMappedFileService(this);
+        this.indexService = new IndexService(this);
         this.consumeQueueTable = new ConcurrentHashMap<>(32);
 
         this.dispatcherList = new LinkedList<>();
@@ -60,11 +65,87 @@ public class DefaultMessageStore implements MessageStore {
         this.dispatcherList.addLast(new CommitLogDispatcherBuildIndex());
 
         this.transientStorePool = new TransientStorePool(messageStoreConfig);
+
+        this.scheduleMessageService = new ScheduleMessageService(this);
+
+        this.commitLog = new CommitLog(this);
     }
 
     @Override
     public boolean load() {
-        return false;
+        boolean result = true;
+
+        try {
+            boolean lastExitOK = !this.isTempFileExist();
+            log.info("last shutdown {}", lastExitOK ? "normally" : "abnormally");
+
+            if (null != scheduleMessageService) {
+                result = this.scheduleMessageService.load();
+            }
+
+            // load Commit Log
+            result = result && this.commitLog.load();
+
+            // load Consume Queue
+            result = result && this.loadConsumeQueue();
+
+            if (result) {
+                this.storeCheckpoint =
+                        new StoreCheckpoint(StorePathConfigHelper.getStoreCheckpoint(this.messageStoreConfig.getStorePathRootDir()));
+
+                this.indexService.load(lastExitOK);
+
+                this.recover(lastExitOK);
+
+                log.info("load over, and the max phy offset = {}", this.getMaxPhyOffset());
+            }
+        } catch (Exception e) {
+            log.error("load exception", e);
+            result = false;
+        }
+
+        return result;
+    }
+
+
+    public void doDispatch(DispatchRequest req) {
+        for (CommitLogDispatcher dispatcher : this.dispatcherList) {
+            dispatcher.dispatch(req);
+        }
+    }
+
+    private void recover(final boolean lastExitOK) {
+        this.recoverConsumeQueue();
+
+        if (lastExitOK) {
+            this.commitLog.recoverNormally();
+        } else {
+            this.commitLog.recoverAbnormally();
+        }
+
+        this.recoverTopicQueueTable();
+    }
+
+    private void recoverConsumeQueue() {
+        for (ConcurrentMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                logic.recover();
+            }
+        }
+    }
+
+    private void recoverTopicQueueTable() {
+        HashMap<String, Long> table = new HashMap<>(1024);
+        long minPhyOffset = this.commitLog.getMinOffset();
+        for (ConcurrentMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                String key = logic.getTopic() + "-" + logic.getQueueId();
+                table.put(key, logic.getMaxOffsetInQueue());
+                logic.correctMinOffset(minPhyOffset);
+            }
+        }
+
+        this.commitLog.setTopicQueueTable(table);
     }
 
     @Override
@@ -308,6 +389,76 @@ public class DefaultMessageStore implements MessageStore {
         return logic;
     }
 
+    private boolean isTempFileExist() {
+        String fileName = StorePathConfigHelper.getAbortFile(this.messageStoreConfig.getStorePathRootDir());
+        File file = new File(fileName);
+        return file.exists();
+    }
+
+    private boolean loadConsumeQueue() {
+        File dirLogic = new File(StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()));
+        File[] fileTopicList = dirLogic.listFiles();
+        if (fileTopicList != null) {
+
+            for (File fileTopic : fileTopicList) {
+                String topic = fileTopic.getName();
+                File[] fileQueueIdList = fileTopic.listFiles();
+                if (fileQueueIdList != null) {
+                    for (File fileQueueId : fileQueueIdList) {
+                        int queueId;
+                        try {
+                            queueId = Integer.parseInt(fileQueueId.getName());
+                        } catch (NumberFormatException e) {
+                            continue;
+                        }
+                        ConsumeQueue logic = new ConsumeQueue(
+                                topic,
+                                queueId,
+                                StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()),
+                                this.getMessageStoreConfig().getMapedFileSizeConsumeQueue(),
+                                this);
+                        this.putConsumeQueue(topic, queueId, logic);
+                        if (!logic.load()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        log.info("load logics queue all over, OK");
+
+        return true;
+    }
+
+    private void putConsumeQueue(final String topic, final int queueId, final ConsumeQueue consumeQueue) {
+        ConcurrentMap<Integer, ConsumeQueue> map = this.consumeQueueTable.get(topic);
+        if (null == map) {
+            map = new ConcurrentHashMap<>(128);
+            map.put(queueId, consumeQueue);
+            this.consumeQueueTable.put(topic, map);
+        } else {
+            map.put(queueId, consumeQueue);
+        }
+    }
+
+    public void truncateDirtyLogicFiles(long phyOffset) {
+        ConcurrentMap<String, ConcurrentMap<Integer, ConsumeQueue>> tables = DefaultMessageStore.this.consumeQueueTable;
+
+        for (ConcurrentMap<Integer, ConsumeQueue> maps : tables.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                logic.truncateDirtyLogicFiles(phyOffset);
+            }
+        }
+    }
+
+    public void destroyLogics() {
+        for (ConcurrentMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
+            for (ConsumeQueue logic : maps.values()) {
+                logic.destroy();
+            }
+        }
+    }
 
     class CommitLogDispatcherBuildConsumeQueue implements CommitLogDispatcher {
 
@@ -337,4 +488,5 @@ public class DefaultMessageStore implements MessageStore {
             }
         }
     }
+
 }

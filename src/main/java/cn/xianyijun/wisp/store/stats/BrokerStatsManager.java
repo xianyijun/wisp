@@ -17,20 +17,14 @@ import java.util.concurrent.ScheduledExecutorService;
 @Getter
 public class BrokerStatsManager {
 
-    private final String clusterName;
-
     public static final double SIZE_PER_COUNT = 64 * 1024;
-
     public static final String GROUP_GET_FALL_SIZE = "GROUP_GET_FALL_SIZE";
     public static final String GROUP_GET_FALL_TIME = "GROUP_GET_FALL_TIME";
-
     public static final String TOPIC_PUT_NUMS = "TOPIC_PUT_NUMS";
     public static final String TOPIC_PUT_SIZE = "TOPIC_PUT_SIZE";
-
     public static final String BROKER_PUT_NUMS = "BROKER_PUT_NUMS";
-
     public static final String COMMERCIAL_OWNER = "Owner";
-
+    private final String clusterName;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "BrokerStatsThread"));
 
@@ -46,18 +40,6 @@ public class BrokerStatsManager {
     public void start() {
     }
 
-    public enum StatsType {
-        SEND_SUCCESS,
-        SEND_FAILURE,
-        SEND_BACK,
-        SEND_TIMER,
-        SEND_TRANSACTION,
-        RCV_SUCCESS,
-        RCV_EPOLLS,
-        PERM_FAILURE
-    }
-
-
     public void incTopicPutNums(final String topic, int num, int times) {
         this.statsTable.get(TOPIC_PUT_NUMS).addValue(topic, num, times);
     }
@@ -68,5 +50,16 @@ public class BrokerStatsManager {
 
     public void incBrokerPutNums(final int incValue) {
         this.statsTable.get(BROKER_PUT_NUMS).getAndCreateStatsItem(this.clusterName).getValue().addAndGet(incValue);
+    }
+
+    public enum StatsType {
+        SEND_SUCCESS,
+        SEND_FAILURE,
+        SEND_BACK,
+        SEND_TIMER,
+        SEND_TRANSACTION,
+        RCV_SUCCESS,
+        RCV_EPOLLS,
+        PERM_FAILURE
     }
 }

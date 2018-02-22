@@ -5,6 +5,7 @@ import cn.xianyijun.wisp.utils.StringUtils;
 import java.io.File;
 import java.text.NumberFormat;
 import java.util.Calendar;
+import java.util.zip.CRC32;
 
 /**
  * @author xianyijun
@@ -91,5 +92,19 @@ public class UtilAll {
         nf.setMaximumFractionDigits(0);
         nf.setGroupingUsed(false);
         return nf.format(offset);
+    }
+
+    public static int crc32(byte[] array) {
+        if (array != null) {
+            return crc32(array, 0, array.length);
+        }
+
+        return 0;
+    }
+
+    public static int crc32(byte[] array, int offset, int length) {
+        CRC32 crc32 = new CRC32();
+        crc32.update(array, offset, length);
+        return (int) (crc32.getValue() & 0x7FFFFFFF);
     }
 }

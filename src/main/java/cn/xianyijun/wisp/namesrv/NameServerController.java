@@ -25,27 +25,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Getter
 public class NameServerController {
-    private static final String  CONFIG_STORE_PATH = "configStorePath";
+    private static final String CONFIG_STORE_PATH = "configStorePath";
 
     private final NameServerConfig nameServerConfig;
 
     private final NettyServerConfig nettyServerConfig;
-
-    @Getter
-    private Configuration configuration;
-
     private final KVConfigManager kvConfigManager;
-
     private final RouteInfoManager routeInfoManager;
-
-    private BrokerHousekeepingService brokerHousekeepingService;
-
-    private RemotingServer remotingServer;
-
-    private ExecutorService remotingExecutor;
-
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "NSScheduledThread"));
+    @Getter
+    private Configuration configuration;
+    private BrokerHousekeepingService brokerHousekeepingService;
+    private RemotingServer remotingServer;
+    private ExecutorService remotingExecutor;
 
     public NameServerController(NameServerConfig nameServerConfig, NettyServerConfig nettyServerConfig) {
         this.nameServerConfig = nameServerConfig;
@@ -75,10 +68,10 @@ public class NameServerController {
     }
 
     private void registerProcessor() {
-        if (nameServerConfig.isCluster()){
+        if (nameServerConfig.isCluster()) {
             this.remotingServer.registerDefaultProcessor(new ClusterRequestProcessor(this, nameServerConfig.getProductEnvName()),
                     this.remotingExecutor);
-        }else {
+        } else {
             this.remotingServer.registerDefaultProcessor(new DefaultRequestProcessor(this), this.remotingExecutor);
         }
     }

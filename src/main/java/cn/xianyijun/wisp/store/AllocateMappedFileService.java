@@ -19,17 +19,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class AllocateMappedFileService extends ServiceThread {
 
+    private static int waitTimeOut = 1000 * 5;
     private DefaultMessageStore messageStore;
-
     private PriorityBlockingQueue<AllocateRequest> requestQueue =
             new PriorityBlockingQueue<>();
-
     private ConcurrentMap<String, AllocateRequest> requestTable =
             new ConcurrentHashMap<>();
-
     private volatile boolean hasException = false;
-
-    private static int waitTimeOut = 1000 * 5;
 
     public AllocateMappedFileService(DefaultMessageStore messageStore) {
         this.messageStore = messageStore;

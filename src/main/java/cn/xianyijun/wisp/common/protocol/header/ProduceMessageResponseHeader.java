@@ -5,7 +5,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 @Data
-public class ProduceMessageResponseHeader implements CommandCustomHeader{
+public class ProduceMessageResponseHeader implements CommandCustomHeader {
     @NonNull
     private String msgId;
     @NonNull

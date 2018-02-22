@@ -12,7 +12,7 @@ import java.util.Map;
  */
 @Slf4j
 @Getter
-public class PullRequestHoldService extends ServiceThread{
+public class PullRequestHoldService extends ServiceThread {
 
     private static final String TOPIC_QUEUE_ID_SEPARATOR = "@";
     private final BrokerController brokerController;

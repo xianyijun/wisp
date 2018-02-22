@@ -12,7 +12,7 @@ public class DefaultConsumerIdsChangeListener implements ConsumerIdsChangeListen
 
     @Override
     public void handle(ConsumerGroupEvent event, String group, Object... args) {
-        if (event == null){
+        if (event == null) {
             return;
         }
     }

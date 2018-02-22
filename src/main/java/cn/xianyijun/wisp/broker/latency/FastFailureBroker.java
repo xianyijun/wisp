@@ -23,6 +23,16 @@ public class FastFailureBroker {
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "BrokerFastFailureScheduledThread"));
 
+    public static RequestTask castRunnable(final Runnable runnable) {
+        try {
+            ExtFutureTask object = (ExtFutureTask) runnable;
+            return (RequestTask) object.getRunnable();
+        } catch (Throwable e) {
+            log.error(String.format("castRunnable exception, %s", runnable.getClass().getName()), e);
+        }
+
+        return null;
+    }
 
     public void start() {
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -85,18 +95,6 @@ public class FastFailureBroker {
             } catch (Throwable ignored) {
             }
         }
-    }
-
-
-    public static RequestTask castRunnable(final Runnable runnable) {
-        try {
-            ExtFutureTask object = (ExtFutureTask) runnable;
-            return (RequestTask) object.getRunnable();
-        } catch (Throwable e) {
-            log.error(String.format("castRunnable exception, %s", runnable.getClass().getName()), e);
-        }
-
-        return null;
     }
 
     public void shutdown() {

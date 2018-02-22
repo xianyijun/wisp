@@ -39,15 +39,6 @@ public class RouteInfoManager {
         this.filterServerTable = new HashMap<>(256);
     }
 
-    @ToString
-    @Data
-    private class BrokerLiveInfo {
-        private long lastUpdateTimestamp;
-        private DataVersion dataVersion;
-        private Channel channel;
-        private String haServerAddr;
-    }
-
     public void scanNotActiveBroker() {
         Iterator<Map.Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
         while (it.hasNext()) {
@@ -61,7 +52,6 @@ public class RouteInfoManager {
             }
         }
     }
-
 
     private void onChannelDestroy(String remoteAddr, Channel channel) {
         String brokerAddrFound = null;
@@ -221,5 +211,14 @@ public class RouteInfoManager {
         } catch (Exception e) {
             log.error("printAllPeriodically Exception", e);
         }
+    }
+
+    @ToString
+    @Data
+    private class BrokerLiveInfo {
+        private long lastUpdateTimestamp;
+        private DataVersion dataVersion;
+        private Channel channel;
+        private String haServerAddr;
     }
 }

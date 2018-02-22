@@ -7,7 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DefaultRequestProcessor implements NettyRequestProcessor{
+public class DefaultRequestProcessor implements NettyRequestProcessor {
     protected final NameServerController nameServerController;
 
     public DefaultRequestProcessor(NameServerController nameServerController) {
