@@ -1,8 +1,8 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.BrokerConfig;
-import cn.xianyijun.wisp.common.message.MessageExt;
-import cn.xianyijun.wisp.common.message.MessageExtBatch;
+import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.store.config.MessageStoreConfig;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
@@ -88,7 +88,7 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     @Override
-    public PutMessageResult putMessages(MessageExtBatch messageExtBatch) {
+    public PutMessageResult putMessages(ExtBatchMessage messageExtBatch) {
         return null;
     }
 
@@ -118,7 +118,7 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     @Override
-    public MessageExt lookMessageByOffset(long commitLogOffset) {
+    public ExtMessage lookMessageByOffset(long commitLogOffset) {
         return null;
     }
 

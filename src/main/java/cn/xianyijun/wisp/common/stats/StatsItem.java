@@ -129,12 +129,13 @@ public class StatsItem {
         return computeStatsData(this.csListDay);
     }
 
-}
-@RequiredArgsConstructor
-@Getter
-class CallSnapshot {
-    private final long timestamp;
-    private final long times;
+    @RequiredArgsConstructor
+    @Getter
+    static class CallSnapshot {
+        private final long timestamp;
+        private final long times;
 
-    private final long value;
+        private final long value;
+    }
 }
+

@@ -8,7 +8,7 @@ import java.net.SocketAddress;
  * @author xianyijun
  */
 @Data
-public class MessageExt extends Message {
+public class ExtMessage extends Message {
 
     private int queueId;
 

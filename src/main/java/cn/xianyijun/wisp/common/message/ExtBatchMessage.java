@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
  * @author xianyijun
  */
 @Data
-public class MessageExtBatch extends MessageExt {
+public class ExtBatchMessage extends ExtMessage {
 
     public ByteBuffer wrap() {
         return ByteBuffer.wrap(getBody(), 0, getBody().length);

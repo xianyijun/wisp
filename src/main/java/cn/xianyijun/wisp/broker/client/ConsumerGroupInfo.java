@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.broker.client;
 
-import cn.xianyijun.wisp.common.consumer.ConsumeFromWhere;
+import cn.xianyijun.wisp.common.consumer.ConsumeWhereEnum;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;
 import cn.xianyijun.wisp.common.protocol.heartbeat.MessageModel;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
@@ -26,7 +26,7 @@ public class ConsumerGroupInfo {
             new ConcurrentHashMap<>(16);
     private volatile ConsumeType consumeType;
     private volatile MessageModel messageModel;
-    private volatile ConsumeFromWhere consumeFromWhere;
+    private volatile ConsumeWhereEnum consumeFromWhere;
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
 }

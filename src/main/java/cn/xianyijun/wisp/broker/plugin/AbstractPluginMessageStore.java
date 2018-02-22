@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.broker.plugin;
 
-import cn.xianyijun.wisp.common.message.MessageExt;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.store.CommitLogDispatcher;
 import cn.xianyijun.wisp.store.ConsumeQueue;
 import cn.xianyijun.wisp.store.MessageStore;
@@ -60,7 +60,7 @@ public abstract class AbstractPluginMessageStore implements MessageStore {
     }
 
     @Override
-    public MessageExt lookMessageByOffset(long commitLogOffset) {
+    public ExtMessage lookMessageByOffset(long commitLogOffset) {
         return next.lookMessageByOffset(commitLogOffset);
     }
 

@@ -4,11 +4,14 @@ import lombok.Getter;
 
 import java.util.concurrent.FutureTask;
 
+/**
+ * @author xianyijun
+ */
 @Getter
-public class FutureTaskExt<V> extends FutureTask<V> {
+public class ExtFutureTask<V> extends FutureTask<V> {
     private final Runnable runnable;
 
-    public FutureTaskExt(final Runnable runnable, final V result) {
+    public ExtFutureTask(final Runnable runnable, final V result) {
         super(runnable, result);
         this.runnable = runnable;
     }

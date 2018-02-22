@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.store;
 
-import cn.xianyijun.wisp.common.message.MessageExt;
-import cn.xianyijun.wisp.common.message.MessageExtBatch;
+import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -51,7 +51,7 @@ public interface MessageStore {
      * @param messageExtBatch the message ext batch
      * @return the put message result
      */
-    PutMessageResult putMessages(final MessageExtBatch messageExtBatch);
+    PutMessageResult putMessages(final ExtBatchMessage messageExtBatch);
 
     /**
      * Gets message.
@@ -111,7 +111,7 @@ public interface MessageStore {
      * @param commitLogOffset the commit log offset
      * @return the message ext
      */
-    MessageExt lookMessageByOffset(final long commitLogOffset);
+    ExtMessage lookMessageByOffset(final long commitLogOffset);
 
     /**
      * Select one message by offset select mapped buffer result.

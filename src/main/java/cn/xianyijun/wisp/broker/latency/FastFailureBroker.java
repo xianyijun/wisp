@@ -90,7 +90,7 @@ public class FastFailureBroker {
 
     public static RequestTask castRunnable(final Runnable runnable) {
         try {
-            FutureTaskExt object = (FutureTaskExt) runnable;
+            ExtFutureTask object = (ExtFutureTask) runnable;
             return (RequestTask) object.getRunnable();
         } catch (Throwable e) {
             log.error(String.format("castRunnable exception, %s", runnable.getClass().getName()), e);

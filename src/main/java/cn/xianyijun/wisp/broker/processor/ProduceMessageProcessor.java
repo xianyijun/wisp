@@ -12,8 +12,8 @@ import cn.xianyijun.wisp.common.constant.PermName;
 import cn.xianyijun.wisp.common.message.MessageAccessor;
 import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
-import cn.xianyijun.wisp.common.message.MessageExt;
-import cn.xianyijun.wisp.common.message.MessageExtBatch;
+import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
@@ -193,7 +193,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
             response.setRemark("batch request does not support retry group " + requestHeader.getTopic());
             return response;
         }
-        MessageExtBatch messageExtBatch = new MessageExtBatch();
+        ExtBatchMessage messageExtBatch = new ExtBatchMessage();
         messageExtBatch.setTopic(requestHeader.getTopic());
         messageExtBatch.setQueueId(queueIdInt);
 
@@ -217,7 +217,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
     }
 
     private RemotingCommand handlePutMessageResult(PutMessageResult putMessageResult, RemotingCommand response,
-                                                   RemotingCommand request, MessageExt msg,
+                                                   RemotingCommand request, ExtMessage msg,
                                                    ProduceMessageResponseHeader responseHeader, ProduceMessageContext produceMessageContext, ChannelHandlerContext ctx,
                                                    int queueIdInt) {
         if (putMessageResult == null) {
@@ -337,7 +337,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
 
     private boolean handleRetryAndDLQ(ProduceMessageRequestHeader requestHeader, RemotingCommand response,
                                       RemotingCommand request,
-                                      MessageExt msg, TopicConfig topicConfig) {
+                                      ExtMessage msg, TopicConfig topicConfig) {
         String newTopic = requestHeader.getTopic();
         if (null != newTopic && newTopic.startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
             String groupName = newTopic.substring(MixAll.RETRY_GROUP_TOPIC_PREFIX.length());
