@@ -61,4 +61,9 @@ public class ResponseFuture {
             }
         }
     }
+
+    public boolean isTimeout() {
+        long diff = System.currentTimeMillis() - this.beginTimestamp;
+        return diff > this.timeoutMillis;
+    }
 }

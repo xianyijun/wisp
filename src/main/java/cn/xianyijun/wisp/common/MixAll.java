@@ -24,6 +24,7 @@ public class MixAll {
     public static final String WISP_HOME_ENV = "WISP_HOME";
     public static final String WISP_HOME_PROPERTY = "wisp.home.dir";
     public static final String NAME_SERVER_ADDR_PROPERTY = "wisp.name.server.addr";
+    public static final String MESSAGE_COMPRESS_LEVEL = "wisp.message.compressLevel";
     public static final String NAME_SERVER_ADDR_ENV = "NAME_SERVER_ADDR";
     public static final String DEFAULT_TRACE_REGION_ID = "DefaultRegion";
     public static final String WS_DOMAIN_SUBGROUP = System.getProperty("wisp.name.server.domain.subgroup", "nsaddr");
@@ -43,6 +44,9 @@ public class MixAll {
     public static final String DLQ_GROUP_TOPIC_PREFIX = "%DLQ%";
     private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "jmenv.tbsite.net";
     public static final String WS_DOMAIN_NAME = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
+
+    public static final String DEFAULT_PRODUCER_GROUP = "DEFAULT_PRODUCER";
+    public static final String CLIENT_INNER_PRODUCER_GROUP = "CLIENT_INNER_PRODUCER";
 
     public static void properties2Object(final Properties properties, final Object object) {
         Method[] methods = object.getClass().getMethods();

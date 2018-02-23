@@ -5,6 +5,7 @@ import cn.xianyijun.wisp.exception.RemotingSendRequestException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
 import cn.xianyijun.wisp.exception.RemotingTooMuchRequestException;
 import cn.xianyijun.wisp.remoting.ChannelEventListener;
+import cn.xianyijun.wisp.remoting.InvokeCallback;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.RemotingClient;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
@@ -16,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * @author xianyijun
+ * todo
  */
 @Slf4j
 @Getter
@@ -84,6 +86,16 @@ public class NettyRemotingClient extends AbstractNettyRemoting implements Remoti
 
     @Override
     public void invokeOneWay(String addr, RemotingCommand request, long timeoutMillis) throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
+
+    }
+
+    @Override
+    public void registerProcessor(int requestCode, NettyRequestProcessor processor, ExecutorService executor) {
+
+    }
+
+    @Override
+    public void invokeAsync(String addr, RemotingCommand request, long timeoutMillis, InvokeCallback invokeCallback) throws InterruptedException, RemotingConnectException, RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException {
 
     }
 }

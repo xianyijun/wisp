@@ -38,6 +38,7 @@ public class RemotingCommand {
     private static final String BOOLEAN_CANONICAL_NAME_1 = Boolean.class.getCanonicalName();
     private static final String BOOLEAN_CANONICAL_NAME_2 = boolean.class.getCanonicalName();
     private static AtomicInteger requestId = new AtomicInteger(0);
+    @Getter
     private static SerializeType serializeTypeConfigInThisServer = SerializeType.JSON;
     private static volatile int configVersion = -1;
     private int flag = 0;
@@ -50,6 +51,7 @@ public class RemotingCommand {
     private int version = 0;
     private String remark;
     private LanguageCode language = LanguageCode.JAVA;
+
 
     public static RemotingCommand createRequestCommand(int code, CommandCustomHeader customHeader) {
         RemotingCommand cmd = new RemotingCommand();
@@ -341,5 +343,10 @@ public class RemotingCommand {
             extFields = new HashMap<>();
         }
         extFields.put(key, value);
+    }
+
+
+    public static int createNewRequestId() {
+        return requestId.incrementAndGet();
     }
 }

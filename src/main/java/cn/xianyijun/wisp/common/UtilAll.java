@@ -2,15 +2,26 @@ package cn.xianyijun.wisp.common;
 
 import cn.xianyijun.wisp.utils.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.text.NumberFormat;
 import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.zip.CRC32;
+import java.util.zip.DeflaterOutputStream;
 
 /**
  * @author xianyijun
  */
 public class UtilAll {
+
+    final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     public static long computeNextMorningTimeMillis() {
         Calendar cal = Calendar.getInstance();
@@ -107,4 +118,122 @@ public class UtilAll {
         crc32.update(array, offset, length);
         return (int) (crc32.getValue() & 0x7FFFFFFF);
     }
+
+    public static int getPid() {
+        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+        String name = runtime.getName();
+        try {
+            return Integer.parseInt(name.substring(0, name.indexOf('@')));
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
+    public static byte[] getIP() {
+        try {
+            Enumeration allNetInterfaces = NetworkInterface.getNetworkInterfaces();
+            InetAddress ip = null;
+            byte[] internalIP = null;
+            while (allNetInterfaces.hasMoreElements()) {
+                NetworkInterface netInterface = (NetworkInterface) allNetInterfaces.nextElement();
+                Enumeration addresses = netInterface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    ip = (InetAddress) addresses.nextElement();
+                    if (ip != null && ip instanceof Inet4Address) {
+                        byte[] ipByte = ip.getAddress();
+                        if (ipByte.length == 4) {
+                            if (ipCheck(ipByte)) {
+                                if (!isInternalIP(ipByte)) {
+                                    return ipByte;
+                                } else if (internalIP == null) {
+                                    internalIP = ipByte;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (internalIP != null) {
+                return internalIP;
+            } else {
+                throw new RuntimeException("Can not get local ip");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Can not get local ip", e);
+        }
+    }
+
+    private static boolean ipCheck(byte[] ip) {
+        if (ip.length != 4) {
+            throw new RuntimeException("illegal ipv4 bytes");
+        }
+
+//        if (ip[0] == (byte)30 && ip[1] == (byte)10 && ip[2] == (byte)163 && ip[3] == (byte)120) {
+//        }
+
+        if (ip[0] >= (byte) 1 && ip[0] <= (byte) 126) {
+            return (ip[1] != (byte) 1 || ip[2] != (byte) 1 || ip[3] != (byte) 1) && (ip[1] != (byte) 0 || ip[2] != (byte) 0 || ip[3] != (byte) 0);
+        } else if (ip[0] >= (byte) 128 && ip[0] <= (byte) 191) {
+            return (ip[2] != (byte) 1 || ip[3] != (byte) 1) && (ip[2] != (byte) 0 || ip[3] != (byte) 0);
+        } else if (ip[0] >= (byte) 192 && ip[0] <= (byte) 223) {
+            return ip[3] != (byte) 1 && ip[3] != (byte) 0;
+        }
+        return false;
+    }
+
+
+    public static boolean isInternalIP(byte[] ip) {
+        if (ip.length != 4) {
+            throw new RuntimeException("illegal ipv4 bytes");
+        }
+
+        //10.0.0.0~10.255.255.255
+        //172.16.0.0~172.31.255.255
+        //192.168.0.0~192.168.255.255
+        if (ip[0] == (byte) 10) {
+            return true;
+        } else if (ip[0] == (byte) 172) {
+            return ip[1] >= (byte) 16 && ip[1] <= (byte) 31;
+        } else if (ip[0] == (byte) 192) {
+            return ip[1] == (byte) 168;
+        }
+        return false;
+    }
+
+    public static String bytes2string(byte[] src) {
+        char[] hexChars = new char[src.length * 2];
+        for (int j = 0; j < src.length; j++) {
+            int v = src[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    public static byte[] compress(final byte[] src, final int level) throws IOException {
+        byte[] result = src;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(src.length);
+        java.util.zip.Deflater defeater = new java.util.zip.Deflater(level);
+        DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream, defeater);
+        try {
+            deflaterOutputStream.write(src);
+            deflaterOutputStream.finish();
+            deflaterOutputStream.close();
+            result = byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            defeater.end();
+            throw e;
+        } finally {
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException ignored) {
+            }
+
+            defeater.end();
+        }
+
+        return result;
+    }
+
+
 }
