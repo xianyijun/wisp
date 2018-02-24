@@ -1,8 +1,16 @@
 package cn.xianyijun.wisp.common.message;
 
+import cn.xianyijun.wisp.common.UtilAll;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class MessageDecoder {
     public final static int MSG_ID_LENGTH = 8 + 8;
@@ -57,6 +65,25 @@ public class MessageDecoder {
             }
         }
         return sb.toString();
+    }
+
+
+    public static MessageId decodeMessageId(final String msgId) throws UnknownHostException {
+        SocketAddress address;
+        long offset;
+
+        byte[] ip = UtilAll.string2bytes(msgId.substring(0, 8));
+        byte[] port = UtilAll.string2bytes(msgId.substring(8, 16));
+        ByteBuffer bb = ByteBuffer.wrap(Objects.requireNonNull(port));
+        int portInt = bb.getInt(0);
+        address = new InetSocketAddress(InetAddress.getByAddress(ip), portInt);
+
+        // offset
+        byte[] data = UtilAll.string2bytes(msgId.substring(16, 32));
+        bb = ByteBuffer.wrap(data);
+        offset = bb.getLong(0);
+
+        return new MessageId(address, offset);
     }
 
 }

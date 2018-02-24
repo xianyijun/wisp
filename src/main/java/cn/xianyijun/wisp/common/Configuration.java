@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.common;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class Configuration {
         }
     }
 
-    public void registerConfig(Object configObject) {
+    private void registerConfig(Object configObject) {
         try {
             readWriteLock.writeLock().lockInterruptibly();
             try {
@@ -102,6 +103,122 @@ public class Configuration {
         } catch (InterruptedException e) {
             log.error("setStorePathFromConfig lock error");
         }
+    }
+
+    public void update(Properties properties) {
+        try {
+            readWriteLock.writeLock().lockInterruptibly();
+
+            try {
+                mergeIfExist(properties, this.allConfigs);
+
+                for (Object configObject : configObjectList) {
+                    MixAll.properties2Object(properties, configObject);
+                }
+
+                this.dataVersion.nextVersion();
+
+            } finally {
+                readWriteLock.writeLock().unlock();
+            }
+        } catch (InterruptedException e) {
+            log.error("update lock error, {}", properties);
+            return;
+        }
+        persist();
+    }
+
+    private void mergeIfExist(Properties from, Properties to) {
+        for (Object key : from.keySet()) {
+            if (!to.containsKey(key)) {
+                continue;
+            }
+            Object fromObj = from.get(key), toObj = to.get(key);
+            if (toObj != null && !toObj.equals(fromObj)) {
+                log.info("Replace, key: {}, value: {} -> {}", key, toObj, fromObj);
+            }
+            to.put(key, fromObj);
+        }
+    }
+
+    private void persist() {
+        try {
+            readWriteLock.readLock().lockInterruptibly();
+
+            try {
+                String allConfigs = getAllInternalConfigs();
+
+                MixAll.string2File(allConfigs, getStorePath());
+            } catch (IOException e) {
+                log.error("persist string2File error, ", e);
+            } finally {
+                readWriteLock.readLock().unlock();
+            }
+        } catch (InterruptedException e) {
+            log.error("persist lock error");
+        }
+    }
+
+    private String getAllInternalConfigs() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Object configObject : this.configObjectList) {
+            Properties properties = MixAll.object2Properties(configObject);
+            if (properties != null) {
+                merge(properties, this.allConfigs);
+            } else {
+                log.warn("getAllConfigsInternal object2Properties is null, {}", configObject.getClass());
+            }
+        }
+        {
+            stringBuilder.append(MixAll.properties2String(this.allConfigs));
+        }
+        return stringBuilder.toString();
+    }
+
+    private String getStorePath() {
+        String realStorePath = null;
+        try {
+            readWriteLock.readLock().lockInterruptibly();
+
+            try {
+                realStorePath = this.storePath;
+
+                if (this.storePathFromConfig) {
+                    try {
+                        realStorePath = (String) storePathField.get(this.storePathObject);
+                    } catch (IllegalAccessException e) {
+                        log.error("getStorePath error, ", e);
+                    }
+                }
+            } finally {
+                readWriteLock.readLock().unlock();
+            }
+        } catch (InterruptedException e) {
+            log.error("getStorePath lock error");
+        }
+        return realStorePath;
+    }
+
+    public String getAllConfigsFormatString() {
+        try {
+            readWriteLock.readLock().lockInterruptibly();
+
+            try {
+
+                return getAllInternalConfigs();
+
+            } finally {
+                readWriteLock.readLock().unlock();
+            }
+        } catch (InterruptedException e) {
+            log.error("getAllConfigsFormatString lock error");
+        }
+        return null;
+    }
+
+    public String getDataVersionJson() {
+        return this.dataVersion.toJson();
     }
 
 }

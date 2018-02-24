@@ -4,14 +4,17 @@ import cn.xianyijun.wisp.common.annotation.ImportantField;
 import cn.xianyijun.wisp.utils.ArrayUtils;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -209,6 +212,28 @@ public class MixAll {
         }
     }
 
+    public static Properties string2Properties(final String str) {
+        Properties properties = new Properties();
+        try {
+            InputStream in = new ByteArrayInputStream(str.getBytes(DEFAULT_CHARSET));
+            properties.load(in);
+        } catch (Exception e) {
+            log.error("Failed to handle properties", e);
+            return null;
+        }
+
+        return properties;
+    }
+
+    public static String properties2String(final Properties properties) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            if (entry.getValue() != null) {
+                sb.append(entry.getKey().toString()).append("=").append(entry.getValue().toString()).append("\n");
+            }
+        }
+        return sb.toString();
+    }
 
     public static String getWSAddr() {
         String wsDomainName = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
@@ -220,6 +245,15 @@ public class MixAll {
         return wsAddr;
     }
 
+    public static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) {
+            return bytes + " B";
+        }
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
 
     public static String brokerVIPChannel(final boolean isChange, final String brokerAddr) {
         if (isChange) {
@@ -233,7 +267,6 @@ public class MixAll {
     public static boolean isSysConsumerGroup(final String consumerGroup) {
         return consumerGroup.startsWith(CID_RMQ_SYS_PREFIX);
     }
-
 
     public static String getDLQTopic(final String consumerGroup) {
         return DLQ_GROUP_TOPIC_PREFIX + consumerGroup;

@@ -6,6 +6,11 @@ import cn.xianyijun.wisp.common.message.Message;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import lombok.Data;
 
+/**
+ * The type Check forbidden context.
+ *
+ * @author xianyijun
+ */
 @Data
 public class CheckForbiddenContext {
 

@@ -1,12 +1,14 @@
 package cn.xianyijun.wisp.broker.client;
 
 import cn.xianyijun.wisp.common.RemotingHelper;
+import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import io.netty.channel.Channel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +53,49 @@ public class ConsumerManager {
                 it.remove();
             }
         }
+    }
+
+    public ConsumerGroupInfo getConsumerGroupInfo(final String group) {
+        return this.consumerTable.get(group);
+    }
+
+    public SubscriptionData findSubscriptionData(final String group, final String topic) {
+        ConsumerGroupInfo consumerGroupInfo = this.getConsumerGroupInfo(group);
+        if (consumerGroupInfo != null) {
+            return consumerGroupInfo.findSubscriptionData(topic);
+        }
+
+        return null;
+    }
+
+    public int findSubscriptionDataCount(final String group) {
+        ConsumerGroupInfo consumerGroupInfo = this.getConsumerGroupInfo(group);
+        if (consumerGroupInfo != null) {
+            return consumerGroupInfo.getSubscriptionTable().size();
+        }
+        return 0;
+    }
+
+
+    public HashSet<String> queryTopicConsumeByWho(final String topic) {
+        HashSet<String> groups = new HashSet<>();
+        for (Map.Entry<String, ConsumerGroupInfo> entry : this.consumerTable.entrySet()) {
+            ConcurrentMap<String, SubscriptionData> subscriptionTable =
+                    entry.getValue().getSubscriptionTable();
+            if (subscriptionTable.containsKey(topic)) {
+                groups.add(entry.getKey());
+            }
+        }
+        return groups;
+    }
+
+
+    public ClientChannelInfo findChannel(final String group, final String clientId) {
+        ConsumerGroupInfo consumerGroupInfo = this.consumerTable.get(group);
+        if (consumerGroupInfo != null) {
+            return consumerGroupInfo.findChannel(clientId);
+        }
+        return null;
     }
 
 }

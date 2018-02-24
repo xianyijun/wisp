@@ -111,12 +111,24 @@ public class ConsumeQueue {
     }
 
 
+
+    public ConsumeQueueExt.CqExtUnit getExt(final long offset) {
+        if (isExtReadEnable()) {
+            return this.consumeQueueExt.get(offset);
+        }
+        return null;
+    }
+
+    public boolean getExt(final long offset, ConsumeQueueExt.CqExtUnit cqExtUnit) {
+        return isExtReadEnable() && this.consumeQueueExt.get(offset, cqExtUnit);
+    }
+
     private boolean isExtWriteEnable() {
         return this.consumeQueueExt != null
                 && this.defaultMessageStore.getMessageStoreConfig().isEnableConsumeQueueExt();
     }
 
-    private boolean isExtAddr(long tagsCode) {
+    public boolean isExtAddr(long tagsCode) {
         return ConsumeQueueExt.isExtAddr(tagsCode);
     }
 
@@ -288,6 +300,19 @@ public class ConsumeQueue {
         if (isExtReadEnable()) {
             this.consumeQueueExt.truncateByMinAddress(minExtAddr);
         }
+    }
+
+
+    public SelectMappedBufferResult getIndexBuffer(final long startIndex) {
+        int mappedFileSize = this.mappedFileSize;
+        long offset = startIndex * CQ_STORE_UNIT_SIZE;
+        if (offset >= this.getMinLogicOffset()) {
+            MappedFile mappedFile = this.mappedFileQueue.findMappedFileByOffset(offset);
+            if (mappedFile != null) {
+                return mappedFile.selectMappedBuffer((int) (offset % mappedFileSize));
+            }
+        }
+        return null;
     }
 
 

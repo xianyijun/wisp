@@ -11,6 +11,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author xianyijun
  */
 @Slf4j
+@Getter
 public class ConsumerFilterManager extends AbstractConfigManager {
     private static final long MS_24_HOUR = 24 * 3600 * 1000;
 
@@ -93,6 +95,29 @@ public class ConsumerFilterManager extends AbstractConfigManager {
             }
         }
     }
+
+    public final Collection<ConsumerFilterData> get(final String topic) {
+        if (!this.filterDataByTopic.containsKey(topic)) {
+            return null;
+        }
+        if (this.filterDataByTopic.get(topic).getGroupFilterData().isEmpty()) {
+            return null;
+        }
+
+        return this.filterDataByTopic.get(topic).getGroupFilterData().values();
+    }
+
+    public ConsumerFilterData get(final String topic, final String consumerGroup) {
+        if (!this.filterDataByTopic.containsKey(topic)) {
+            return null;
+        }
+        if (this.filterDataByTopic.get(topic).getGroupFilterData().isEmpty()) {
+            return null;
+        }
+
+        return this.filterDataByTopic.get(topic).getGroupFilterData().get(consumerGroup);
+    }
+
 
     @Getter
     @NoArgsConstructor

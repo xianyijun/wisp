@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public abstract class AbstractNettyRemoting {
 
-    protected final NettyEventExecutor nettyEventExecutor = new NettyEventExecutor();
+    final NettyEventExecutor nettyEventExecutor = new NettyEventExecutor();
     /**
      * The Processor table.
      */
@@ -70,7 +70,7 @@ public abstract class AbstractNettyRemoting {
         this.semaphoreAsync = new Semaphore(permitsAsync, true);
     }
 
-    private void executeInvokeCallback(final ResponseFuture responseFuture) {
+    protected void executeInvokeCallback(final ResponseFuture responseFuture) {
         boolean runInThisThread = false;
         ExecutorService executor = this.getCallbackExecutor();
         if (executor != null) {

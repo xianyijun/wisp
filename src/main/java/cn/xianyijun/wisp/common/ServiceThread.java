@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.common;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author xianyijun
+ */
 @Slf4j
 @Getter
 public abstract class ServiceThread implements Runnable {

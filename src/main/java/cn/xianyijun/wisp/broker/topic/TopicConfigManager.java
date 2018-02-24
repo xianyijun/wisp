@@ -23,7 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author xianyijun
- * todo
  */
 @Slf4j
 @Getter
@@ -308,6 +307,31 @@ public class TopicConfigManager extends AbstractConfigManager {
                 this.dataVersion.nextVersion();
                 this.persist();
             }
+        }
+    }
+
+
+    public void updateTopicConfig(final TopicConfig topicConfig) {
+        TopicConfig old = this.topicConfigTable.put(topicConfig.getTopicName(), topicConfig);
+        if (old != null) {
+            log.info("update topic config, old:[{}] new:[{}]", old, topicConfig);
+        } else {
+            log.info("create new topic [{}]", topicConfig);
+        }
+
+        this.dataVersion.nextVersion();
+
+        this.persist();
+    }
+
+    public void deleteTopicConfig(final String topic) {
+        TopicConfig old = this.topicConfigTable.remove(topic);
+        if (old != null) {
+            log.info("delete topic config OK, topic: {}", old);
+            this.dataVersion.nextVersion();
+            this.persist();
+        } else {
+            log.warn("delete topic config failed, topic: {} not exists", topic);
         }
     }
 

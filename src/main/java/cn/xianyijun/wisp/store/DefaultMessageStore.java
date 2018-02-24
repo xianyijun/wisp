@@ -460,6 +460,11 @@ public class DefaultMessageStore implements MessageStore {
         }
     }
 
+
+    public int remainTransientStoreBufferNumbs() {
+        return this.transientStorePool.remainBufferNumbs();
+    }
+
     class CommitLogDispatcherBuildConsumeQueue implements CommitLogDispatcher {
 
         @Override

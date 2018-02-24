@@ -322,8 +322,8 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
     }
 
 
-    protected void doResponse(ChannelHandlerContext ctx, RemotingCommand request,
-                              final RemotingCommand response) {
+    private void doResponse(ChannelHandlerContext ctx, RemotingCommand request,
+                            final RemotingCommand response) {
         if (!request.isOneWayRPC()) {
             try {
                 ctx.writeAndFlush(response);

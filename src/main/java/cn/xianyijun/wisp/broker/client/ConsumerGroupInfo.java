@@ -9,6 +9,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -29,4 +32,20 @@ public class ConsumerGroupInfo {
     private volatile ConsumeWhereEnum consumeFromWhere;
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 
+    public SubscriptionData findSubscriptionData(final String topic) {
+        return this.subscriptionTable.get(topic);
+    }
+
+    public List<Channel> getAllChannel() {
+        return new ArrayList<>(this.channelInfoTable.keySet());
+    }
+
+    public ClientChannelInfo findChannel(final String clientId) {
+        for (Map.Entry<Channel, ClientChannelInfo> next : this.channelInfoTable.entrySet()) {
+            if (next.getValue().getClientId().equals(clientId)) {
+                return next.getValue();
+            }
+        }
+        return null;
+    }
 }

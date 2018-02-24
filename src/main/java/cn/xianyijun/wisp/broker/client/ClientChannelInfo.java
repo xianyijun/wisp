@@ -16,5 +16,4 @@ public class ClientChannelInfo {
     private final LanguageCode language;
     private final int version;
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
-
 }

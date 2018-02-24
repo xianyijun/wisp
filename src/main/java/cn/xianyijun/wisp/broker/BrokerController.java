@@ -490,15 +490,15 @@ public class BrokerController {
         return slowTimeMills;
     }
 
-    private long headSlowTimeMills4SendThreadPoolQueue() {
+    public long headSlowTimeMills4SendThreadPoolQueue() {
         return this.headSlowTimeMills(this.sendThreadPoolQueue);
     }
 
-    private long headSlowTimeMills4PullThreadPoolQueue() {
+    public long headSlowTimeMills4PullThreadPoolQueue() {
         return this.headSlowTimeMills(this.pullThreadPoolQueue);
     }
 
-    private long headSlowTimeMills4QueryThreadPoolQueue() {
+    public long headSlowTimeMills4QueryThreadPoolQueue() {
         return this.headSlowTimeMills(this.queryThreadPoolQueue);
     }
 

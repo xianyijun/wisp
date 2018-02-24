@@ -13,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static cn.xianyijun.wisp.common.message.MessageDecoder.MESSAGE_MAGIC_CODE;
 
@@ -29,8 +30,13 @@ public class CommitLog {
 
     private final MappedFileQueue mappedFileQueue;
 
+    private long flushedWhere = 0;
+    private long committedWhere = 0;
+
     @Setter
     private Map<String, Long> topicQueueTable = new HashMap<>(1024);
+
+    private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<>();
 
 
     public CommitLog(final DefaultMessageStore defaultMessageStore) {
@@ -359,8 +365,42 @@ public class CommitLog {
         return false;
     }
 
-    public long rollNextFile(final long offset) {
+    private long rollNextFile(final long offset) {
         int mappedFileSize = this.defaultMessageStore.getMessageStoreConfig().getMappedFileSizeCommitLog();
         return offset + mappedFileSize - offset % mappedFileSize;
+    }
+
+    public long remainHowManyDataToCommit() {
+        return this.mappedFileQueue.remainHowManyDataToCommit();
+    }
+
+
+    public long getMaxOffset() {
+        MappedFile mappedFile = getLastMappedFile();
+        if (mappedFile != null) {
+            return mappedFile.getFileFromOffset() + mappedFile.getReadPosition();
+        }
+        return 0;
+    }
+
+    public long remainHowManyDataToFlush() {
+        return getMaxOffset() - flushedWhere;
+    }
+
+    public MappedFile getLastMappedFile() {
+        MappedFile mappedFileLast = null;
+
+        while (!this.mappedFiles.isEmpty()) {
+            try {
+                mappedFileLast = this.mappedFiles.get(this.mappedFiles.size() - 1);
+                break;
+            } catch (IndexOutOfBoundsException e) {
+                //continue;
+            } catch (Exception e) {
+                log.error("getLastMappedFile has exception.", e);
+                break;
+            }
+        }
+        return mappedFileLast;
     }
 }

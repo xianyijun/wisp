@@ -53,7 +53,7 @@ public class RouteInfoManager {
         }
     }
 
-    private void onChannelDestroy(String remoteAddr, Channel channel) {
+    public void onChannelDestroy(String remoteAddr, Channel channel) {
         String brokerAddrFound = null;
         if (channel != null) {
             try {

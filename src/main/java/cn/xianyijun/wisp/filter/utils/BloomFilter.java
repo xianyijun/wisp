@@ -1,5 +1,6 @@
 package cn.xianyijun.wisp.filter.utils;
 
+import com.google.common.hash.Hashing;
 import lombok.Getter;
 
 import java.nio.charset.Charset;
@@ -40,7 +41,70 @@ public class BloomFilter {
         return new BloomFilter(f, n);
     }
 
+    public int[] calcBitPositions(String str) {
+        int[] bitPositions = new int[this.k];
+
+        long hash64 = Hashing.murmur3_128().hashString(str, UTF_8).asLong();
+
+        int hash1 = (int) hash64;
+        int hash2 = (int) (hash64 >>> 32);
+
+        for (int i = 1; i <= this.k; i++) {
+            int combinedHash = hash1 + (i * hash2);
+            // Flip all the bits if it's negative (guaranteed positive number)
+            if (combinedHash < 0) {
+                combinedHash = ~combinedHash;
+            }
+            bitPositions[i - 1] = combinedHash % this.m;
+        }
+
+        return bitPositions;
+    }
+
+
+    public boolean isHit(String str, BitsArray bits) {
+        return isHit(calcBitPositions(str), bits);
+    }
+
+    public boolean isHit(int[] bitPositions, BitsArray bits) {
+        check(bits);
+        boolean ret = bits.getBit(bitPositions[0]);
+        for (int i = 1; i < bitPositions.length; i++) {
+            ret &= bits.getBit(bitPositions[i]);
+        }
+        return ret;
+    }
+
+    public boolean isHit(BloomFilterData filterData, BitsArray bits) {
+        if (!isValid(filterData)) {
+            throw new IllegalArgumentException(
+                    String.format("Bloom filter data may not belong to this filter! %s, %s",
+                            filterData, this.toString())
+            );
+        }
+        return isHit(filterData.getBitPos(), bits);
+    }
+
+
     private double logMN(double m, double n) {
         return Math.log(n) / Math.log(m);
     }
+
+
+    protected void check(BitsArray bits) {
+        if (bits.getBitLength() != this.m) {
+            throw new IllegalArgumentException(
+                    String.format("Length(%d) of bits in BitsArray is not equal to %d!", bits.getBitLength(), this.m)
+            );
+        }
+    }
+
+    public boolean isValid(BloomFilterData filterData) {
+        return filterData != null
+                && filterData.getBitNum() == this.m
+                && filterData.getBitPos() != null
+                && filterData.getBitPos().length == this.k;
+    }
+
+
 }

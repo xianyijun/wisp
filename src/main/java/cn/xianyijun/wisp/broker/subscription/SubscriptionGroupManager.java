@@ -139,4 +139,28 @@ public class SubscriptionGroupManager extends AbstractConfigManager {
 
         return subscriptionGroupConfig;
     }
+
+
+    public void updateSubscriptionGroupConfig(final SubscriptionGroupConfig config) {
+        SubscriptionGroupConfig old = this.subscriptionGroupTable.put(config.getGroupName(), config);
+        if (old != null) {
+            log.info("update subscription group config, old: {} new: {}", old, config);
+        } else {
+            log.info("create new subscription group, {}", config);
+        }
+        this.dataVersion.nextVersion();
+        this.persist();
+    }
+
+
+    public void deleteSubscriptionGroupConfig(final String groupName) {
+        SubscriptionGroupConfig old = this.subscriptionGroupTable.remove(groupName);
+        if (old != null) {
+            log.info("delete subscription group OK, subscription group:{}", old);
+            this.dataVersion.nextVersion();
+            this.persist();
+        } else {
+            log.warn("delete subscription group failed, subscription groupName: {} not exist", groupName);
+        }
+    }
 }

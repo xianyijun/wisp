@@ -258,4 +258,15 @@ public class MappedFileQueue {
         }
     }
 
+    public long getMaxWrotePosition() {
+        MappedFile mappedFile = getLastMappedFile();
+        if (mappedFile != null) {
+            return mappedFile.getFileFromOffset() + mappedFile.getWrotePosition();
+        }
+        return 0;
+    }
+
+    public long remainHowManyDataToCommit() {
+        return getMaxWrotePosition() - committedWhere;
+    }
 }

@@ -93,7 +93,21 @@ public class FilterServerManager {
         }
     }
 
-    @AllArgsConstructor
+
+    public void registerFilterServer(final Channel channel, final String filterServerAddr) {
+        FilterServerInfo filterServerInfo = this.filterServerTable.get(channel);
+        if (filterServerInfo != null) {
+            filterServerInfo.setLastUpdateTimestamp(System.currentTimeMillis());
+        } else {
+            filterServerInfo = new FilterServerInfo();
+            filterServerInfo.setFilterServerAddr(filterServerAddr);
+            filterServerInfo.setLastUpdateTimestamp(System.currentTimeMillis());
+            this.filterServerTable.put(channel, filterServerInfo);
+            log.info("Receive a New Filter Server<{}>", filterServerAddr);
+        }
+    }
+
+
     @Data
     private static class FilterServerInfo {
         private String filterServerAddr;

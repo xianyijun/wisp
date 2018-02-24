@@ -3,17 +3,15 @@ package cn.xianyijun.wisp.broker.filter;
 import cn.xianyijun.wisp.filter.Expression;
 import cn.xianyijun.wisp.filter.utils.BloomFilterData;
 import lombok.Data;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
-import java.util.Collections;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * @author xianyijun
  */
 @Data
+@EqualsAndHashCode
+@ToString
 public class ConsumerFilterData {
 
     private String consumerGroup;
@@ -37,19 +35,7 @@ public class ConsumerFilterData {
         return -1;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        return EqualsBuilder.reflectionEquals(this, o, Collections.emptyList());
+    public boolean isMsgInLive(long msgStoreTime) {
+        return msgStoreTime > getBornTime();
     }
-
-    @Override
-    public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this, Collections.emptyList());
-    }
-
-    @Override
-    public String toString() {
-        return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
-    }
-
 }

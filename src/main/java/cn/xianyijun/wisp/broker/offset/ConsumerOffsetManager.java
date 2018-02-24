@@ -9,6 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -53,5 +57,97 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
     @Override
     public String encode(boolean prettyFormat) {
         return RemotingSerializable.toJson(this, prettyFormat);
+    }
+
+    public Set<String> whichTopicByConsumer(final String group) {
+        Set<String> topics = new HashSet<String>();
+
+        for (Map.Entry<String, ConcurrentMap<Integer, Long>> next : this.offsetTable.entrySet()) {
+            String topicAtGroup = next.getKey();
+            String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
+            if (arrays.length == 2) {
+                if (group.equals(arrays[1])) {
+                    topics.add(arrays[0]);
+                }
+            }
+        }
+
+        return topics;
+    }
+
+    public Map<Integer, Long> queryOffset(final String group, final String topic) {
+        // topic@group
+        String key = topic + TOPIC_GROUP_SEPARATOR + group;
+        return this.offsetTable.get(key);
+    }
+
+
+    public long queryOffset(final String group, final String topic, final int queueId) {
+        // topic@group
+        String key = topic + TOPIC_GROUP_SEPARATOR + group;
+        ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
+        if (null != map) {
+            Long offset = map.get(queueId);
+            if (offset != null) {
+                return offset;
+            }
+        }
+        return -1;
+    }
+
+
+    public Set<String> whichGroupByTopic(final String topic) {
+        Set<String> groups = new HashSet<>();
+
+        for (Map.Entry<String, ConcurrentMap<Integer, Long>> next : this.offsetTable.entrySet()) {
+            String topicAtGroup = next.getKey();
+            String[] arrays = topicAtGroup.split(TOPIC_GROUP_SEPARATOR);
+            if (arrays.length == 2) {
+                if (topic.equals(arrays[0])) {
+                    groups.add(arrays[1]);
+                }
+            }
+        }
+        return groups;
+    }
+
+
+    public Map<Integer, Long> queryMinOffsetInAllGroup(final String topic, final String filterGroups) {
+
+        Map<Integer, Long> queueMinOffset = new HashMap<>();
+        Set<String> topicGroups = this.offsetTable.keySet();
+        if (!StringUtils.isEmpty(filterGroups)) {
+            for (String group : filterGroups.split(",")) {
+                topicGroups.removeIf(s -> group.equals(s.split(TOPIC_GROUP_SEPARATOR)[1]));
+            }
+        }
+
+        for (Map.Entry<String, ConcurrentMap<Integer, Long>> offSetEntry : this.offsetTable.entrySet()) {
+            String topicGroup = offSetEntry.getKey();
+            String[] topicGroupArr = topicGroup.split(TOPIC_GROUP_SEPARATOR);
+            if (topic.equals(topicGroupArr[0])) {
+                for (Map.Entry<Integer, Long> entry : offSetEntry.getValue().entrySet()) {
+                    long minOffset = this.brokerController.getMessageStore().getMinOffsetInQueue(topic, entry.getKey());
+                    if (entry.getValue() >= minOffset) {
+                        Long offset = queueMinOffset.get(entry.getKey());
+                        if (offset == null) {
+                            queueMinOffset.put(entry.getKey(), Math.min(Long.MAX_VALUE, entry.getValue()));
+                        } else {
+                            queueMinOffset.put(entry.getKey(), Math.min(entry.getValue(), offset));
+                        }
+                    }
+                }
+            }
+
+        }
+        return queueMinOffset;
+    }
+
+
+    public void cloneOffset(final String srcGroup, final String destGroup, final String topic) {
+        ConcurrentMap<Integer, Long> offsets = this.offsetTable.get(topic + TOPIC_GROUP_SEPARATOR + srcGroup);
+        if (offsets != null) {
+            this.offsetTable.put(topic + TOPIC_GROUP_SEPARATOR + destGroup, new ConcurrentHashMap<>(offsets));
+        }
     }
 }
