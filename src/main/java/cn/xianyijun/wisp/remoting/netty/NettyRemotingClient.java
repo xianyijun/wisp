@@ -56,7 +56,7 @@ public class NettyRemotingClient extends AbstractNettyRemoting implements Remoti
 
     @Override
     public ChannelEventListener getChannelEventListener() {
-        return null;
+        return channelEventListener;
     }
 
     @Override

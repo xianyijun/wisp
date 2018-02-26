@@ -167,8 +167,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
     }
 
     private boolean useEPoll() {
-        return RemotingUtils.isLinuxPlatform()
-                && nettyServerConfig.isUseEPollNativeSelector()
+        return nettyServerConfig.isUseEPollNativeSelector()
                 && Epoll.isAvailable();
     }
 

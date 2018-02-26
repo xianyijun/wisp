@@ -142,7 +142,7 @@ public abstract class AbstractNettyRemoting {
                     try {
                         executeInvokeCallback(responseFuture);
                     } catch (Throwable e) {
-                        log.warn("excute callback in writeAndFlush addListener, and callback throw", e);
+                        log.warn("execute callback in writeAndFlush addListener, and callback throw", e);
                     } finally {
                         responseFuture.release();
                     }
@@ -273,18 +273,18 @@ public abstract class AbstractNettyRemoting {
      * @throws Exception the exception
      */
     void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
-        final RemotingCommand command = msg;
-        if (command != null) {
-            switch (command.getType()) {
-                case REQUEST_COMMAND:
-                    processRequestCommand(ctx, command);
-                    break;
-                case RESPONSE_COMMAND:
-                    processResponseCommand(ctx, command);
-                    break;
-                default:
-                    break;
-            }
+        if (msg == null) {
+            return;
+        }
+        switch (msg.getType()) {
+            case REQUEST_COMMAND:
+                processRequestCommand(ctx, msg);
+                break;
+            case RESPONSE_COMMAND:
+                processResponseCommand(ctx, msg);
+                break;
+            default:
+                break;
         }
     }
 

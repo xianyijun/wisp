@@ -75,4 +75,17 @@ public class StoreCheckpoint {
 
         return min;
     }
+
+    public void shutdown() {
+        this.flush();
+
+        // unmap mappedByteBuffer
+        MappedFile.clean(this.mappedByteBuffer);
+
+        try {
+            this.fileChannel.close();
+        } catch (IOException e) {
+            log.error("Failed to properly close the channel", e);
+        }
+    }
 }

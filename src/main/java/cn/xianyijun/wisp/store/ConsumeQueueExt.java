@@ -64,6 +64,11 @@ public class ConsumeQueueExt {
         }
     }
 
+
+    public boolean flush(final int flushLeastPages) {
+        return this.mappedFileQueue.flush(flushLeastPages);
+    }
+
     public static boolean isExtAddr(final long address) {
         return address <= MAX_ADDR;
     }

@@ -90,7 +90,7 @@ public class MessageStoreConfig {
     private long flushDelayOffsetInterval = 1000 * 10;
     @ImportantField
     private boolean cleanFileForciblyEnable = true;
-    private boolean warmMapedFileEnable = false;
+    private boolean warmMappedFileEnable = false;
     private boolean offsetCheckInSlave = false;
     private boolean debugLockEnable = false;
     private boolean duplicationEnable = false;
@@ -103,7 +103,7 @@ public class MessageStoreConfig {
     private int transientStorePoolSize = 5;
     private boolean fastFailIfNoBufferInStorePool = false;
 
-    public int getMapedFileSizeConsumeQueue() {
+    public int getMappedFileSizeConsumeQueue() {
 
         int factor = (int) Math.ceil(this.mappedFileSizeConsumeQueue / (ConsumeQueue.CQ_STORE_UNIT_SIZE * 1.0));
         return factor * ConsumeQueue.CQ_STORE_UNIT_SIZE;

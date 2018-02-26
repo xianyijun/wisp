@@ -96,4 +96,15 @@ public class BitsArray {
         }
     }
 
+
+    public void setBit(int bitPos, boolean set) {
+        checkBitPosition(bitPos, this);
+        int sub = subscript(bitPos);
+        int pos = position(bitPos);
+        if (set) {
+            this.bytes[sub] = (byte) (this.bytes[sub] | pos);
+        } else {
+            this.bytes[sub] = (byte) (this.bytes[sub] & ~pos);
+        }
+    }
 }

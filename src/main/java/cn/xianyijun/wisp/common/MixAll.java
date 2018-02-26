@@ -147,6 +147,13 @@ public class MixAll {
         return properties;
     }
 
+
+    public static void deleteFile(final String fileName) {
+        File file = new File(fileName);
+        boolean result = file.delete();
+        log.info(fileName + (result ? " delete OK" : " delete Failed"));
+    }
+
     public static String file2String(final String fileName) throws IOException {
         File file = new File(fileName);
         return file2String(file);

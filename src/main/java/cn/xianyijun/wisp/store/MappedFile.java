@@ -9,9 +9,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -94,6 +97,31 @@ public class MappedFile extends ReferenceResource {
                 this.fileChannel.close();
             }
         }
+    }
+
+    public int flush(final int flushLeastPages) {
+        if (this.isAbleToFlush(flushLeastPages)) {
+            if (this.hold()) {
+                int value = getReadPosition();
+
+                try {
+                    if (writeBuffer != null || this.fileChannel.position() != 0) {
+                        this.fileChannel.force(false);
+                    } else {
+                        this.mappedByteBuffer.force();
+                    }
+                } catch (Throwable e) {
+                    log.error("Error occurred when force data to disk.", e);
+                }
+
+                this.flushedPosition.set(value);
+                this.release();
+            } else {
+                log.warn("in flush, hold failed, flush offset = " + this.flushedPosition.get());
+                this.flushedPosition.set(getReadPosition());
+            }
+        }
+        return this.getFlushedPosition();
     }
 
     public boolean destroy(final long intervalForcibly) {
@@ -197,8 +225,133 @@ public class MappedFile extends ReferenceResource {
         return null;
     }
 
+
+    public int getFlushedPosition() {
+        return flushedPosition.get();
+    }
+
+
+    private boolean isAbleToFlush(final int flushLeastPages) {
+        int flush = this.flushedPosition.get();
+        int write = getReadPosition();
+
+        if (this.isFull()) {
+            return true;
+        }
+
+        if (flushLeastPages > 0) {
+            return ((write / OS_PAGE_SIZE) - (flush / OS_PAGE_SIZE)) >= flushLeastPages;
+        }
+
+        return write > flush;
+    }
+
+    public int commit(final int commitLeastPages) {
+        if (writeBuffer == null) {
+            //no need to commit data to file channel, so just regard wrotePosition as committedPosition.
+            return this.wrotePosition.get();
+        }
+        if (this.isAbleToCommit(commitLeastPages)) {
+            if (this.hold()) {
+                commit0(commitLeastPages);
+                this.release();
+            } else {
+                log.warn("in commit, hold failed, commit offset = " + this.committedPosition.get());
+            }
+        }
+
+        // All dirty data has been committed to FileChannel.
+        if (writeBuffer != null && this.transientStorePool != null && this.fileSize == this.committedPosition.get()) {
+            this.transientStorePool.returnBuffer(writeBuffer);
+            this.writeBuffer = null;
+        }
+
+        return this.committedPosition.get();
+    }
+
+    protected void commit0(final int commitLeastPages) {
+        int writePos = this.wrotePosition.get();
+        int lastCommittedPosition = this.committedPosition.get();
+
+        if (writePos - this.committedPosition.get() > 0) {
+            try {
+                ByteBuffer byteBuffer = writeBuffer.slice();
+                byteBuffer.position(lastCommittedPosition);
+                byteBuffer.limit(writePos);
+                this.fileChannel.position(lastCommittedPosition);
+                this.fileChannel.write(byteBuffer);
+                this.committedPosition.set(writePos);
+            } catch (Throwable e) {
+                log.error("Error occurred when commit data to FileChannel.", e);
+            }
+        }
+    }
+
+    protected boolean isAbleToCommit(final int commitLeastPages) {
+        int flush = this.committedPosition.get();
+        int write = this.wrotePosition.get();
+
+        if (this.isFull()) {
+            return true;
+        }
+
+        if (commitLeastPages > 0) {
+            return ((write / OS_PAGE_SIZE) - (flush / OS_PAGE_SIZE)) >= commitLeastPages;
+        }
+
+        return write > flush;
+    }
+
     @Override
     public boolean cleanup(long currentRef) {
         return false;
+    }
+
+
+    public static void clean(final ByteBuffer buffer) {
+        if (buffer == null || !buffer.isDirect() || buffer.capacity() == 0) {
+            return;
+        }
+        invoke(invoke(viewed(buffer), "cleaner"), "clean");
+    }
+
+    private static Object invoke(final Object target, final String methodName, final Class<?>... args) {
+        return AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            try {
+                Method method = method(target, methodName, args);
+                method.setAccessible(true);
+                return method.invoke(target);
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        });
+    }
+
+    private static ByteBuffer viewed(ByteBuffer buffer) {
+        String methodName = "viewedBuffer";
+
+        Method[] methods = buffer.getClass().getMethods();
+        for (Method method : methods) {
+            if ("attachment".equals(method.getName())) {
+                methodName = "attachment";
+                break;
+            }
+        }
+
+        ByteBuffer viewedBuffer = (ByteBuffer) invoke(buffer, methodName);
+        if (viewedBuffer == null) {
+            return buffer;
+        } else {
+            return viewed(viewedBuffer);
+        }
+    }
+
+    private static Method method(Object target, String methodName, Class<?>[] args)
+            throws NoSuchMethodException {
+        try {
+            return target.getClass().getMethod(methodName, args);
+        } catch (NoSuchMethodException e) {
+            return target.getClass().getDeclaredMethod(methodName, args);
+        }
     }
 }

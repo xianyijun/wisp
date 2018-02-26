@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.common.DataVersion;
 import cn.xianyijun.wisp.common.protocol.route.BrokerData;
 import cn.xianyijun.wisp.common.protocol.route.QueueData;
 import cn.xianyijun.wisp.utils.RemotingUtils;
+import cn.xianyijun.wisp.utils.StringUtils;
 import io.netty.channel.Channel;
 import lombok.Data;
 import lombok.ToString;
@@ -79,8 +80,7 @@ public class RouteInfoManager {
             log.info("the broker's channel destroyed, {}, clean it's data structure at once", brokerAddrFound);
         }
 
-        if (brokerAddrFound != null && brokerAddrFound.length() > 0) {
-
+        if (!StringUtils.isEmpty(brokerAddrFound)) {
             try {
                 try {
                     this.lock.writeLock().lockInterruptibly();
@@ -192,9 +192,7 @@ public class RouteInfoManager {
 
                 {
                     log.info("brokerLiveTable SIZE: {}", this.brokerLiveTable.size());
-                    Iterator<Map.Entry<String, BrokerLiveInfo>> it = this.brokerLiveTable.entrySet().iterator();
-                    while (it.hasNext()) {
-                        Map.Entry<String, BrokerLiveInfo> next = it.next();
+                    for (Map.Entry<String, BrokerLiveInfo> next : this.brokerLiveTable.entrySet()) {
                         log.info("brokerLiveTable brokerAddr: {} {}", next.getKey(), next.getValue());
                     }
                 }

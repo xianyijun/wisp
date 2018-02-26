@@ -232,4 +232,21 @@ public class IndexService {
         }
     }
 
+    public void shutdown() {
+
+    }
+
+    public void destroy() {
+        try {
+            this.readWriteLock.writeLock().lock();
+            for (IndexFile f : this.indexFileList) {
+                f.destroy(1000 * 3);
+            }
+            this.indexFileList.clear();
+        } catch (Exception e) {
+            log.error("destroy exception", e);
+        } finally {
+            this.readWriteLock.writeLock().unlock();
+        }
+    }
 }

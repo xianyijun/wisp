@@ -258,6 +258,38 @@ public class MappedFileQueue {
         }
     }
 
+
+    public boolean commit(final int commitLeastPages) {
+        boolean result = true;
+        MappedFile mappedFile = this.findMappedFileByOffset(this.committedWhere, this.committedWhere == 0);
+        if (mappedFile != null) {
+            int offset = mappedFile.commit(commitLeastPages);
+            long where = mappedFile.getFileFromOffset() + offset;
+            result = where == this.committedWhere;
+            this.committedWhere = where;
+        }
+
+        return result;
+    }
+
+
+    public boolean flush(final int flushLeastPages) {
+        boolean result = true;
+        MappedFile mappedFile = this.findMappedFileByOffset(this.flushedWhere, this.flushedWhere == 0);
+        if (mappedFile != null) {
+            long tmpTimeStamp = mappedFile.getStoreTimestamp();
+            int offset = mappedFile.flush(flushLeastPages);
+            long where = mappedFile.getFileFromOffset() + offset;
+            result = where == this.flushedWhere;
+            this.flushedWhere = where;
+            if (0 == flushLeastPages) {
+                this.storeTimestamp = tmpTimeStamp;
+            }
+        }
+
+        return result;
+    }
+
     public long getMaxWrotePosition() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {

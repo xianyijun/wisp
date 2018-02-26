@@ -107,4 +107,21 @@ public class BloomFilter {
     }
 
 
+    public void hashTo(BloomFilterData filterData, BitsArray bits) {
+        if (!isValid(filterData)) {
+            throw new IllegalArgumentException(
+                    String.format("Bloom filter data may not belong to this filter! %s, %s",
+                            filterData, this.toString())
+            );
+        }
+        hashTo(filterData.getBitPos(), bits);
+    }
+
+    public void hashTo(int[] bitPositions, BitsArray bits) {
+        check(bits);
+
+        for (int i : bitPositions) {
+            bits.setBit(i, true);
+        }
+    }
 }

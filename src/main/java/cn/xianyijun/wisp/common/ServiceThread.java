@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.common;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * @author xianyijun
  */
@@ -12,8 +15,9 @@ public abstract class ServiceThread implements Runnable {
 
     private static final long JOIN_TIME = 90 * 1000;
     protected final Thread thread;
-    protected volatile boolean hasNotified = false;
+    protected volatile AtomicBoolean hasNotified = new AtomicBoolean(false);
     protected volatile boolean stopped = false;
+    protected final WispCountDownLatch waitPoint = new WispCountDownLatch(1);
 
     public ServiceThread() {
         this.thread = new Thread(this, this.getServiceName());
@@ -31,11 +35,8 @@ public abstract class ServiceThread implements Runnable {
     public void shutdown(final boolean interrupt) {
         this.stopped = true;
         log.info("shutdown thread " + this.getServiceName() + " interrupt " + interrupt);
-        synchronized (this) {
-            if (!this.hasNotified) {
-                this.hasNotified = true;
-                this.notify();
-            }
+        if (hasNotified.compareAndSet(false, true)) {
+            waitPoint.countDown();
         }
 
         try {
@@ -53,6 +54,43 @@ public abstract class ServiceThread implements Runnable {
         }
     }
 
+
+    protected void waitForRunning(long interval) {
+        if (hasNotified.compareAndSet(true, false)) {
+            this.onWaitEnd();
+            return;
+        }
+
+        //entry to wait
+        waitPoint.reset();
+
+        try {
+            waitPoint.await(interval, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            log.error("Interrupted", e);
+        } finally {
+            hasNotified.set(false);
+            this.onWaitEnd();
+        }
+    }
+
+    public void wakeup() {
+        if (hasNotified.compareAndSet(false, true)) {
+            waitPoint.countDown(); // notify
+        }
+    }
+
+    public long getJoinTime() {
+        return JOIN_TIME;
+    }
+
+    protected void onWaitEnd() {
+    }
+
+    public void makeStop() {
+        this.stopped = true;
+        log.info("makestop thread " + this.getServiceName());
+    }
     public abstract String getServiceName();
 
 }

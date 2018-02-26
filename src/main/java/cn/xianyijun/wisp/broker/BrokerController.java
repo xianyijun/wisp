@@ -98,7 +98,7 @@ public class BrokerController {
     private final BrokerOuter brokerOuter;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "BrokerControllerScheduledThread"));
-    private final SynchronizeSlave slaveSynchronize;
+    private final SynchronizeSlave synchronizeSlave;
     private final BlockingQueue<Runnable> sendThreadPoolQueue;
     private final BlockingQueue<Runnable> pullThreadPoolQueue;
     private final BlockingQueue<Runnable> queryThreadPoolQueue;
@@ -150,7 +150,7 @@ public class BrokerController {
         this.brokerOuter = new BrokerOuter(nettyClientConfig);
         this.filterServerManager = new FilterServerManager(this);
 
-        this.slaveSynchronize = new SynchronizeSlave(this);
+        this.synchronizeSlave = new SynchronizeSlave(this);
 
         this.sendThreadPoolQueue = new LinkedBlockingQueue<>(this.brokerConfig.getSendThreadPoolQueueCapacity());
         this.pullThreadPoolQueue = new LinkedBlockingQueue<>(this.brokerConfig.getPullThreadPoolQueueCapacity());
@@ -302,7 +302,7 @@ public class BrokerController {
 
                 this.scheduledExecutorService.scheduleAtFixedRate(() -> {
                     try {
-                        BrokerController.this.slaveSynchronize.syncAll();
+                        BrokerController.this.synchronizeSlave.syncAll();
                     } catch (Throwable e) {
                         log.error("ScheduledTask syncAll slave exception", e);
                     }
@@ -466,7 +466,7 @@ public class BrokerController {
                 this.messageStore.updateHaMasterAddress(registerBrokerResult.getHaServerAddr());
             }
 
-            this.slaveSynchronize.setMasterAddr(registerBrokerResult.getMasterAddr());
+            this.synchronizeSlave.setMasterAddr(registerBrokerResult.getMasterAddr());
 
             if (checkOrderConfig) {
                 this.getTopicConfigManager().updateOrderTopicConfig(registerBrokerResult.getKvTable());

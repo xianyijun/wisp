@@ -22,7 +22,7 @@ public class RunningFlags {
     }
 
 
-    public void makeLogicsQueueError() {
+    public void makeLogicQueueError() {
         this.flagBits = this.flagBits | WRITE_LOGIC_QUEUE_ERROR_BIT;
     }
 
@@ -30,4 +30,13 @@ public class RunningFlags {
         return (this.flagBits & (NOT_WRITEABLE_BIT | WRITE_LOGIC_QUEUE_ERROR_BIT | WRITE_INDEX_FILE_ERROR_BIT)) == 0;
     }
 
+    public boolean isReadable() {
+        return (this.flagBits & NOT_READABLE_BIT) == 0;
+    }
+
+
+    public boolean isWriteable() {
+        return (this.flagBits & (NOT_WRITEABLE_BIT | WRITE_LOGIC_QUEUE_ERROR_BIT | DISK_FULL_BIT | WRITE_INDEX_FILE_ERROR_BIT)) == 0;
+
+    }
 }

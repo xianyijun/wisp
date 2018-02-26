@@ -66,4 +66,24 @@ public class StoreStatsService extends ServiceThread {
     public void run() {
 
     }
+
+
+    public AtomicLong getSinglePutMessageTopicTimesTotal(String topic) {
+        AtomicLong rs = putMessageTopicTimesTotal.get(topic);
+        if (null == rs) {
+            rs = new AtomicLong(0);
+            putMessageTopicTimesTotal.put(topic, rs);
+        }
+        return rs;
+    }
+
+
+    public AtomicLong getSinglePutMessageTopicSizeTotal(String topic) {
+        AtomicLong rs = putMessageTopicSizeTotal.get(topic);
+        if (null == rs) {
+            rs = new AtomicLong(0);
+            putMessageTopicSizeTotal.put(topic, rs);
+        }
+        return rs;
+    }
 }

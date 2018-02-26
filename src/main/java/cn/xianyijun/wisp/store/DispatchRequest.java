@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.store;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.util.Map;
 
@@ -26,6 +27,7 @@ public class DispatchRequest {
     private final int sysFlag;
     private final long preparedTransactionOffset;
     private final Map<String, String> propertiesMap;
+    @Setter
     private byte[] bitMap;
 
     public DispatchRequest(int size, boolean success) {

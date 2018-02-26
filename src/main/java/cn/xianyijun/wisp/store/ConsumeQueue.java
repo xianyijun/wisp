@@ -94,7 +94,6 @@ public class ConsumeQueue {
                 this.defaultMessageStore.getStoreCheckpoint().setLogicMsgTimestamp(request.getStoreTimestamp());
                 return;
             } else {
-                // XXX: warn and notify me
                 log.warn("[BUG]put commit log position info to " + topic + ":" + queueId + " " + request.getCommitLogOffset()
                         + " failed, retry " + i + " times");
 
@@ -107,7 +106,7 @@ public class ConsumeQueue {
         }
 
         log.error("[BUG]consume queue can not write, {} {}", this.topic, this.queueId);
-        this.defaultMessageStore.getRunningFlags().makeLogicsQueueError();
+        this.defaultMessageStore.getRunningFlags().makeLogicQueueError();
     }
 
 
@@ -394,6 +393,16 @@ public class ConsumeQueue {
         if (isExtReadEnable()) {
             this.consumeQueueExt.destroy();
         }
+    }
+
+
+    public boolean flush(final int flushLeastPages) {
+        boolean result = this.mappedFileQueue.flush(flushLeastPages);
+        if (isExtReadEnable()) {
+            result = result & this.consumeQueueExt.flush(flushLeastPages);
+        }
+
+        return result;
     }
 
 

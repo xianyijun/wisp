@@ -86,4 +86,13 @@ public class MessageDecoder {
         return new MessageId(address, offset);
     }
 
+    public static String createMessageId(final ByteBuffer input, final ByteBuffer addr, final long offset) {
+        input.flip();
+        input.limit(MessageDecoder.MSG_ID_LENGTH);
+
+        input.put(addr);
+        input.putLong(offset);
+
+        return UtilAll.bytes2string(input.array());
+    }
 }
