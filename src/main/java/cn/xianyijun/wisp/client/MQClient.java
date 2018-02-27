@@ -323,7 +323,7 @@ public class MQClient {
                         context.setSendResult(sendResult);
                         context.getProducer().executeSendMessageHookAfter(context);
                     }
-                } catch (Throwable e) {
+                } catch (Throwable ignored) {
                 }
 
                 producer.updateFaultItem(brokerName, System.currentTimeMillis() - responseFuture.getBeginTimestamp(), false);

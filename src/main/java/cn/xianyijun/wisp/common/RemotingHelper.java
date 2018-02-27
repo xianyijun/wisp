@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 /**
@@ -63,5 +64,10 @@ public class RemotingHelper {
         }
 
         return sb.toString();
+    }
+
+    public static SocketAddress string2SocketAddress(final String addr) {
+        String[] s = addr.split(":");
+        return new InetSocketAddress(s[0], Integer.parseInt(s[1]));
     }
 }

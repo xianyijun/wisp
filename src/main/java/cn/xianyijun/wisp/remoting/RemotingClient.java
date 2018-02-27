@@ -91,4 +91,11 @@ public interface RemotingClient extends RemotingService {
                      final InvokeCallback invokeCallback) throws InterruptedException, RemotingConnectException,
             RemotingTooMuchRequestException, RemotingTimeoutException, RemotingSendRequestException;
 
+
+    /**
+     * Sets callback executor.
+     *
+     * @param callbackExecutor the callback executor
+     */
+    void setCallbackExecutor(final ExecutorService callbackExecutor);
 }

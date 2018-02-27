@@ -13,7 +13,6 @@ import cn.xianyijun.wisp.common.protocol.body.TopicConfigSerializeWrapper;
 import cn.xianyijun.wisp.common.protocol.header.namesrv.RegisterBrokerRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.namesrv.RegisterBrokerResponseHeader;
 import cn.xianyijun.wisp.exception.BrokerException;
-import cn.xianyijun.wisp.exception.RemotingCommandException;
 import cn.xianyijun.wisp.exception.RemotingConnectException;
 import cn.xianyijun.wisp.exception.RemotingSendRequestException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
@@ -49,12 +48,13 @@ public class BrokerOuter {
         this(nettyClientConfig, null);
     }
 
-    public BrokerOuter(final NettyClientConfig nettyClientConfig, RPCHook rpcHook) {
+    private BrokerOuter(final NettyClientConfig nettyClientConfig, RPCHook rpcHook) {
         this.remotingClient = new NettyRemotingClient(nettyClientConfig);
         this.remotingClient.registerRPCHook(rpcHook);
     }
 
     public void start() {
+        log.info("[BrokerOuter] start");
         this.remotingClient.start();
     }
 
@@ -66,7 +66,7 @@ public class BrokerOuter {
     }
 
 
-    public String fetchNameServerAddr() {
+    public void fetchNameServerAddr() {
         try {
             String addrListStr = this.topAddressing.fetchNameServerAddr();
             if (addrListStr != null) {
@@ -74,13 +74,11 @@ public class BrokerOuter {
                     log.info("name server address changed, old: {} new: {}", this.nameServerAddr, addrListStr);
                     this.updateNameServerAddressList(addrListStr);
                     this.nameServerAddr = addrListStr;
-                    return nameServerAddr;
                 }
             }
         } catch (Exception e) {
             log.error("fetchNameServerAddr Exception", e);
         }
-        return nameServerAddr;
     }
 
     public TopicConfigSerializeWrapper getAllTopicConfig(
@@ -192,7 +190,7 @@ public class BrokerOuter {
             final List<String> filterServerList,
             final boolean oneWay,
             final int timeoutMills
-    ) throws RemotingCommandException, BrokerException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
+    ) throws BrokerException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
             InterruptedException {
         RegisterBrokerRequestHeader requestHeader = new RegisterBrokerRequestHeader();
         requestHeader.setBrokerAddr(brokerAddr);
@@ -216,7 +214,6 @@ public class BrokerOuter {
         }
 
         RemotingCommand response = this.remotingClient.invokeSync(nameServerAddr, request, timeoutMills);
-        assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
                 RegisterBrokerResponseHeader responseHeader =

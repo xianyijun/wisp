@@ -12,13 +12,19 @@ import cn.xianyijun.wisp.remoting.InvokeCallback;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.remoting.protocol.RemotingSysResponseCode;
+import com.alibaba.fastjson.JSON;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.SslContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.SocketAddress;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -58,7 +64,7 @@ public abstract class AbstractNettyRemoting {
      */
     Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
 
-
+    protected SslContext sslContext;
     /**
      * Instantiates a new Abstract netty remoting.
      *
@@ -185,12 +191,13 @@ public abstract class AbstractNettyRemoting {
                                  final long timeoutMillis)
             throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException {
         final int opaque = request.getOpaque();
-
+        log.info("[AbstractNettyRemoting] doInvokeSync , channel :{} , request: {} , timeoutMillis :{}",channel, request, timeoutMillis);
         try {
             final ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, null, null);
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
             channel.writeAndFlush(request).addListener((ChannelFutureListener) f -> {
+                log.info("[AbstractNettyRemoting] doInvokeSync addListener ,future :{}",f);
                 if (f.isSuccess()) {
                     responseFuture.setSendRequestOK(true);
                     return;
@@ -397,6 +404,31 @@ public abstract class AbstractNettyRemoting {
         } else {
             log.warn("receive response, but not matched any request, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
             log.warn(cmd.toString());
+        }
+    }
+
+    public void scanResponseTable() {
+        log.info("[NettyRemotingServer] scanResponseTable, responseTable : {} " , JSON.toJSONString(this.responseTable));
+        final List<ResponseFuture> rfList = new LinkedList<>();
+        Iterator<Map.Entry<Integer, ResponseFuture>> it = this.responseTable.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<Integer, ResponseFuture> next = it.next();
+            ResponseFuture rep = next.getValue();
+
+            if ((rep.getBeginTimestamp() + rep.getTimeoutMillis() + 1000) <= System.currentTimeMillis()) {
+                rep.release();
+                it.remove();
+                rfList.add(rep);
+                log.warn("remove timeout request, " + rep);
+            }
+        }
+
+        for (ResponseFuture rf : rfList) {
+            try {
+                executeInvokeCallback(rf);
+            } catch (Throwable e) {
+                log.warn("scanResponseTable, operationComplete Exception", e);
+            }
         }
     }
 

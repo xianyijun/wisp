@@ -115,4 +115,9 @@ public class ScheduleMessageService extends AbstractConfigManager {
         }
         return storeTimestamp + 1000;
     }
+
+
+    public static int delayLevelQueueId(final int delayLevel) {
+        return delayLevel - 1;
+    }
 }

@@ -436,6 +436,8 @@ public class BrokerController {
     }
 
     public synchronized void registerBrokerAll(final boolean checkOrderConfig, boolean oneWay) {
+        log.info("[BrokerController] registerBroker all , checkOrderConfig :{} , oneWay :{} ", checkOrderConfig, oneWay);
+
         TopicConfigSerializeWrapper topicConfigWrapper = this.getTopicConfigManager().buildTopicConfigSerializeWrapper();
 
         if (!PermName.isWriteable(this.getBrokerConfig().getBrokerPermission())
@@ -514,11 +516,9 @@ public class BrokerController {
         log.info("Slave fall behind master: {} bytes", diff);
     }
 
-
     public String getBrokerAddr() {
         return this.brokerConfig.getBrokerIP1() + ":" + this.nettyServerConfig.getListenPort();
     }
-
 
     private String getHAServerAddr() {
         return this.brokerConfig.getBrokerIP2() + ":" + this.messageStoreConfig.getHaListenPort();

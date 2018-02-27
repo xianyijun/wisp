@@ -36,7 +36,7 @@ public class HAService {
     private final DefaultMessageStore defaultMessageStore;
 
     private final WaitNotifyObject waitNotifyObject = new WaitNotifyObject();
-    private final AtomicLong push2SlaveMaxOffset = new AtomicLong(0);
+    private final AtomicLong pushSlaveMaxOffset = new AtomicLong(0);
 
     private final GroupTransferService groupTransferService;
 
@@ -51,13 +51,13 @@ public class HAService {
     }
 
     public void notifyTransferSome(final long offset) {
-        for (long value = this.push2SlaveMaxOffset.get(); offset > value; ) {
-            boolean ok = this.push2SlaveMaxOffset.compareAndSet(value, offset);
+        for (long value = this.pushSlaveMaxOffset.get(); offset > value; ) {
+            boolean ok = this.pushSlaveMaxOffset.compareAndSet(value, offset);
             if (ok) {
                 this.groupTransferService.notifyTransferSome();
                 break;
             } else {
-                value = this.push2SlaveMaxOffset.get();
+                value = this.pushSlaveMaxOffset.get();
             }
         }
     }
@@ -93,7 +93,19 @@ public class HAService {
     }
 
 
-    @Slf4j
+    public void putRequest(final CommitLog.GroupCommitRequest request) {
+        this.groupTransferService.putRequest(request);
+    }
+
+    public boolean isSlaveOK(final long masterPutWhere) {
+        boolean result = this.connectionCount.get() > 0;
+        result =
+                result
+                        && ((masterPutWhere - this.pushSlaveMaxOffset.get()) < this.defaultMessageStore
+                        .getMessageStoreConfig().getHaSlaveFallbehindMax());
+        return result;
+    }
+
     class AcceptSocketService extends ServiceThread {
         private final SocketAddress socketAddressListen;
         private ServerSocketChannel serverSocketChannel;
@@ -186,14 +198,13 @@ public class HAService {
     }
 
 
-    @Slf4j
     class GroupTransferService extends ServiceThread {
 
         private final WaitNotifyObject notifyTransferObject = new WaitNotifyObject();
         private volatile List<CommitLog.GroupCommitRequest> requestsWrite = new ArrayList<>();
         private volatile List<CommitLog.GroupCommitRequest> requestsRead = new ArrayList<>();
 
-        public synchronized void putRequest(final CommitLog.GroupCommitRequest request) {
+        synchronized void putRequest(final CommitLog.GroupCommitRequest request) {
             synchronized (this.requestsWrite) {
                 this.requestsWrite.add(request);
             }
@@ -216,10 +227,10 @@ public class HAService {
             synchronized (this.requestsRead) {
                 if (!this.requestsRead.isEmpty()) {
                     for (CommitLog.GroupCommitRequest req : this.requestsRead) {
-                        boolean transferOK = HAService.this.push2SlaveMaxOffset.get() >= req.getNextOffset();
+                        boolean transferOK = HAService.this.pushSlaveMaxOffset.get() >= req.getNextOffset();
                         for (int i = 0; !transferOK && i < 5; i++) {
                             this.notifyTransferObject.waitForRunning(1000);
-                            transferOK = HAService.this.push2SlaveMaxOffset.get() >= req.getNextOffset();
+                            transferOK = HAService.this.pushSlaveMaxOffset.get() >= req.getNextOffset();
                         }
 
                         if (!transferOK) {

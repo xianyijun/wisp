@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.common;
 
 import cn.xianyijun.wisp.common.constant.PermName;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -9,6 +10,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 public class TopicConfig {
 
     private static final String SEPARATOR = " ";

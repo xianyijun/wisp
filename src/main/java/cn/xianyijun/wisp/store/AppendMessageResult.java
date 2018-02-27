@@ -32,4 +32,9 @@ public class AppendMessageResult {
         this.pageCacheRT = pageCacheRT;
     }
 
+    public boolean isOk() {
+        return this.status == AppendMessageStatus.PUT_OK;
+    }
+
+
 }

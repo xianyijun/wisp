@@ -12,6 +12,7 @@ import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.RemotingServer;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.utils.RemotingUtils;
+import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -29,7 +30,6 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -39,10 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.cert.CertificateException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -73,7 +69,6 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
     /**
      * The Ssl context.
      */
-    protected SslContext sslContext;
     private int port = 0;
     private RPCHook rpcHook;
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
@@ -235,6 +230,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
 
     @Override
     public void start() {
+        log.info("[NettyRemotingSerer] invoke start, config: {}  ", JSON.toJSONString(nettyServerConfig));
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
                 nettyServerConfig.getServerWorkerThreads(),
                 new ThreadFactory() {
@@ -277,7 +273,6 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
             childHandler.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
         }
 
-
         try {
             ChannelFuture sync = this.serverBootstrap.bind().sync();
             InetSocketAddress addr = (InetSocketAddress) sync.channel().localAddress();
@@ -303,29 +298,6 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
         }, 1000 * 3, 1000);
     }
 
-    public void scanResponseTable() {
-        final List<ResponseFuture> rfList = new LinkedList<ResponseFuture>();
-        Iterator<Map.Entry<Integer, ResponseFuture>> it = this.responseTable.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Integer, ResponseFuture> next = it.next();
-            ResponseFuture rep = next.getValue();
-
-            if ((rep.getBeginTimestamp() + rep.getTimeoutMillis() + 1000) <= System.currentTimeMillis()) {
-                rep.release();
-                it.remove();
-                rfList.add(rep);
-                log.warn("remove timeout request, " + rep);
-            }
-        }
-
-        for (ResponseFuture rf : rfList) {
-            try {
-                executeInvokeCallback(rf);
-            } catch (Throwable e) {
-                log.warn("scanResponseTable, operationComplete Exception", e);
-            }
-        }
-    }
 
 
     @Override

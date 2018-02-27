@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Getter
@@ -30,6 +31,9 @@ public class StoreStatsService extends ServiceThread {
             new ConcurrentHashMap<>(128);
     private final AtomicLong getMessageTransferedMsgCount = new AtomicLong(0);
     private volatile AtomicLong[] putMessageDistributeTime;
+
+    private ReentrantLock lockPut = new ReentrantLock();
+    private volatile long putMessageEntireTimeMax = 0;
 
     public StoreStatsService() {
         this.initPutMessageDistributeTime();
@@ -86,4 +90,59 @@ public class StoreStatsService extends ServiceThread {
         }
         return rs;
     }
+
+    public void setPutMessageEntireTimeMax(long value) {
+        final AtomicLong[] times = this.putMessageDistributeTime;
+
+        if (null == times) {
+            return;
+        }
+
+        // us
+        if (value <= 0) {
+            times[0].incrementAndGet();
+        } else if (value < 10) {
+            times[1].incrementAndGet();
+        } else if (value < 50) {
+            times[2].incrementAndGet();
+        } else if (value < 100) {
+            times[3].incrementAndGet();
+        } else if (value < 200) {
+            times[4].incrementAndGet();
+        } else if (value < 500) {
+            times[5].incrementAndGet();
+        } else if (value < 1000) {
+            times[6].incrementAndGet();
+        }
+        // 2s
+        else if (value < 2000) {
+            times[7].incrementAndGet();
+        }
+        // 3s
+        else if (value < 3000) {
+            times[8].incrementAndGet();
+        }
+        // 4s
+        else if (value < 4000) {
+            times[9].incrementAndGet();
+        }
+        // 5s
+        else if (value < 5000) {
+            times[10].incrementAndGet();
+        }
+        // 10s
+        else if (value < 10000) {
+            times[11].incrementAndGet();
+        } else {
+            times[12].incrementAndGet();
+        }
+
+        if (value > this.putMessageEntireTimeMax) {
+            this.lockPut.lock();
+            this.putMessageEntireTimeMax =
+                    value > this.putMessageEntireTimeMax ? value : this.putMessageEntireTimeMax;
+            this.lockPut.unlock();
+        }
+    }
+
 }

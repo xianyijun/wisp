@@ -48,4 +48,10 @@ public class ConsumerGroupInfo {
         }
         return null;
     }
+
+
+    public boolean doChannelCloseEvent(final String remoteAddr, final Channel channel) {
+        final ClientChannelInfo info = this.channelInfoTable.remove(channel);
+        return info != null;
+    }
 }

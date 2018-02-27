@@ -59,4 +59,36 @@ public class ProducerManager {
             log.error("", e);
         }
     }
+
+    public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
+        if (channel == null) {
+            return;
+        }
+        try {
+            if (!this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+                log.warn("ProducerManager doChannelCloseEvent lock timeout");
+                return;
+            }
+            try {
+                for (final Map.Entry<String, HashMap<Channel, ClientChannelInfo>> entry : this.groupChannelTable
+                        .entrySet()) {
+                    final String group = entry.getKey();
+                    final HashMap<Channel, ClientChannelInfo> clientChannelInfoTable =
+                            entry.getValue();
+                    final ClientChannelInfo clientChannelInfo =
+                            clientChannelInfoTable.remove(channel);
+                    if (clientChannelInfo != null) {
+                        log.info(
+                                "NETTY EVENT: remove channel[{}][{}] from ProducerManager groupChannelTable, producer group: {}",
+                                clientChannelInfo.toString(), remoteAddr, group);
+                    }
+
+                }
+            } finally {
+                this.groupChannelLock.unlock();
+            }
+        } catch (InterruptedException e) {
+            log.error("", e);
+        }
+    }
 }

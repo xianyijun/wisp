@@ -98,4 +98,24 @@ public class ConsumerManager {
         return null;
     }
 
+    public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
+        for (Map.Entry<String, ConsumerGroupInfo> next : this.consumerTable.entrySet()) {
+            ConsumerGroupInfo info = next.getValue();
+            boolean removed = info.doChannelCloseEvent(remoteAddr, channel);
+            if (removed) {
+                if (info.getChannelInfoTable().isEmpty()) {
+                    ConsumerGroupInfo remove = this.consumerTable.remove(next.getKey());
+                    if (remove != null) {
+                        log.info("unregister consumer ok, no any connection, and remove consumer group, {}",
+                                next.getKey());
+                        this.consumerIdsChangeListener.handle(ConsumerGroupEvent.UNREGISTER, next.getKey());
+                    }
+                }
+
+                this.consumerIdsChangeListener.handle(ConsumerGroupEvent.CHANGE, next.getKey(), info.getAllChannel());
+            }
+        }
+    }
+
+
 }

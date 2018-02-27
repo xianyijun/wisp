@@ -1,9 +1,15 @@
 package cn.xianyijun.wisp.store;
 
+import cn.xianyijun.wisp.common.message.ExtBatchMessage;
+import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.store.utils.LibC;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -209,6 +215,32 @@ public class MappedFile extends ReferenceResource {
         return false;
     }
 
+    public AppendMessageResult appendMessage(final MessageExtBrokerInner msg, final AppendMessageCallback cb) {
+        return appendMessagesInner(msg, cb);
+    }
+
+    public AppendMessageResult appendMessagesInner(final ExtMessage extMessage, final AppendMessageCallback cb) {
+
+        int currentPos = this.wrotePosition.get();
+
+        if (currentPos < this.fileSize) {
+            ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : this.mappedByteBuffer.slice();
+            byteBuffer.position(currentPos);
+            AppendMessageResult result = null;
+            if (extMessage instanceof MessageExtBrokerInner) {
+                result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) extMessage);
+            } else if (extMessage instanceof ExtBatchMessage) {
+                result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (ExtBatchMessage) extMessage);
+            } else {
+                return new AppendMessageResult(AppendMessageStatus.UNKNOWN_ERROR);
+            }
+            this.wrotePosition.addAndGet(result.getWroteBytes());
+            this.storeTimestamp = result.getStoreTimestamp();
+            return result;
+        }
+        log.error("MappedFile.appendMessage return null, wrotePosition: {} fileSize: {}", currentPos, this.fileSize);
+        return new AppendMessageResult(AppendMessageStatus.UNKNOWN_ERROR);
+    }
 
     public SelectMappedBufferResult selectMappedBuffer(int pos) {
         int readPosition = getReadPosition();
@@ -285,6 +317,15 @@ public class MappedFile extends ReferenceResource {
                 log.error("Error occurred when commit data to FileChannel.", e);
             }
         }
+    }
+
+
+    public void munLock() {
+        final long beginTime = System.currentTimeMillis();
+        final long address = ((DirectBuffer) (this.mappedByteBuffer)).address();
+        Pointer pointer = new Pointer(address);
+        int ret = LibC.INSTANCE.munlock(pointer, new NativeLong(this.fileSize));
+        log.info("munLock {} {} {} ret = {} time consuming = {}", address, this.fileName, this.fileSize, ret, System.currentTimeMillis() - beginTime);
     }
 
     protected boolean isAbleToCommit(final int commitLeastPages) {

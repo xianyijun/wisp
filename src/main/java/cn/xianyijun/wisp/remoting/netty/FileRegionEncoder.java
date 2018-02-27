@@ -11,6 +11,7 @@ import java.nio.channels.WritableByteChannel;
 
 /**
  * The type File region encoder.
+ * @author xianyijun
  */
 public class FileRegionEncoder extends MessageToByteEncoder<FileRegion> {
     @Override
@@ -35,7 +36,7 @@ public class FileRegionEncoder extends MessageToByteEncoder<FileRegion> {
         long toTransfer = msg.count();
 
         while (true) {
-            long transferred = msg.transfered();
+            long transferred = msg.transferred();
             if (toTransfer - transferred <= 0) {
                 break;
             }

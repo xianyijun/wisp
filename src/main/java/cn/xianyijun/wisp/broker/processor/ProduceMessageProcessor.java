@@ -20,7 +20,6 @@ import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageResponseHeader;
 import cn.xianyijun.wisp.common.subscription.SubscriptionGroupConfig;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
-import cn.xianyijun.wisp.exception.RemotingCommandException;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.store.MessageExtBrokerInner;
@@ -85,7 +84,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
     private RemotingCommand produceMessage(final ChannelHandlerContext ctx,
                                            final RemotingCommand request,
                                            final ProduceMessageContext produceMessageContext,
-                                           final ProduceMessageRequestHeader requestHeader) throws RemotingCommandException {
+                                           final ProduceMessageRequestHeader requestHeader) {
 
         final RemotingCommand response = RemotingCommand.createResponseCommand(ProduceMessageResponseHeader.class);
         final ProduceMessageResponseHeader responseHeader = (ProduceMessageResponseHeader) response.getCustomHeader();
@@ -247,7 +246,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
                 break;
 
             // Failed
-            case CREATE_MAPEDDFILE_FAILED:
+            case CREATE_MAPPED_FILE_FAILED:
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("create mapped file failed, server is busy or broken.");
                 break;

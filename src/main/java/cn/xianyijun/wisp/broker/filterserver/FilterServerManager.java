@@ -5,7 +5,6 @@ import cn.xianyijun.wisp.broker.BrokerStartup;
 import cn.xianyijun.wisp.common.WispThreadFactory;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import io.netty.channel.Channel;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,15 @@ public class FilterServerManager {
             .newSingleThreadScheduledExecutor(new WispThreadFactory("FilterServerManagerScheduledThread"));
 
 
+
+    public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
+        FilterServerInfo old = this.filterServerTable.remove(channel);
+        if (old != null) {
+            log.warn("The Filter Server<{}> connection<{}> closed, remove it", old.getFilterServerAddr(),
+                    remoteAddr);
+        }
+    }
+
     public List<String> buildNewFilterServerList() {
         List<String> addr = new ArrayList<>();
         for (Map.Entry<Channel, FilterServerInfo> next : this.filterServerTable.entrySet()) {
@@ -44,6 +52,7 @@ public class FilterServerManager {
     }
 
     public void start() {
+        log.info("[FilterServerManager] start");
 
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
@@ -84,7 +93,7 @@ public class FilterServerManager {
                 config);
     }
 
-    public void createFilterServer() {
+    private void createFilterServer() {
         int more =
                 this.brokerController.getBrokerConfig().getFilterServerNums() - this.filterServerTable.size();
         String cmd = this.buildStartCommand();

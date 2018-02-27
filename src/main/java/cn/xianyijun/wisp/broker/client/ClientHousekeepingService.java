@@ -25,15 +25,12 @@ public class ClientHousekeepingService implements ChannelEventListener {
 
 
     public void start() {
-
-        this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ClientHousekeepingService.this.scanExceptionChannel();
-                } catch (Throwable e) {
-                    log.error("Error occurred when scan not active client channels.", e);
-                }
+        log.info("[ClientHousekeepingService] clientHousekeepingService start");
+        this.scheduledExecutorService.scheduleAtFixedRate(() -> {
+            try {
+                ClientHousekeepingService.this.scanExceptionChannel();
+            } catch (Throwable e) {
+                log.error("Error occurred when scan not active client channels.", e);
             }
         }, 1000 * 10, 1000 * 10, TimeUnit.MILLISECONDS);
     }
@@ -51,16 +48,22 @@ public class ClientHousekeepingService implements ChannelEventListener {
 
     @Override
     public void onChannelClose(String remoteAddr, Channel channel) {
-
+        this.brokerController.getProducerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getConsumerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getFilterServerManager().doChannelCloseEvent(remoteAddr, channel);
     }
 
     @Override
     public void onChannelException(String remoteAddr, Channel channel) {
-
+        this.brokerController.getProducerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getConsumerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getFilterServerManager().doChannelCloseEvent(remoteAddr, channel);
     }
 
     @Override
     public void onChannelIdle(String remoteAddr, Channel channel) {
-
+        this.brokerController.getProducerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getConsumerManager().doChannelCloseEvent(remoteAddr, channel);
+        this.brokerController.getFilterServerManager().doChannelCloseEvent(remoteAddr, channel);
     }
 }

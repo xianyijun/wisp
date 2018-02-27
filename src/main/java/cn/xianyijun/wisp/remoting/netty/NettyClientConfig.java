@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * @author xianyijun
+ */
 @Slf4j
 @Getter
 @Setter
@@ -16,5 +19,12 @@ public class NettyClientConfig {
     private int connectTimeoutMillis = 3000;
     private long channelNotActiveInterval = 1000 * 60;
 
+    private int clientSocketSndBufSize = NettySystemConfig.socketSndBufSize;
+    private int clientSocketRcvBufSize = NettySystemConfig.socketRcvBufSize;
+
+    private int clientChannelMaxIdleTimeSeconds = 120;
+
     private boolean useTLS;
+
+    private boolean clientCloseSocketIfTimeout = false;
 }

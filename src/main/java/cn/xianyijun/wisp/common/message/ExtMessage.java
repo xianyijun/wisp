@@ -70,4 +70,20 @@ public class ExtMessage extends Message {
     public ByteBuffer getBornHostBytes(ByteBuffer byteBuffer) {
         return socketAddress2ByteBuffer(this.bornHost, byteBuffer);
     }
+
+    public String getBornHostString() {
+        if (this.bornHost != null) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) this.bornHost;
+            return inetSocketAddress.getAddress().getHostAddress();
+        }
+        return null;
+    }
+
+    public String getBornHostNameString() {
+        if (this.bornHost != null) {
+            InetSocketAddress inetSocketAddress = (InetSocketAddress) this.bornHost;
+            return inetSocketAddress.getAddress().getHostName();
+        }
+        return null;
+    }
 }

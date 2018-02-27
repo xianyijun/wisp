@@ -25,6 +25,7 @@ public abstract class ServiceThread implements Runnable {
 
 
     public void start() {
+        log.info("[ServiceThread] {} start",this.getServiceName());
         this.thread.start();
     }
 

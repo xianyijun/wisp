@@ -158,6 +158,8 @@ public class BrokerStartup {
             controller.getConfiguration().registerConfig(properties);
 
             boolean initResult = controller.initialize();
+            log.info("[BrokerStartUp] doMain initialize result :{}  ",initResult);
+
             if (!initResult) {
                 controller.shutdown();
                 System.exit(-3);

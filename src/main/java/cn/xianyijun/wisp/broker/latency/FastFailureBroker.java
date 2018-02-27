@@ -35,6 +35,7 @@ public class FastFailureBroker {
     }
 
     public void start() {
+        log.info("[FastFailureBroker] start");
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             if (brokerController.getBrokerConfig().isBrokerFastFailureEnable()) {
                 cleanExpiredRequest();
