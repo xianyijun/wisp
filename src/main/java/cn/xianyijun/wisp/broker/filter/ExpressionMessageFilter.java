@@ -9,6 +9,9 @@ import cn.xianyijun.wisp.store.MessageFilter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
  * @author xianyijun
  */
@@ -80,5 +83,10 @@ public class ExpressionMessageFilter implements MessageFilter {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean isMatchedByCommitLog(ByteBuffer msgBuffer, Map<String, String> properties) {
+        return false;
     }
 }

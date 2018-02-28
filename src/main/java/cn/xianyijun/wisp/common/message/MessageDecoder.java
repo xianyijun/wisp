@@ -95,4 +95,24 @@ public class MessageDecoder {
 
         return UtilAll.bytes2string(input.array());
     }
+
+    public static Map<String, String> decodeProperties(java.nio.ByteBuffer byteBuffer) {
+        int topicLengthPosition = BODY_SIZE_POSITION + 4 + byteBuffer.getInt(BODY_SIZE_POSITION);
+
+        byte topicLength = byteBuffer.get(topicLengthPosition);
+
+        short propertiesLength = byteBuffer.getShort(topicLengthPosition + 1 + topicLength);
+
+        byteBuffer.position(topicLengthPosition + 1 + topicLength + 2);
+
+        if (propertiesLength > 0) {
+            byte[] properties = new byte[propertiesLength];
+            byteBuffer.get(properties);
+            String propertiesString = new String(properties, CHARSET_UTF8);
+            Map<String, String> map = string2messageProperties(propertiesString);
+            return map;
+        }
+        return null;
+    }
+
 }

@@ -1,7 +1,11 @@
 package cn.xianyijun.wisp.store;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
  * The interface Message filter.
+ *
  * @author xianyijun
  */
 public interface MessageFilter {
@@ -14,4 +18,15 @@ public interface MessageFilter {
      */
     boolean isMatchedByConsumeQueue(final Long tagsCode,
                                     final ConsumeQueueExt.CqExtUnit cqExtUnit);
+
+    /**
+     * Is matched by commit log boolean.
+     *
+     * @param msgBuffer  the msg buffer
+     * @param properties the properties
+     * @return the boolean
+     */
+    boolean isMatchedByCommitLog(final ByteBuffer msgBuffer,
+                                 final Map<String, String> properties);
+
 }

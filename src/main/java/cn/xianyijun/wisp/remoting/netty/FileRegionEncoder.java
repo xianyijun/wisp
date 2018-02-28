@@ -5,7 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.MessageToByteEncoder;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
@@ -18,7 +17,7 @@ public class FileRegionEncoder extends MessageToByteEncoder<FileRegion> {
     protected void encode(ChannelHandlerContext ctx, FileRegion msg, final ByteBuf out) throws Exception {
         WritableByteChannel writableByteChannel = new WritableByteChannel() {
             @Override
-            public int write(ByteBuffer src) throws IOException {
+            public int write(ByteBuffer src) {
                 out.writeBytes(src);
                 return out.capacity();
             }
@@ -29,14 +28,14 @@ public class FileRegionEncoder extends MessageToByteEncoder<FileRegion> {
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() {
             }
         };
 
         long toTransfer = msg.count();
 
         while (true) {
-            long transferred = msg.transferred();
+            long transferred = msg.transfered();
             if (toTransfer - transferred <= 0) {
                 break;
             }

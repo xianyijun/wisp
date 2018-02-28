@@ -171,7 +171,7 @@ public class RemotingCommand {
         return encodeHeader(this.body != null ? this.body.length : 0);
     }
 
-    private ByteBuffer encodeHeader(final int bodyLength) {
+    public ByteBuffer encodeHeader(final int bodyLength) {
         // 1> header length size
         int length = 4;
 

@@ -150,4 +150,26 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
             this.offsetTable.put(topic + TOPIC_GROUP_SEPARATOR + destGroup, new ConcurrentHashMap<>(offsets));
         }
     }
+
+
+    public void commitOffset(final String clientHost, final String group, final String topic, final int queueId,
+                             final long offset) {
+        // topic@group
+        String key = topic + TOPIC_GROUP_SEPARATOR + group;
+        this.commitOffset(clientHost, key, queueId, offset);
+    }
+
+    private void commitOffset(final String clientHost, final String key, final int queueId, final long offset) {
+        ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
+        if (null == map) {
+            map = new ConcurrentHashMap<>(32);
+            map.put(queueId, offset);
+            this.offsetTable.put(key, map);
+        } else {
+            Long storeOffset = map.put(queueId, offset);
+            if (storeOffset != null && offset < storeOffset) {
+                log.warn("[commitOffset] update consumer offset less than store. clientHost={}, key={}, queueId={}, requestOffset={}, storeOffset={}", clientHost, key, queueId, offset, storeOffset);
+            }
+        }
+    }
 }

@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author xianyijun
- * todo
  */
 @Slf4j
 public class DefaultRequestProcessor implements NettyRequestProcessor {
@@ -382,13 +381,6 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
                 log.error("updateConfig byte array to string error: ", e);
                 response.setCode(ResponseCode.SYSTEM_ERROR);
                 response.setRemark("UnsupportedEncodingException " + e);
-                return response;
-            }
-
-            if (bodyStr == null) {
-                log.error("updateConfig get null body!");
-                response.setCode(ResponseCode.SYSTEM_ERROR);
-                response.setRemark("string2Properties error");
                 return response;
             }
 

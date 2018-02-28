@@ -26,9 +26,17 @@ public class BrokerStatsManager {
     public static final String TOPIC_PUT_SIZE = "TOPIC_PUT_SIZE";
     public static final String BROKER_PUT_NUMS = "BROKER_PUT_NUMS";
     public static final String COMMERCIAL_OWNER = "Owner";
+
+    public static final String GROUP_GET_LATENCY = "GROUP_GET_LATENCY";
+    public static final String GROUP_GET_SIZE = "GROUP_GET_SIZE";
+    public static final String BROKER_GET_NUMS = "BROKER_GET_NUMS";
+
+
     private final String clusterName;
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "BrokerStatsThread"));
+
+    private final MomentStatsItemSet momentStatsItemSetFallTime = new MomentStatsItemSet(GROUP_GET_FALL_TIME, scheduledExecutorService);
 
     private final MomentStatsItemSet momentStatsItemSetFallSize = new MomentStatsItemSet(GROUP_GET_FALL_SIZE, scheduledExecutorService);
 
@@ -55,6 +63,26 @@ public class BrokerStatsManager {
     }
 
 
+    public void incGroupGetNums(final String group, final String topic, final int incValue) {
+        final String statsKey = buildStatsKey(topic, group);
+        this.statsTable.get(GROUP_GET_NUMS).addValue(statsKey, incValue, 1);
+    }
+
+
+    public void incBrokerGetNums(final int incValue) {
+        this.statsTable.get(BROKER_GET_NUMS).getAndCreateStatsItem(this.clusterName).getValue().addAndGet(incValue);
+    }
+
+    public void incGroupGetSize(final String group, final String topic, final int incValue) {
+        final String statsKey = buildStatsKey(topic, group);
+        this.statsTable.get(GROUP_GET_SIZE).addValue(statsKey, incValue, 1);
+    }
+
+    public void incGroupGetLatency(final String group, final String topic, final int queueId, final int incValue) {
+        final String statsKey = String.format("%d@%s@%s", queueId, topic, group);
+        this.statsTable.get(GROUP_GET_LATENCY).addValue(statsKey, incValue, 1);
+    }
+
     public double tpsGroupGetNums(final String group, final String topic) {
         final String statsKey = buildStatsKey(topic, group);
         return this.statsTable.get(GROUP_GET_NUMS).getStatsDataInMinute(statsKey).getTps();
@@ -72,6 +100,13 @@ public class BrokerStatsManager {
             return null;
         }
     }
+
+    public void recordDiskFallBehindTime(final String group, final String topic, final int queueId,
+                                         final long fallBehind) {
+        final String statsKey = String.format("%d@%s@%s", queueId, topic, group);
+        this.momentStatsItemSetFallTime.getAndCreateStatsItem(statsKey).getValue().set(fallBehind);
+    }
+
 
     public enum StatsType {
         SEND_SUCCESS,
