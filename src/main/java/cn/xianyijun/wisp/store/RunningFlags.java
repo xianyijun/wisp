@@ -37,6 +37,16 @@ public class RunningFlags {
 
     public boolean isWriteable() {
         return (this.flagBits & (NOT_WRITEABLE_BIT | WRITE_LOGIC_QUEUE_ERROR_BIT | DISK_FULL_BIT | WRITE_INDEX_FILE_ERROR_BIT)) == 0;
+    }
+    public boolean getAndMakeDiskFull() {
+        boolean result = !((this.flagBits & DISK_FULL_BIT) == DISK_FULL_BIT);
+        this.flagBits |= DISK_FULL_BIT;
+        return result;
+    }
 
+    public boolean getAndMakeDiskOK() {
+        boolean result = !((this.flagBits & DISK_FULL_BIT) == DISK_FULL_BIT);
+        this.flagBits &= ~DISK_FULL_BIT;
+        return result;
     }
 }

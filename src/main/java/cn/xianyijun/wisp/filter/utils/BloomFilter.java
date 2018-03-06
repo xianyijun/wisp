@@ -124,4 +124,11 @@ public class BloomFilter {
             bits.setBit(i, true);
         }
     }
+
+    public BloomFilterData generate(String str) {
+        int[] bitPositions = calcBitPositions(str);
+
+        return new BloomFilterData(bitPositions, this.m);
+    }
+
 }

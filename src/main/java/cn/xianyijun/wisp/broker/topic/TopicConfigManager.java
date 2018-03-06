@@ -119,19 +119,36 @@ public class TopicConfigManager extends AbstractConfigManager {
 
     @Override
     public void decode(String jsonString) {
-
+        if (jsonString != null) {
+            TopicConfigSerializeWrapper topicConfigSerializeWrapper =
+                    TopicConfigSerializeWrapper.fromJson(jsonString, TopicConfigSerializeWrapper.class);
+            if (topicConfigSerializeWrapper != null) {
+                this.topicConfigTable.putAll(topicConfigSerializeWrapper.getTopicConfigTable());
+                this.dataVersion.assignNewOne(topicConfigSerializeWrapper.getDataVersion());
+                this.printLoadDataWhenFirstBoot(topicConfigSerializeWrapper);
+            }
+        }
     }
 
     @Override
     public String encode() {
-        return null;
+        return encode(false);
     }
 
     @Override
     public String encode(boolean prettyFormat) {
-        return null;
+        TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
+        topicConfigSerializeWrapper.setTopicConfigTable(this.topicConfigTable);
+        topicConfigSerializeWrapper.setDataVersion(this.dataVersion);
+        return topicConfigSerializeWrapper.toJson(prettyFormat);
     }
 
+
+    private void printLoadDataWhenFirstBoot(final TopicConfigSerializeWrapper tcs) {
+        for (Map.Entry<String, TopicConfig> next : tcs.getTopicConfigTable().entrySet()) {
+            log.info("load exist local topic, {}", next.getValue().toString());
+        }
+    }
 
     public boolean isOrderTopic(final String topic) {
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
@@ -150,6 +167,7 @@ public class TopicConfigManager extends AbstractConfigManager {
 
     public TopicConfig createTopicInProduceMessageMethod(final String topic, final String defaultTopic,
                                                          final String remoteAddress, final int clientDefaultTopicQueueNums, final int topicSysFlag) {
+        log.info("[TopicConfigManager] createTopicInProduceMessageMethod , topic :{} , defaultTopic:{} , remoteAddress:{}, clientDefaultTopicQueueNums:{} ,topicSysFlag:{}",topic, defaultTopic, remoteAddress, clientDefaultTopicQueueNums, topicSysFlag);
         TopicConfig topicConfig = null;
         boolean createNew = false;
 
@@ -228,6 +246,7 @@ public class TopicConfigManager extends AbstractConfigManager {
             final int clientDefaultTopicQueueNums,
             final int perm,
             final int topicSysFlag) {
+        log.info("[TopicConfigManager] createTopicInProduceMessageBackMethod , topic:{} ", topic);
         TopicConfig topicConfig = this.topicConfigTable.get(topic);
         if (topicConfig != null) {
             return topicConfig;

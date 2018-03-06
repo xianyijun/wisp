@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Setter
 public class RemotingCommand {
     public static final String REMOTING_VERSION_KEY = "wisp.remoting.version";
-    private static final int RPC_TYPE = 0; // 0, REQUEST_COMMAND
-    private static final int RPC_ONE_WAY = 1; // 0, RPC
+    private static final int RPC_TYPE = 0;
+    private static final int RPC_ONE_WAY = 1;
     private static final Map<Class<? extends CommandCustomHeader>, Field[]> CLASS_HASH_MAP = new HashMap<>();
     private static final Map<Class, String> CANONICAL_NAME_CACHE = new HashMap<>();
     private static final String STRING_CANONICAL_NAME = String.class.getCanonicalName();
@@ -89,8 +89,7 @@ public class RemotingCommand {
 
         if (classHeader != null) {
             try {
-                CommandCustomHeader objectHeader = classHeader.newInstance();
-                cmd.customHeader = objectHeader;
+                cmd.customHeader = classHeader.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {
                 return null;
             }
@@ -250,7 +249,7 @@ public class RemotingCommand {
     }
 
     @JSONField(serialize = false)
-    public boolean isResponseType() {
+    private boolean isResponseType() {
         int bits = 1 << RPC_TYPE;
         return (this.flag & bits) == bits;
     }
@@ -266,7 +265,7 @@ public class RemotingCommand {
     @JSONField(serialize = false)
     public boolean isOneWayRPC() {
         int bits = 1 << RPC_ONE_WAY;
-        return (this.flag & bits) != bits;
+        return (this.flag & bits) == bits;
     }
 
     public void markResponseType() {
@@ -348,5 +347,21 @@ public class RemotingCommand {
 
     public static int createNewRequestId() {
         return requestId.incrementAndGet();
+    }
+
+    @Override
+    public String toString() {
+        return "RemotingCommand{" +
+                "flag=" + flag +
+                ", opaque=" + opaque +
+                ", extFields=" + extFields +
+                ", serializeTypeCurrentRPC=" + serializeTypeCurrentRPC +
+                ", body=" + (body != null ? new String(body): "") +
+                ", customHeader=" + customHeader +
+                ", code=" + code +
+                ", version=" + version +
+                ", remark='" + remark + '\'' +
+                ", language=" + language +
+                '}';
     }
 }

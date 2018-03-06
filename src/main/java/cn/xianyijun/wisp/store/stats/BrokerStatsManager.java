@@ -19,20 +19,39 @@ import java.util.concurrent.ScheduledExecutorService;
 public class BrokerStatsManager {
 
     public static final double SIZE_PER_COUNT = 64 * 1024;
+    public static final String COMMERCIAL_OWNER = "Owner";
+
     public static final String GROUP_GET_FALL_SIZE = "GROUP_GET_FALL_SIZE";
     public static final String GROUP_GET_FALL_TIME = "GROUP_GET_FALL_TIME";
     public static final String GROUP_GET_NUMS = "GROUP_GET_NUMS";
+
+    public static final String SNDBCK_PUT_NUMS = "SNDBCK_PUT_NUMS";
+
     public static final String TOPIC_PUT_NUMS = "TOPIC_PUT_NUMS";
     public static final String TOPIC_PUT_SIZE = "TOPIC_PUT_SIZE";
-    public static final String BROKER_PUT_NUMS = "BROKER_PUT_NUMS";
-    public static final String COMMERCIAL_OWNER = "Owner";
 
     public static final String GROUP_GET_LATENCY = "GROUP_GET_LATENCY";
     public static final String GROUP_GET_SIZE = "GROUP_GET_SIZE";
+
+    public static final String BROKER_PUT_NUMS = "BROKER_PUT_NUMS";
     public static final String BROKER_GET_NUMS = "BROKER_GET_NUMS";
 
+    public static final String GROUP_GET_FROM_DISK_NUMS = "GROUP_GET_FROM_DISK_NUMS";
+    public static final String GROUP_GET_FROM_DISK_SIZE = "GROUP_GET_FROM_DISK_SIZE";
+    public static final String BROKER_GET_FROM_DISK_NUMS = "BROKER_GET_FROM_DISK_NUMS";
+    public static final String BROKER_GET_FROM_DISK_SIZE = "BROKER_GET_FROM_DISK_SIZE";
+
+    public static final String COMMERCIAL_SEND_TIMES = "COMMERCIAL_SEND_TIMES";
+    public static final String COMMERCIAL_SNDBCK_TIMES = "COMMERCIAL_SNDBCK_TIMES";
+    public static final String COMMERCIAL_RCV_TIMES = "COMMERCIAL_RCV_TIMES";
+    public static final String COMMERCIAL_RCV_EPOLLS = "COMMERCIAL_RCV_EPOLLS";
+    public static final String COMMERCIAL_SEND_SIZE = "COMMERCIAL_SEND_SIZE";
+    public static final String COMMERCIAL_RCV_SIZE = "COMMERCIAL_RCV_SIZE";
+    public static final String COMMERCIAL_PERM_FAILURES = "COMMERCIAL_PERM_FAILURES";
 
     private final String clusterName;
+    private final ScheduledExecutorService commercialExecutor = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
+            "CommercialStatsThread"));
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new WispThreadFactory(
             "BrokerStatsThread"));
 
@@ -44,6 +63,28 @@ public class BrokerStatsManager {
 
     public BrokerStatsManager(String clusterName) {
         this.clusterName = clusterName;
+
+        this.statsTable.put(TOPIC_PUT_NUMS, new StatsItemSet(TOPIC_PUT_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(TOPIC_PUT_SIZE, new StatsItemSet(TOPIC_PUT_SIZE, this.scheduledExecutorService));
+        this.statsTable.put(GROUP_GET_NUMS, new StatsItemSet(GROUP_GET_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(GROUP_GET_SIZE, new StatsItemSet(GROUP_GET_SIZE, this.scheduledExecutorService));
+        this.statsTable.put(GROUP_GET_LATENCY, new StatsItemSet(GROUP_GET_LATENCY, this.scheduledExecutorService));
+        this.statsTable.put(SNDBCK_PUT_NUMS, new StatsItemSet(SNDBCK_PUT_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(BROKER_PUT_NUMS, new StatsItemSet(BROKER_PUT_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(BROKER_GET_NUMS, new StatsItemSet(BROKER_GET_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(GROUP_GET_FROM_DISK_NUMS, new StatsItemSet(GROUP_GET_FROM_DISK_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(GROUP_GET_FROM_DISK_SIZE, new StatsItemSet(GROUP_GET_FROM_DISK_SIZE, this.scheduledExecutorService));
+        this.statsTable.put(BROKER_GET_FROM_DISK_NUMS, new StatsItemSet(BROKER_GET_FROM_DISK_NUMS, this.scheduledExecutorService));
+        this.statsTable.put(BROKER_GET_FROM_DISK_SIZE, new StatsItemSet(BROKER_GET_FROM_DISK_SIZE, this.scheduledExecutorService));
+
+        this.statsTable.put(COMMERCIAL_SEND_TIMES, new StatsItemSet(COMMERCIAL_SEND_TIMES, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_RCV_TIMES, new StatsItemSet(COMMERCIAL_RCV_TIMES, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_SEND_SIZE, new StatsItemSet(COMMERCIAL_SEND_SIZE, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_RCV_SIZE, new StatsItemSet(COMMERCIAL_RCV_SIZE, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_RCV_EPOLLS, new StatsItemSet(COMMERCIAL_RCV_EPOLLS, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_SNDBCK_TIMES, new StatsItemSet(COMMERCIAL_SNDBCK_TIMES, this.commercialExecutor));
+        this.statsTable.put(COMMERCIAL_PERM_FAILURES, new StatsItemSet(COMMERCIAL_PERM_FAILURES, this.commercialExecutor));
+
     }
 
 
@@ -107,6 +148,12 @@ public class BrokerStatsManager {
         this.momentStatsItemSetFallTime.getAndCreateStatsItem(statsKey).getValue().set(fallBehind);
     }
 
+
+    public void recordDiskFallBehindSize(final String group, final String topic, final int queueId,
+                                         final long fallBehind) {
+        final String statsKey = String.format("%d@%s@%s", queueId, topic, group);
+        this.momentStatsItemSetFallSize.getAndCreateStatsItem(statsKey).getValue().set(fallBehind);
+    }
 
     public enum StatsType {
         SEND_SUCCESS,

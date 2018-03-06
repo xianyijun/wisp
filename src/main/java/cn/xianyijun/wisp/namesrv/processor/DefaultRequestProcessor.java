@@ -44,6 +44,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
+        log.info("[DefaultRequestProcessor] processRequest , request code :{} , remark :{} , header:{}",request.getCode(), request.getBody() == null ? "" : new String(request.getBody()), request.getCustomHeader());
         switch (request.getCode()) {
             case RequestCode.PUT_KV_CONFIG:
                 return this.putKVConfig(ctx, request);
@@ -151,6 +152,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
     }
 
     private RemotingCommand registerBrokerWithFilterServer(ChannelHandlerContext ctx, RemotingCommand request) {
+        log.info("[DefaultRequestProcessor.registerBrokerWithFilterServer] request:{}", request);
         final RemotingCommand response = RemotingCommand.createResponseCommand(RegisterBrokerResponseHeader.class);
         final RegisterBrokerResponseHeader responseHeader = (RegisterBrokerResponseHeader) response.getCustomHeader();
         final RegisterBrokerRequestHeader requestHeader =

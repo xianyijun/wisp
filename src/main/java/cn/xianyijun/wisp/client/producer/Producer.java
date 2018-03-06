@@ -97,7 +97,7 @@ public interface Producer extends MQAdmin{
      * @throws RemotingException    the remoting exception
      * @throws InterruptedException the interrupted exception
      */
-    void sendOneway(final Message msg) throws ClientException, RemotingException,
+    void sendOneWay(final Message msg) throws ClientException, RemotingException,
             InterruptedException;
 
     /**
@@ -165,7 +165,7 @@ public interface Producer extends MQAdmin{
      * @throws RemotingException    the remoting exception
      * @throws InterruptedException the interrupted exception
      */
-    void sendOneway(final Message msg, final MessageQueue mq) throws ClientException,
+    void sendOneWay(final Message msg, final MessageQueue mq) throws ClientException,
             RemotingException, InterruptedException;
 
     /**
@@ -241,7 +241,7 @@ public interface Producer extends MQAdmin{
      * @throws RemotingException    the remoting exception
      * @throws InterruptedException the interrupted exception
      */
-    void sendOneway(final Message msg, final MessageQueueSelector selector, final Object arg)
+    void sendOneWay(final Message msg, final MessageQueueSelector selector, final Object arg)
             throws ClientException, RemotingException, InterruptedException;
 
     /**

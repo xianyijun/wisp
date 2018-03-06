@@ -7,7 +7,9 @@ import cn.xianyijun.wisp.client.MQClientManager;
 import cn.xianyijun.wisp.client.admin.DefaultAdmin;
 import cn.xianyijun.wisp.client.admin.MQAdminExtInner;
 import cn.xianyijun.wisp.client.consumer.ConsumerInner;
+import cn.xianyijun.wisp.client.consumer.ConsumerPullDelegate;
 import cn.xianyijun.wisp.client.consumer.ConsumerPushDelegate;
+import cn.xianyijun.wisp.client.consumer.ProcessQueue;
 import cn.xianyijun.wisp.client.consumer.PullMessageService;
 import cn.xianyijun.wisp.client.consumer.ReBalanceService;
 import cn.xianyijun.wisp.client.producer.DefaultProducer;
@@ -19,7 +21,10 @@ import cn.xianyijun.wisp.common.ServiceState;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.WispVersion;
 import cn.xianyijun.wisp.common.constant.PermName;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.MessageQueue;
+import cn.xianyijun.wisp.common.protocol.body.ConsumeMessageDirectlyResult;
+import cn.xianyijun.wisp.common.protocol.body.ConsumerRunningInfo;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumerData;
 import cn.xianyijun.wisp.common.protocol.heartbeat.HeartbeatData;
@@ -31,6 +36,7 @@ import cn.xianyijun.wisp.common.protocol.route.TopicRouteData;
 import cn.xianyijun.wisp.exception.BrokerException;
 import cn.xianyijun.wisp.exception.ClientException;
 import cn.xianyijun.wisp.exception.RemotingException;
+import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.netty.NettyClientConfig;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
@@ -45,6 +51,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -106,6 +113,8 @@ public class ClientInstance {
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "MQClientFactoryScheduledThread"));
 
     private DatagramSocket datagramSocket;
+
+    private Random random = new Random();
 
     public ClientInstance(ClientConfig clientConfig, int instanceIndex, String clientId, RPCHook rpcHook) {
         this.clientConfig = clientConfig;
@@ -473,7 +482,6 @@ public class ClientInstance {
                                 this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
                             }
 
-                            // Update Pub info
                             {
                                 TopicPublishInfo publishInfo = topicRouteData2TopicPublishInfo(topic, topicRouteData);
                                 publishInfo.setHaveTopicRouterInfo(true);
@@ -806,4 +814,174 @@ public class ClientInstance {
         }
         return null;
     }
+
+    public MQProducerInner selectProducer(final String group) {
+        return this.producerTable.get(group);
+    }
+
+
+    public void reBalanceImmediately() {
+        this.reBalanceService.wakeup();
+    }
+
+    public void resetOffset(String topic, String group, Map<MessageQueue, Long> offsetTable) {
+        ConsumerPushDelegate consumer = null;
+        try {
+            ConsumerInner impl = this.consumerTable.get(group);
+            if (impl != null && impl instanceof ConsumerPushDelegate) {
+                consumer = (ConsumerPushDelegate) impl;
+            } else {
+                log.info("[reset-offset] consumer dose not exist. group={}", group);
+                return;
+            }
+            consumer.suspend();
+
+            ConcurrentMap<MessageQueue, ProcessQueue> processQueueTable = consumer.getReBalance().getProcessQueueTable();
+            for (Map.Entry<MessageQueue, ProcessQueue> entry : processQueueTable.entrySet()) {
+                MessageQueue messageQueue = entry.getKey();
+                if (topic.equals(messageQueue.getTopic()) && offsetTable.containsKey(messageQueue)) {
+                    ProcessQueue processQueue = entry.getValue();
+                    processQueue.setDropped(true);
+                    processQueue.clear();
+                }
+            }
+
+            try {
+                TimeUnit.SECONDS.sleep(10);
+            } catch (InterruptedException ignored) {
+            }
+
+            Iterator<MessageQueue> iterator = processQueueTable.keySet().iterator();
+            while (iterator.hasNext()) {
+                MessageQueue mq = iterator.next();
+                Long offset = offsetTable.get(mq);
+                if (topic.equals(mq.getTopic()) && offset != null) {
+                    try {
+                        consumer.updateConsumeOffset(mq, offset);
+                        consumer.getReBalance().removeUnnecessaryMessageQueue(mq, processQueueTable.get(mq));
+                        iterator.remove();
+                    } catch (Exception e) {
+                        log.warn("reset offset failed. group={}, {}", group, mq, e);
+                    }
+                }
+            }
+        } finally {
+            if (consumer != null) {
+                consumer.resume();
+            }
+        }
+    }
+
+
+    public boolean registerConsumer(final String group, final ConsumerInner consumer) {
+        if (null == group || null == consumer) {
+            return false;
+        }
+
+        ConsumerInner prev = this.consumerTable.putIfAbsent(group, consumer);
+        if (prev != null) {
+            log.warn("the consumer group[" + group + "] exist already.");
+            return false;
+        }
+        return true;
+    }
+
+    public void checkClientInBroker() throws ClientException {
+
+        for (Map.Entry<String, ConsumerInner> entry : this.consumerTable.entrySet()) {
+            Set<SubscriptionData> subscriptionInner = entry.getValue().subScriptions();
+            if (subscriptionInner == null || subscriptionInner.isEmpty()) {
+                return;
+            }
+
+            for (SubscriptionData subscriptionData : subscriptionInner) {
+                if (ExpressionType.isTagType(subscriptionData.getExpressionType())) {
+                    continue;
+                }
+                String addr = findBrokerAddrByTopic(subscriptionData.getTopic());
+
+                if (addr != null) {
+                    try {
+                        this.client.checkClientInBroker(
+                                addr, entry.getKey(), this.clientId, subscriptionData, 3 * 1000
+                        );
+                    } catch (Exception e) {
+                        if (e instanceof ClientException) {
+                            throw (ClientException) e;
+                        } else {
+                            throw new ClientException("Check client in broker error, maybe because you use "
+                                    + subscriptionData.getExpressionType() + " to filter message, but server has not been upgraded to support!"
+                                    + "This error would not affect the launch of consumer, but may has impact on message receiving if you " +
+                                    "have use the new features which are not supported by server, please check the log!", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private String findBrokerAddrByTopic(final String topic) {
+        TopicRouteData topicRouteData = this.topicRouteTable.get(topic);
+        if (topicRouteData != null) {
+            List<BrokerData> brokers = topicRouteData.getBrokerDatas();
+            if (!brokers.isEmpty()) {
+                int index = random.nextInt(brokers.size());
+                BrokerData bd = brokers.get(index % brokers.size());
+                return bd.selectBrokerAddr();
+            }
+        }
+
+        return null;
+    }
+
+    public Map<MessageQueue, Long> getConsumerStatus(String topic, String group) {
+        ConsumerInner impl = this.consumerTable.get(group);
+        if (impl != null && impl instanceof ConsumerPushDelegate) {
+            ConsumerPushDelegate consumer = (ConsumerPushDelegate) impl;
+            return consumer.getOffsetStore().cloneOffsetTable(topic);
+        } else if (impl != null && impl instanceof ConsumerPullDelegate) {
+            ConsumerPullDelegate consumer = (ConsumerPullDelegate) impl;
+            return consumer.getOffsetStore().cloneOffsetTable(topic);
+        } else {
+            return Collections.emptyMap();
+        }
+    }
+
+    public ConsumerRunningInfo consumerRunningInfo(final String consumerGroup) {
+        ConsumerInner mqConsumerInner = this.consumerTable.get(consumerGroup);
+
+        ConsumerRunningInfo consumerRunningInfo = mqConsumerInner.consumerRunningInfo();
+
+        List<String> nsList = this.client.getRemotingClient().getNameServerAddressList();
+
+        StringBuilder strBuilder = new StringBuilder();
+        if (nsList != null) {
+            for (String addr : nsList) {
+                strBuilder.append(addr).append(";");
+            }
+        }
+
+        String nsAddr = strBuilder.toString();
+        consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_NAME_SERVER_ADDR, nsAddr);
+        consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_CONSUME_TYPE, mqConsumerInner.consumeType().name());
+        consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_CLIENT_VERSION,
+                WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION));
+
+        return consumerRunningInfo;
+    }
+
+
+    public ConsumeMessageDirectlyResult consumeMessageDirectly(final ExtMessage msg,
+                                                               final String consumerGroup,
+                                                               final String brokerName) {
+        ConsumerInner consumerInner = this.consumerTable.get(consumerGroup);
+        if (null != consumerInner) {
+            ConsumerPushDelegate consumer = (ConsumerPushDelegate) consumerInner;
+
+            return consumer.getConsumeMessageService().consumeMessageDirectly(msg, brokerName);
+        }
+
+        return null;
+    }
+
 }

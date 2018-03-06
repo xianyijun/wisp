@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.exception.FilterException;
 
 /**
  * The interface Filter.
+ * @author xianyijun
  */
 public interface Filter {
 

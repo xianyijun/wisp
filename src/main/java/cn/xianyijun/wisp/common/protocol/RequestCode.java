@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.common.protocol;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author xianyijun
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RequestCode {
     public static final int SEND_MESSAGE = 10;

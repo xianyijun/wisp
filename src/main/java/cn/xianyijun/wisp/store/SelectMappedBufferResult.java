@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.store;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.nio.ByteBuffer;
 
@@ -16,6 +17,7 @@ public class SelectMappedBufferResult {
 
     private final ByteBuffer byteBuffer;
 
+    @Setter
     private int size;
 
     private MappedFile mappedFile;

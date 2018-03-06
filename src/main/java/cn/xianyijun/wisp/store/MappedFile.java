@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.store.config.FlushDiskType;
 import cn.xianyijun.wisp.store.utils.LibC;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -47,7 +48,6 @@ public class MappedFile extends ReferenceResource {
     @Setter
     private boolean firstCreateInQueue = false;
 
-
     private int fileSize;
     private FileChannel fileChannel;
 
@@ -70,7 +70,7 @@ public class MappedFile extends ReferenceResource {
         }
     }
 
-    private void init(final String fileName, final int fileSize,
+    protected void init(final String fileName, final int fileSize,
                       final TransientStorePool transientStorePool) throws IOException {
         init(fileName, fileSize);
         this.writeBuffer = transientStorePool.borrowBuffer();
@@ -145,9 +145,6 @@ public class MappedFile extends ReferenceResource {
             }
 
             return true;
-        } else {
-            log.warn("destroy mapped file[REF:" + this.getRefCount() + "] " + this.fileName
-                    + " Failed. cleanupOver: " + this.cleanupOver);
         }
 
         return false;
@@ -165,6 +162,10 @@ public class MappedFile extends ReferenceResource {
         return wrotePosition.get();
     }
 
+    public long getLastModifiedTimestamp() {
+        return this.file.lastModified();
+    }
+
     public void setWrotePosition(int pos) {
         this.wrotePosition.set(pos);
     }
@@ -172,7 +173,6 @@ public class MappedFile extends ReferenceResource {
     public void setFlushedPosition(int pos) {
         this.flushedPosition.set(pos);
     }
-
 
     public void setCommittedPosition(int pos) {
         this.committedPosition.set(pos);
@@ -182,6 +182,9 @@ public class MappedFile extends ReferenceResource {
         return this.fileSize == this.wrotePosition.get();
     }
 
+    public AppendMessageResult appendMessages(final ExtBatchMessage extBatchMessage, final AppendMessageCallback cb) {
+        return appendMessagesInner(extBatchMessage, cb);
+    }
     public boolean appendMessage(final byte[] data) {
         int currentPos = this.wrotePosition.get();
 
@@ -219,14 +222,14 @@ public class MappedFile extends ReferenceResource {
         return appendMessagesInner(msg, cb);
     }
 
-    public AppendMessageResult appendMessagesInner(final ExtMessage extMessage, final AppendMessageCallback cb) {
+    private AppendMessageResult appendMessagesInner(final ExtMessage extMessage, final AppendMessageCallback cb) {
 
         int currentPos = this.wrotePosition.get();
 
         if (currentPos < this.fileSize) {
             ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : this.mappedByteBuffer.slice();
             byteBuffer.position(currentPos);
-            AppendMessageResult result = null;
+            AppendMessageResult result;
             if (extMessage instanceof MessageExtBrokerInner) {
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) extMessage);
             } else if (extMessage instanceof ExtBatchMessage) {
@@ -257,9 +260,73 @@ public class MappedFile extends ReferenceResource {
         return null;
     }
 
+    public SelectMappedBufferResult selectMappedBuffer(int pos, int size) {
+        int readPosition = getReadPosition();
+        if ((pos + size) <= readPosition) {
+            if (this.hold()) {
+                ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+                byteBuffer.position(pos);
+                ByteBuffer byteBufferNew = byteBuffer.slice();
+                byteBufferNew.limit(size);
+                return new SelectMappedBufferResult(this.fileFromOffset + pos, byteBufferNew, size, this);
+            }
+        }
+        return null;
+    }
 
-    public int getFlushedPosition() {
+
+    private int getFlushedPosition() {
         return flushedPosition.get();
+    }
+
+    public void warmMappedFile(FlushDiskType type, int pages) {
+        long beginTime = System.currentTimeMillis();
+        ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
+        int flush = 0;
+        long time = System.currentTimeMillis();
+        for (int i = 0, j = 0; i < this.fileSize; i += MappedFile.OS_PAGE_SIZE, j++) {
+            byteBuffer.put(i, (byte) 0);
+            if (type == FlushDiskType.SYNC_FLUSH) {
+                if ((i / OS_PAGE_SIZE) - (flush / OS_PAGE_SIZE) >= pages) {
+                    flush = i;
+                    mappedByteBuffer.force();
+                }
+            }
+            if (j % 1000 == 0) {
+                log.info("j={}, costTime={}", j, System.currentTimeMillis() - time);
+                time = System.currentTimeMillis();
+                try {
+                    Thread.sleep(0);
+                } catch (InterruptedException e) {
+                    log.error("Interrupted", e);
+                }
+            }
+        }
+
+        if (type == FlushDiskType.SYNC_FLUSH) {
+            log.info("mapped file warm-up done, force to disk, mappedFile={}, costTime={}",
+                    this.getFileName(), System.currentTimeMillis() - beginTime);
+            mappedByteBuffer.force();
+        }
+        log.info("mapped file warm-up done. mappedFile={}, costTime={}", this.getFileName(),
+                System.currentTimeMillis() - beginTime);
+
+        this.mLock();
+    }
+
+    private void mLock() {
+        final long beginTime = System.currentTimeMillis();
+        final long address = ((DirectBuffer) (this.mappedByteBuffer)).address();
+        Pointer pointer = new Pointer(address);
+        {
+            int ret = LibC.INSTANCE.mlock(pointer, new NativeLong(this.fileSize));
+            log.info("mLock {} {} {} ret = {} time consuming = {}", address, this.fileName, this.fileSize, ret, System.currentTimeMillis() - beginTime);
+        }
+
+        {
+            int ret = LibC.INSTANCE.madvise(pointer, new NativeLong(this.fileSize), LibC.MADV_WILLNEED);
+            log.info("mAdvise {} {} {} ret = {} time consuming = {}", address, this.fileName, this.fileSize, ret, System.currentTimeMillis() - beginTime);
+        }
     }
 
 
@@ -280,7 +347,6 @@ public class MappedFile extends ReferenceResource {
 
     public int commit(final int commitLeastPages) {
         if (writeBuffer == null) {
-            //no need to commit data to file channel, so just regard wrotePosition as committedPosition.
             return this.wrotePosition.get();
         }
         if (this.isAbleToCommit(commitLeastPages)) {
@@ -292,7 +358,6 @@ public class MappedFile extends ReferenceResource {
             }
         }
 
-        // All dirty data has been committed to FileChannel.
         if (writeBuffer != null && this.transientStorePool != null && this.fileSize == this.committedPosition.get()) {
             this.transientStorePool.returnBuffer(writeBuffer);
             this.writeBuffer = null;
@@ -301,7 +366,7 @@ public class MappedFile extends ReferenceResource {
         return this.committedPosition.get();
     }
 
-    protected void commit0(final int commitLeastPages) {
+    private void commit0(final int commitLeastPages) {
         int writePos = this.wrotePosition.get();
         int lastCommittedPosition = this.committedPosition.get();
 
@@ -328,7 +393,7 @@ public class MappedFile extends ReferenceResource {
         log.info("munLock {} {} {} ret = {} time consuming = {}", address, this.fileName, this.fileSize, ret, System.currentTimeMillis() - beginTime);
     }
 
-    protected boolean isAbleToCommit(final int commitLeastPages) {
+    private boolean isAbleToCommit(final int commitLeastPages) {
         int flush = this.committedPosition.get();
         int write = this.wrotePosition.get();
 

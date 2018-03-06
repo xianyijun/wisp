@@ -325,10 +325,10 @@ public class BrokerController {
         produceMessageProcessor.setProduceMessageHookList(produceMessageHookList);
         produceMessageProcessor.setConsumeMessageHookList(consumeMessageHookList);
 
-
         this.remotingServer.registerProcessor(RequestCode.SEND_MESSAGE, produceMessageProcessor, this.produceMessageExecutor);
         this.remotingServer.registerProcessor(RequestCode.SEND_BATCH_MESSAGE, produceMessageProcessor, this.produceMessageExecutor);
         this.remotingServer.registerProcessor(RequestCode.CONSUMER_SEND_MSG_BACK, produceMessageProcessor, this.produceMessageExecutor);
+
         this.fastRemotingServer.registerProcessor(RequestCode.SEND_MESSAGE, produceMessageProcessor, this.produceMessageExecutor);
         this.fastRemotingServer.registerProcessor(RequestCode.SEND_BATCH_MESSAGE, produceMessageProcessor, this.produceMessageExecutor);
         this.fastRemotingServer.registerProcessor(RequestCode.CONSUMER_SEND_MSG_BACK, produceMessageProcessor, this.produceMessageExecutor);
@@ -506,9 +506,9 @@ public class BrokerController {
 
 
     private void printWaterMark() {
-        log.info("[WATERMARK] Send Queue Size: {} SlowTimeMills: {}", this.sendThreadPoolQueue.size(), headSlowTimeMills4SendThreadPoolQueue());
-        log.info("[WATERMARK] Pull Queue Size: {} SlowTimeMills: {}", this.pullThreadPoolQueue.size(), headSlowTimeMills4PullThreadPoolQueue());
-        log.info("[WATERMARK] Query Queue Size: {} SlowTimeMills: {}", this.queryThreadPoolQueue.size(), headSlowTimeMills4QueryThreadPoolQueue());
+//        log.info("[WATERMARK] Send Queue Size: {} SlowTimeMills: {}", this.sendThreadPoolQueue.size(), headSlowTimeMills4SendThreadPoolQueue());
+//        log.info("[WATERMARK] Pull Queue Size: {} SlowTimeMills: {}", this.pullThreadPoolQueue.size(), headSlowTimeMills4PullThreadPoolQueue());
+//        log.info("[WATERMARK] Query Queue Size: {} SlowTimeMills: {}", this.queryThreadPoolQueue.size(), headSlowTimeMills4QueryThreadPoolQueue());
     }
 
     private void printMasterAndSlaveDiff() {

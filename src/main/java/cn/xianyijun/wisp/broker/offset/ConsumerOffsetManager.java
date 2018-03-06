@@ -76,14 +76,12 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
     }
 
     public Map<Integer, Long> queryOffset(final String group, final String topic) {
-        // topic@group
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
         return this.offsetTable.get(key);
     }
 
 
     public long queryOffset(final String group, final String topic, final int queueId) {
-        // topic@group
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
         ConcurrentMap<Integer, Long> map = this.offsetTable.get(key);
         if (null != map) {

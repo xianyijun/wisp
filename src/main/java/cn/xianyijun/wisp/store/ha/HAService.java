@@ -62,6 +62,13 @@ public class HAService {
         }
     }
 
+    public void start() throws Exception {
+        this.acceptSocketService.beginAccept();
+        this.acceptSocketService.start();
+        this.groupTransferService.start();
+        this.haClient.start();
+    }
+
     public void shutdown() {
         this.haClient.shutdown();
         this.acceptSocketService.shutdown(true);
@@ -89,6 +96,12 @@ public class HAService {
     public void removeConnection(final HAConnection conn) {
         synchronized (this.connectionList) {
             this.connectionList.remove(conn);
+        }
+    }
+
+    public void updateMasterAddress(final String newAddr) {
+        if (this.haClient != null) {
+            this.haClient.updateMasterAddress(newAddr);
         }
     }
 

@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -69,6 +70,46 @@ public class IndexService {
         }
 
         return true;
+    }
+
+    public QueryOffsetResult queryOffset(String topic, String key, int maxNum, long begin, long end) {
+        List<Long> phyOffsets = new ArrayList<Long>(maxNum);
+
+        long indexLastUpdateTimestamp = 0;
+        long indexLastUpdatePhyoffSet = 0;
+        maxNum = Math.min(maxNum, this.defaultMessageStore.getMessageStoreConfig().getMaxMsgsNumBatch());
+        try {
+            this.readWriteLock.readLock().lock();
+            if (!this.indexFileList.isEmpty()) {
+                for (int i = this.indexFileList.size(); i > 0; i--) {
+                    IndexFile f = this.indexFileList.get(i - 1);
+                    boolean lastFile = i == this.indexFileList.size();
+                    if (lastFile) {
+                        indexLastUpdateTimestamp = f.getEndTimestamp();
+                        indexLastUpdatePhyoffSet = f.getEndPhyOffset();
+                    }
+
+                    if (f.isTimeMatched(begin, end)) {
+
+                        f.selectPhyOffSet(phyOffsets, buildKey(topic, key), maxNum, begin, end, lastFile);
+                    }
+
+                    if (f.getBeginTimestamp() < begin) {
+                        break;
+                    }
+
+                    if (phyOffsets.size() >= maxNum) {
+                        break;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("queryMsg exception", e);
+        } finally {
+            this.readWriteLock.readLock().unlock();
+        }
+
+        return new QueryOffsetResult(phyOffsets, indexLastUpdateTimestamp, indexLastUpdatePhyoffSet);
     }
 
     public void buildIndex(DispatchRequest req) {
@@ -162,6 +203,59 @@ public class IndexService {
         }
 
         return indexFile;
+    }
+
+    public void deleteExpiredFile(long offset) {
+        Object[] files = null;
+        try {
+            this.readWriteLock.readLock().lock();
+            if (this.indexFileList.isEmpty()) {
+                return;
+            }
+
+            long endPhyOffset = this.indexFileList.get(0).getEndPhyOffset();
+            if (endPhyOffset < offset) {
+                files = this.indexFileList.toArray();
+            }
+        } catch (Exception e) {
+            log.error("destroy exception", e);
+        } finally {
+            this.readWriteLock.readLock().unlock();
+        }
+
+        if (files != null) {
+            List<IndexFile> fileList = new ArrayList<IndexFile>();
+            for (int i = 0; i < (files.length - 1); i++) {
+                IndexFile f = (IndexFile) files[i];
+                if (f.getEndPhyOffset() < offset) {
+                    fileList.add(f);
+                } else {
+                    break;
+                }
+            }
+
+            this.deleteExpiredFile(fileList);
+        }
+    }
+
+    private void deleteExpiredFile(List<IndexFile> files) {
+        if (!files.isEmpty()) {
+            try {
+                this.readWriteLock.writeLock().lock();
+                for (IndexFile file : files) {
+                    boolean destroyed = file.destroy(3000);
+                    destroyed = destroyed && this.indexFileList.remove(file);
+                    if (!destroyed) {
+                        log.error("deleteExpiredFile remove failed.");
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("deleteExpiredFile has exception.", e);
+            } finally {
+                this.readWriteLock.writeLock().unlock();
+            }
+        }
     }
 
     private IndexFile getAndCreateLastIndexFile() {

@@ -5,6 +5,7 @@ import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.route.QueueData;
 import cn.xianyijun.wisp.common.protocol.route.TopicRouteData;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
  * @author xianyijun
  */
 @Data
+@ToString
 public class TopicPublishInfo {
     private boolean orderTopic = false;
     private boolean haveTopicRouterInfo = false;

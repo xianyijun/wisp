@@ -45,11 +45,14 @@ public class MixAll {
     public static final String RETRY_GROUP_TOPIC_PREFIX = "%RETRY%";
     public static final String CID_RMQ_SYS_PREFIX = "CID_RMQ_SYS_";
     public static final String DLQ_GROUP_TOPIC_PREFIX = "%DLQ%";
-    private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "jmenv.tbsite.net";
+    private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "localhost:9876";
     public static final String WS_DOMAIN_NAME = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
 
     public static final String DEFAULT_PRODUCER_GROUP = "DEFAULT_PRODUCER";
     public static final String CLIENT_INNER_PRODUCER_GROUP = "CLIENT_INNER_PRODUCER";
+    public static final String UNIQUE_MSG_QUERY_FLAG = "_UNIQUE_KEY_QUERY";
+
+    public static final String DEFAULT_CONSUMER_GROUP = "DEFAULT_CONSUMER";
 
     public static void properties2Object(final Properties properties, final Object object) {
         Method[] methods = object.getClass().getMethods();
@@ -147,6 +150,10 @@ public class MixAll {
         return properties;
     }
 
+
+    public static String getRetryTopic(final String consumerGroup) {
+        return RETRY_GROUP_TOPIC_PREFIX + consumerGroup;
+    }
 
     public static void deleteFile(final String fileName) {
         File file = new File(fileName);

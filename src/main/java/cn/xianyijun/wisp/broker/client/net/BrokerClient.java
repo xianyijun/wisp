@@ -10,6 +10,7 @@ import cn.xianyijun.wisp.common.protocol.ResponseCode;
 import cn.xianyijun.wisp.common.protocol.body.GetConsumerStatusBody;
 import cn.xianyijun.wisp.common.protocol.body.ResetOffsetBody;
 import cn.xianyijun.wisp.common.protocol.header.GetConsumerStatusRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.NotifyConsumerIdsChangedRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ResetOffsetRequestHeader;
 import cn.xianyijun.wisp.exception.RemotingSendRequestException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
@@ -60,7 +61,6 @@ public class BrokerClient {
 
             long timeStampOffset;
             if (timeStamp == -1) {
-
                 timeStampOffset = this.brokerController.getMessageStore().getMaxOffsetInQueue(topic, i);
             } else {
                 timeStampOffset = this.brokerController.getMessageStore().getOffsetInQueueByTime(topic, i, timeStamp);
@@ -189,5 +189,26 @@ public class BrokerClient {
     ) throws RemotingSendRequestException, RemotingTimeoutException, InterruptedException {
         return this.brokerController.getRemotingServer().invokeSync(channel, request, 10000);
     }
+
+    public void notifyConsumerIdsChanged(
+            final Channel channel,
+            final String consumerGroup) {
+        if (null == consumerGroup) {
+            log.error("notifyConsumerIdsChanged consumerGroup is null");
+            return;
+        }
+
+        NotifyConsumerIdsChangedRequestHeader requestHeader = new NotifyConsumerIdsChangedRequestHeader();
+        requestHeader.setConsumerGroup(consumerGroup);
+        RemotingCommand request =
+                RemotingCommand.createRequestCommand(RequestCode.NOTIFY_CONSUMER_IDS_CHANGED, requestHeader);
+
+        try {
+            this.brokerController.getRemotingServer().invokeOneWay(channel, request, 10);
+        } catch (Exception e) {
+            log.error("notifyConsumerIdsChanged exception, " + consumerGroup, e.getMessage());
+        }
+    }
+
 
 }

@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.List;
 
 /**
  * @author xianyijun
@@ -148,6 +149,71 @@ public class IndexFile {
         }
     }
 
+    public boolean isTimeMatched(final long begin, final long end) {
+        boolean result = begin < this.indexHeader.getBeginTimestamp() && end > this.indexHeader.getEndTimestamp();
+        result = result || (begin >= this.indexHeader.getBeginTimestamp() && begin <= this.indexHeader.getEndTimestamp());
+        result = result || (end >= this.indexHeader.getBeginTimestamp() && end <= this.indexHeader.getEndTimestamp());
+        return result;
+    }
+
+    public void selectPhyOffSet(final List<Long> phyOffsets, final String key, final int maxNum,
+                                final long begin, final long end, boolean lock) {
+        if (this.mappedFile.hold()) {
+            int keyHash = indexKeyHashMethod(key);
+            int slotPos = keyHash % this.hashSlotNum;
+            int absSlotPos = IndexHeader.INDEX_HEADER_SIZE + slotPos * hashSlotSize;
+
+            try {
+                int slotValue = this.mappedByteBuffer.getInt(absSlotPos);
+
+                if (slotValue <= invalidIndex || slotValue > this.indexHeader.getIndexCount()
+                        || this.indexHeader.getIndexCount() <= 1) {
+                    //
+                } else {
+                    for (int nextIndexToRead = slotValue; ; ) {
+                        if (phyOffsets.size() >= maxNum) {
+                            break;
+                        }
+
+                        int absIndexPos =
+                                IndexHeader.INDEX_HEADER_SIZE + this.hashSlotNum * hashSlotSize
+                                        + nextIndexToRead * indexSize;
+
+                        int keyHashRead = this.mappedByteBuffer.getInt(absIndexPos);
+                        long phyOffsetRead = this.mappedByteBuffer.getLong(absIndexPos + 4);
+
+                        long timeDiff = (long) this.mappedByteBuffer.getInt(absIndexPos + 4 + 8);
+                        int prevIndexRead = this.mappedByteBuffer.getInt(absIndexPos + 4 + 8 + 4);
+
+                        if (timeDiff < 0) {
+                            break;
+                        }
+
+                        timeDiff *= 1000L;
+
+                        long timeRead = this.indexHeader.getBeginTimestamp() + timeDiff;
+                        boolean timeMatched = (timeRead >= begin) && (timeRead <= end);
+
+                        if (keyHash == keyHashRead && timeMatched) {
+                            phyOffsets.add(phyOffsetRead);
+                        }
+
+                        if (prevIndexRead <= invalidIndex
+                                || prevIndexRead > this.indexHeader.getIndexCount()
+                                || prevIndexRead == nextIndexToRead || timeRead < begin) {
+                            break;
+                        }
+
+                        nextIndexToRead = prevIndexRead;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("selectPhyOffset exception ", e);
+            } finally {
+                this.mappedFile.release();
+            }
+        }
+    }
     public boolean isWriteFull() {
         return this.indexHeader.getIndexCount() >= this.indexNum;
     }

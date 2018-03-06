@@ -2,6 +2,9 @@ package cn.xianyijun.wisp.common.protocol;
 
 import cn.xianyijun.wisp.remoting.protocol.RemotingSysResponseCode;
 
+/**
+ * @author xianyijun
+ */
 public class ResponseCode extends RemotingSysResponseCode {
 
     public static final int FLUSH_DISK_TIMEOUT = 10;

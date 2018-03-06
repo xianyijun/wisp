@@ -14,6 +14,7 @@ import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.ServiceState;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.message.BatchMessage;
+import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.Message;
 import cn.xianyijun.wisp.common.message.MessageAccessor;
 import cn.xianyijun.wisp.common.message.MessageClientIDSetter;
@@ -22,6 +23,7 @@ import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.message.MessageType;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
+import cn.xianyijun.wisp.common.protocol.header.CheckTransactionStateRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.exception.BrokerException;
@@ -172,6 +174,11 @@ public class ProducerDelegate implements MQProducerInner {
         return this.defaultMQProducer.isUnitMode();
     }
 
+    @Override
+    public void checkTransactionState(String addr, ExtMessage msg, CheckTransactionStateRequestHeader checkRequestHeader) {
+        //todo
+    }
+
     /**
      * Send send result.
      *
@@ -207,7 +214,7 @@ public class ProducerDelegate implements MQProducerInner {
             Message msg,
             final CommunicationMode communicationMode,
             final SendCallback sendCallback,
-            final long timeout)  throws ClientException, RemotingException, BrokerException, InterruptedException {
+            final long timeout)  throws ClientException, BrokerException, InterruptedException {
         this.makeSureStateOK();
 
         final long invokeID = random.nextLong();
@@ -218,23 +225,23 @@ public class ProducerDelegate implements MQProducerInner {
         TopicPublishInfo topicPublishInfo = this.tryToFindTopicPublishInfo(msg.getTopic());
 
         if (topicPublishInfo != null && topicPublishInfo.ok()) {
-            MessageQueue mq = null;
+            MessageQueue messageQueue = null;
             Exception exception = null;
             SendResult sendResult = null;
             int timesTotal = communicationMode == CommunicationMode.SYNC ? 1 + this.defaultMQProducer.getRetryTimesWhenSendFailed() : 1;
             int times = 0;
             String[] brokersSent = new String[timesTotal];
             for (; times < timesTotal; times++) {
-                String lastBrokerName = null == mq ? null : mq.getBrokerName();
+                String lastBrokerName = null == messageQueue ? null : messageQueue.getBrokerName();
                 MessageQueue mqSelected = this.selectOneMessageQueue(topicPublishInfo, lastBrokerName);
                 if (mqSelected != null) {
-                    mq = mqSelected;
-                    brokersSent[times] = mq.getBrokerName();
+                    messageQueue = mqSelected;
+                    brokersSent[times] = messageQueue.getBrokerName();
                     try {
                         beginTimestampPrev = System.currentTimeMillis();
-                        sendResult = this.doKernelSend(msg, mq, communicationMode, sendCallback, topicPublishInfo, timeout);
+                        sendResult = this.doKernelSend(msg, messageQueue, communicationMode, sendCallback, topicPublishInfo, timeout);
                         endTimestamp = System.currentTimeMillis();
-                        this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, false);
+                        this.updateFaultItem(messageQueue.getBrokerName(), endTimestamp - beginTimestampPrev, false);
                         switch (communicationMode) {
                             case ASYNC:
                                 return null;
@@ -246,21 +253,20 @@ public class ProducerDelegate implements MQProducerInner {
                                         continue;
                                     }
                                 }
-
                                 return sendResult;
                             default:
                                 break;
                         }
                     } catch (RemotingException | ClientException e) {
                         endTimestamp = System.currentTimeMillis();
-                        this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, true);
-                        log.warn(String.format("sendKernelImpl exception, resend at once, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, mq), e);
+                        this.updateFaultItem(messageQueue.getBrokerName(), endTimestamp - beginTimestampPrev, true);
+                        log.warn(String.format("sendKernelImpl exception, resend at once, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, messageQueue), e);
                         log.warn(msg.toString());
                         exception = e;
                     } catch (BrokerException e) {
                         endTimestamp = System.currentTimeMillis();
-                        this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, true);
-                        log.warn(String.format("sendKernelImpl exception, resend at once, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, mq), e);
+                        this.updateFaultItem(messageQueue.getBrokerName(), endTimestamp - beginTimestampPrev, true);
+                        log.warn(String.format("sendKernelImpl exception, resend at once, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, messageQueue), e);
                         log.warn(msg.toString());
                         exception = e;
                         switch (e.getResponseCode()) {
@@ -280,8 +286,8 @@ public class ProducerDelegate implements MQProducerInner {
                         }
                     } catch (InterruptedException e) {
                         endTimestamp = System.currentTimeMillis();
-                        this.updateFaultItem(mq.getBrokerName(), endTimestamp - beginTimestampPrev, false);
-                        log.warn(String.format("sendKernelImpl exception, throw exception, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, mq), e);
+                        this.updateFaultItem(messageQueue.getBrokerName(), endTimestamp - beginTimestampPrev, false);
+                        log.warn(String.format("sendKernelImpl exception, throw exception, InvokeID: %s, RT: %sms, Broker: %s", invokeID, endTimestamp - beginTimestampPrev, messageQueue), e);
                         log.warn(msg.toString());
 
                         log.warn("sendKernelImpl exception", e);
@@ -427,6 +433,7 @@ public class ProducerDelegate implements MQProducerInner {
                                       final SendCallback sendCallback,
                                       final TopicPublishInfo topicPublishInfo,
                                       final long timeout) throws ClientException, RemotingException, BrokerException, InterruptedException {
+        log.info("[ProduceDelegate] doKernelSend , msg：{} ，mq :{} , topicPublishInfo :{}",msg,mq,topicPublishInfo);
         String brokerAddr = this.clientFactory.findBrokerAddressInPublish(mq.getBrokerName());
         if (null == brokerAddr) {
             tryToFindTopicPublishInfo(mq.getTopic());
@@ -439,7 +446,6 @@ public class ProducerDelegate implements MQProducerInner {
 
             byte[] prevBody = msg.getBody();
             try {
-                //for MessageBatch,ID has been set in the generating process
                 if (!(msg instanceof BatchMessage)) {
                     MessageClientIDSetter.setUniqueID(msg);
                 }
@@ -506,9 +512,9 @@ public class ProducerDelegate implements MQProducerInner {
                         MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_RECONSUME_TIME);
                     }
 
-                    String maxReconsumeTimes = MessageAccessor.getMaxReConsumeTimes(msg);
-                    if (maxReconsumeTimes != null) {
-                        requestHeader.setMaxReConsumeTimes(Integer.valueOf(maxReconsumeTimes));
+                    String maxReConsumeTimes = MessageAccessor.getMaxReConsumeTimes(msg);
+                    if (maxReConsumeTimes != null) {
+                        requestHeader.setMaxReConsumeTimes(Integer.valueOf(maxReConsumeTimes));
                         MessageAccessor.clearProperty(msg, MessageConst.PROPERTY_MAX_RECONSUME_TIMES);
                     }
                 }
@@ -618,7 +624,7 @@ public class ProducerDelegate implements MQProducerInner {
      * @param context the context
      * @throws ClientException the client exception
      */
-    public void executeCheckForbiddenHook(final CheckForbiddenContext context) throws ClientException {
+    private void executeCheckForbiddenHook(final CheckForbiddenContext context) throws ClientException {
         if (hasCheckForbiddenHook()) {
             for (CheckForbiddenHook hook : checkForbiddenHookList) {
                 hook.checkForbidden(context);

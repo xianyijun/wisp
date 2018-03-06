@@ -75,7 +75,7 @@ public class RouteInfoManager {
                 BrokerData brokerData = this.brokerAddrTable.get(brokerName);
                 if (null == brokerData) {
                     registerFirst = true;
-                    brokerData = new BrokerData(clusterName, brokerName, new HashMap<Long, String>());
+                    brokerData = new BrokerData(clusterName, brokerName, new HashMap<>());
                     this.brokerAddrTable.put(brokerName, brokerData);
                 }
                 String oldAddr = brokerData.getBrokerAddrs().put(brokerId, brokerAddr);
@@ -563,13 +563,12 @@ public class RouteInfoManager {
 
     public TopicRouteData pickupTopicRouteData(final String topic) {
         TopicRouteData topicRouteData = new TopicRouteData();
-        boolean foundQueueData = false;
         boolean foundBrokerData = false;
-        Set<String> brokerNameSet = new HashSet<String>();
-        List<BrokerData> brokerDataList = new LinkedList<BrokerData>();
+        Set<String> brokerNameSet = new HashSet<>();
+        List<BrokerData> brokerDataList = new LinkedList<>();
         topicRouteData.setBrokerDatas(brokerDataList);
 
-        HashMap<String, List<String>> filterServerMap = new HashMap<String, List<String>>();
+        HashMap<String, List<String>> filterServerMap = new HashMap<>();
         topicRouteData.setFilterServerTable(filterServerMap);
 
         try {
@@ -578,7 +577,6 @@ public class RouteInfoManager {
                 List<QueueData> queueDataList = this.topicQueueTable.get(topic);
                 if (queueDataList != null) {
                     topicRouteData.setQueueDatas(queueDataList);
-                    foundQueueData = true;
 
                     for (QueueData qd : queueDataList) {
                         brokerNameSet.add(qd.getBrokerName());
@@ -602,10 +600,6 @@ public class RouteInfoManager {
             }
         } catch (Exception e) {
             log.error("pickupTopicRouteData Exception", e);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("pickupTopicRouteData {} {}", topic, topicRouteData);
         }
 
         if (foundBrokerData) {

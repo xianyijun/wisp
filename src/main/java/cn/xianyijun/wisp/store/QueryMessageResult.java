@@ -19,6 +19,7 @@ public class QueryMessageResult {
 
     private final List<ByteBuffer> messageBufferList = new ArrayList<ByteBuffer>(100);
     private long indexLastUpdateTimestamp;
+    @Setter
     private long indexLastUpdatePhyOffset;
 
     private int bufferTotalSize = 0;
@@ -28,4 +29,11 @@ public class QueryMessageResult {
             select.release();
         }
     }
+
+    public void addMessage(final SelectMappedBufferResult mappedBuffer) {
+        this.messageMappedList.add(mappedBuffer);
+        this.messageBufferList.add(mappedBuffer.getByteBuffer());
+        this.bufferTotalSize += mappedBuffer.getSize();
+    }
+
 }

@@ -1,6 +1,9 @@
 package cn.xianyijun.wisp.broker.client;
 
 import cn.xianyijun.wisp.common.RemotingHelper;
+import cn.xianyijun.wisp.common.consumer.ConsumeWhereEnum;
+import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;
+import cn.xianyijun.wisp.common.protocol.heartbeat.MessageModel;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import io.netty.channel.Channel;
@@ -11,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -76,7 +80,6 @@ public class ConsumerManager {
         return 0;
     }
 
-
     public HashSet<String> queryTopicConsumeByWho(final String topic) {
         HashSet<String> groups = new HashSet<>();
         for (Map.Entry<String, ConsumerGroupInfo> entry : this.consumerTable.entrySet()) {
@@ -117,5 +120,50 @@ public class ConsumerManager {
         }
     }
 
+    public boolean registerConsumer(final String group, final ClientChannelInfo clientChannelInfo,
+                                    ConsumeType consumeType, MessageModel messageModel, ConsumeWhereEnum consumeFromWhere,
+                                    final Set<SubscriptionData> subList, boolean isNotifyConsumerIdsChangedEnable) {
+
+        ConsumerGroupInfo consumerGroupInfo = this.consumerTable.get(group);
+        if (null == consumerGroupInfo) {
+            ConsumerGroupInfo tmp = new ConsumerGroupInfo(group, consumeType, messageModel, consumeFromWhere);
+            ConsumerGroupInfo prev = this.consumerTable.putIfAbsent(group, tmp);
+            consumerGroupInfo = prev != null ? prev : tmp;
+        }
+
+        boolean r1 =
+                consumerGroupInfo.updateChannel(clientChannelInfo, consumeType, messageModel,
+                        consumeFromWhere);
+        boolean r2 = consumerGroupInfo.updateSubscription(subList);
+
+        if (r1 || r2) {
+            if (isNotifyConsumerIdsChangedEnable) {
+                this.consumerIdsChangeListener.handle(ConsumerGroupEvent.CHANGE, group, consumerGroupInfo.getAllChannel());
+            }
+        }
+
+        this.consumerIdsChangeListener.handle(ConsumerGroupEvent.REGISTER, group, subList);
+
+        return r1 || r2;
+    }
+
+    public void unregisterConsumer(final String group, final ClientChannelInfo clientChannelInfo,
+                                   boolean isNotifyConsumerIdsChangedEnable) {
+        ConsumerGroupInfo consumerGroupInfo = this.consumerTable.get(group);
+        if (null != consumerGroupInfo) {
+            consumerGroupInfo.unregisterChannel(clientChannelInfo);
+            if (consumerGroupInfo.getChannelInfoTable().isEmpty()) {
+                ConsumerGroupInfo remove = this.consumerTable.remove(group);
+                if (remove != null) {
+                    log.info("unregister consumer ok, no any connection, and remove consumer group, {}", group);
+
+                    this.consumerIdsChangeListener.handle(ConsumerGroupEvent.UNREGISTER, group);
+                }
+            }
+            if (isNotifyConsumerIdsChangedEnable) {
+                this.consumerIdsChangeListener.handle(ConsumerGroupEvent.CHANGE, group, consumerGroupInfo.getAllChannel());
+            }
+        }
+    }
 
 }

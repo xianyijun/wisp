@@ -54,9 +54,9 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
     }
 
     @Override
-    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
+    public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
+        log.info("[ProduceMessageProcessor] processRequest , request: {}",request);
         ProduceMessageContext mqTraceContext;
-
         switch (request.getCode()) {
             case RequestCode.CONSUMER_SEND_MSG_BACK:
                 return this.consumerSendMsgBack(ctx, request);
@@ -86,6 +86,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
                                            final ProduceMessageContext produceMessageContext,
                                            final ProduceMessageRequestHeader requestHeader) {
 
+        log.info("[ProduceMessageProcessor] produceMessage  request :{}", request);
         final RemotingCommand response = RemotingCommand.createResponseCommand(ProduceMessageResponseHeader.class);
         final ProduceMessageResponseHeader responseHeader = (ProduceMessageResponseHeader) response.getCustomHeader();
 
@@ -96,10 +97,10 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
 
         log.debug("receive SendMessage request command, {}", request);
 
-        final long startTimstamp = this.brokerController.getBrokerConfig().getStartAcceptSendRequestTimeStamp();
-        if (this.brokerController.getMessageStore().now() < startTimstamp) {
+        final long startTimestamp = this.brokerController.getBrokerConfig().getStartAcceptSendRequestTimeStamp();
+        if (this.brokerController.getMessageStore().now() < startTimestamp) {
             response.setCode(ResponseCode.SYSTEM_ERROR);
-            response.setRemark(String.format("broker unable to service, until %s", UtilAll.timeMillisToHumanString(startTimstamp)));
+            response.setRemark(String.format("broker unable to service, until %s", UtilAll.timeMillisToHumanString(startTimestamp)));
             return response;
         }
 
@@ -147,12 +148,13 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
 
         PutMessageResult putMessageResult = this.brokerController.getMessageStore().putMessage(msgInner);
 
+        log.info("[ProduceMessageProcessor.produceMessage] putMessageResult: {} , msgInner: {} ", putMessageResult , msgInner);
         return handlePutMessageResult(putMessageResult, response, request, msgInner, responseHeader, produceMessageContext, ctx, queueIdInt);
 
     }
 
     private RemotingCommand produceBatchMessage(ChannelHandlerContext ctx, RemotingCommand request, ProduceMessageContext produceMessageContext, ProduceMessageRequestHeader requestHeader) {
-
+        log.info("[ProduceMessageProcessor] produceBatchMessage , request:{} , requestHeader: {}", request, requestHeader );
         final RemotingCommand response = RemotingCommand.createResponseCommand(ProduceMessageResponseHeader.class);
         final ProduceMessageResponseHeader responseHeader = (ProduceMessageResponseHeader) response.getCustomHeader();
 
@@ -219,6 +221,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
                                                    RemotingCommand request, ExtMessage msg,
                                                    ProduceMessageResponseHeader responseHeader, ProduceMessageContext produceMessageContext, ChannelHandlerContext ctx,
                                                    int queueIdInt) {
+        log.info("[ProduceMessageProcessor.handlePutMessageResult]  request :{} ,response:{} , msg:{} ,responseHeader:{}", request , response ,msg , responseHeader.getClass().getSimpleName());
         if (putMessageResult == null) {
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark("store putMessage return null");

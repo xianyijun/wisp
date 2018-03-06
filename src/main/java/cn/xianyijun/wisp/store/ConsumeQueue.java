@@ -16,7 +16,6 @@ import java.util.List;
 public class ConsumeQueue {
     public static final int CQ_STORE_UNIT_SIZE = 20;
 
-
     private final DefaultMessageStore defaultMessageStore;
 
     private final MappedFileQueue mappedFileQueue;
@@ -109,6 +108,20 @@ public class ConsumeQueue {
         this.defaultMessageStore.getRunningFlags().makeLogicQueueError();
     }
 
+
+    public void checkSelf() {
+        mappedFileQueue.checkSelf();
+        if (isExtReadEnable()) {
+            this.consumeQueueExt.checkSelf();
+        }
+    }
+
+
+    public int deleteExpiredFile(long offset) {
+        int cnt = this.mappedFileQueue.deleteExpiredFileByOffset(offset, CQ_STORE_UNIT_SIZE);
+        this.correctMinOffset(offset);
+        return cnt;
+    }
 
 
     public ConsumeQueueExt.CqExtUnit getExt(final long offset) {
@@ -314,6 +327,34 @@ public class ConsumeQueue {
         return null;
     }
 
+    public long getLastOffset() {
+        long lastOffset = -1;
+
+        MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();
+        if (mappedFile != null) {
+
+            int position = mappedFile.getWrotePosition() - CQ_STORE_UNIT_SIZE;
+            if (position < 0) {
+                position = 0;
+            }
+
+            ByteBuffer byteBuffer = mappedFile.sliceByteBuffer();
+            byteBuffer.position(position);
+            for (int i = 0; i < this.mappedFileSize; i += CQ_STORE_UNIT_SIZE) {
+                long offset = byteBuffer.getLong();
+                int size = byteBuffer.getInt();
+                byteBuffer.getLong();
+
+                if (offset >= 0 && size > 0) {
+                    lastOffset = offset + size;
+                } else {
+                    break;
+                }
+            }
+        }
+        return lastOffset;
+    }
+
 
     public void truncateDirtyLogicFiles(long phyOffset) {
 
@@ -405,9 +446,87 @@ public class ConsumeQueue {
         return result;
     }
 
+    public long rollNextFile(final long index) {
+        int mappedFileSize = this.mappedFileSize;
+        int totalUnitsInFile = mappedFileSize / CQ_STORE_UNIT_SIZE;
+        return index + totalUnitsInFile - index % totalUnitsInFile;
+    }
+
+    public long getOffsetInQueueByTime(final long timestamp) {
+        MappedFile mappedFile = this.mappedFileQueue.getMappedFileByTime(timestamp);
+        if (mappedFile != null) {
+            long offset = 0;
+            int low = minLogicOffset > mappedFile.getFileFromOffset() ? (int) (minLogicOffset - mappedFile.getFileFromOffset()) : 0;
+            int high = 0;
+            int midOffset = -1, targetOffset = -1, leftOffset = -1, rightOffset = -1;
+            long leftIndexValue = -1L, rightIndexValue = -1L;
+            long minPhysicOffset = this.defaultMessageStore.getMinPhyOffset();
+            SelectMappedBufferResult sbr = mappedFile.selectMappedBuffer(0);
+            if (null != sbr) {
+                ByteBuffer byteBuffer = sbr.getByteBuffer();
+                high = byteBuffer.limit() - CQ_STORE_UNIT_SIZE;
+                try {
+                    while (high >= low) {
+                        midOffset = (low + high) / (2 * CQ_STORE_UNIT_SIZE) * CQ_STORE_UNIT_SIZE;
+                        byteBuffer.position(midOffset);
+                        long phyOffset = byteBuffer.getLong();
+                        int size = byteBuffer.getInt();
+                        if (phyOffset < minPhysicOffset) {
+                            low = midOffset + CQ_STORE_UNIT_SIZE;
+                            leftOffset = midOffset;
+                            continue;
+                        }
+
+                        long storeTime =
+                                this.defaultMessageStore.getCommitLog().pickupStoreTimestamp(phyOffset, size);
+                        if (storeTime < 0) {
+                            return 0;
+                        } else if (storeTime == timestamp) {
+                            targetOffset = midOffset;
+                            break;
+                        } else if (storeTime > timestamp) {
+                            high = midOffset - CQ_STORE_UNIT_SIZE;
+                            rightOffset = midOffset;
+                            rightIndexValue = storeTime;
+                        } else {
+                            low = midOffset + CQ_STORE_UNIT_SIZE;
+                            leftOffset = midOffset;
+                            leftIndexValue = storeTime;
+                        }
+                    }
+
+                    if (targetOffset != -1) {
+
+                        offset = targetOffset;
+                    } else {
+                        if (leftIndexValue == -1) {
+
+                            offset = rightOffset;
+                        } else if (rightIndexValue == -1) {
+
+                            offset = leftOffset;
+                        } else {
+                            offset =
+                                    Math.abs(timestamp - leftIndexValue) > Math.abs(timestamp
+                                            - rightIndexValue) ? rightOffset : leftOffset;
+                        }
+                    }
+
+                    return (mappedFile.getFileFromOffset() + offset) / CQ_STORE_UNIT_SIZE;
+                } finally {
+                    sbr.release();
+                }
+            }
+        }
+        return 0;
+    }
 
     private boolean isExtReadEnable() {
         return this.consumeQueueExt != null;
+    }
+
+    public long getMessageTotalInQueue() {
+        return this.getMaxOffsetInQueue() - this.getMinOffsetInQueue();
     }
 
     public long getMinOffsetInQueue() {

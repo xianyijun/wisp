@@ -1,6 +1,8 @@
 package cn.xianyijun.wisp.client.producer.inner;
 
 import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
+import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.common.protocol.header.CheckTransactionStateRequestHeader;
 
 import java.util.Set;
 
@@ -39,4 +41,17 @@ public interface MQProducerInner {
      * @return the boolean
      */
     boolean isUnitMode();
+
+    /**
+     * Check transaction state.
+     *
+     * @param addr               the addr
+     * @param msg                the msg
+     * @param checkRequestHeader the check request header
+     */
+    void checkTransactionState(
+            final String addr,
+            final ExtMessage msg,
+            final CheckTransactionStateRequestHeader checkRequestHeader);
+
 }

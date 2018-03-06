@@ -183,6 +183,25 @@ public class MappedFileQueue {
         }
     }
 
+    public void checkSelf() {
+
+        if (!this.mappedFiles.isEmpty()) {
+            Iterator<MappedFile> iterator = mappedFiles.iterator();
+            MappedFile pre = null;
+            while (iterator.hasNext()) {
+                MappedFile cur = iterator.next();
+
+                if (pre != null) {
+                    if (cur.getFileFromOffset() - pre.getFileFromOffset() != this.mappedFileSize) {
+                        log.error("[BUG]The mappedFile queue's data is damaged, the adjacent mappedFile's offset don't match. pre file {}, cur file {}",
+                                pre.getFileName(), cur.getFileName());
+                    }
+                }
+                pre = cur;
+            }
+        }
+    }
+
 
     public MappedFile getFirstMappedFile() {
         MappedFile mappedFileFirst = null;
@@ -297,6 +316,146 @@ public class MappedFileQueue {
         }
         return 0;
     }
+
+
+    public MappedFile getMappedFileByTime(final long timestamp) {
+        Object[] mfs = this.copyMappedFiles(0);
+
+        if (null == mfs) {
+            return null;
+        }
+
+        for (Object mf : mfs) {
+            MappedFile mappedFile = (MappedFile) mf;
+            if (mappedFile.getLastModifiedTimestamp() >= timestamp) {
+                return mappedFile;
+            }
+        }
+        return (MappedFile) mfs[mfs.length - 1];
+    }
+
+
+    private Object[] copyMappedFiles(final int reservedMappedFiles) {
+        Object[] mfs;
+
+        if (this.mappedFiles.size() <= reservedMappedFiles) {
+            return null;
+        }
+
+        mfs = this.mappedFiles.toArray();
+        return mfs;
+    }
+
+    public boolean retryDeleteFirstFile(final long intervalForcibly) {
+        MappedFile mappedFile = this.getFirstMappedFile();
+        if (mappedFile != null) {
+            if (!mappedFile.isAvailable()) {
+                log.warn("the mappedFile was destroyed once, but still alive, " + mappedFile.getFileName());
+                boolean result = mappedFile.destroy(intervalForcibly);
+                if (result) {
+                    log.info("the mappedFile re delete OK, " + mappedFile.getFileName());
+                    List<MappedFile> tmpFiles = new ArrayList<MappedFile>();
+                    tmpFiles.add(mappedFile);
+                    this.deleteExpiredFile(tmpFiles);
+                } else {
+                    log.warn("the mappedFile re delete failed, " + mappedFile.getFileName());
+                }
+
+                return result;
+            }
+        }
+
+        return false;
+    }
+
+    public int deleteExpiredFileByTime(final long expiredTime,
+                                       final int deleteFilesInterval,
+                                       final long intervalForcibly,
+                                       final boolean cleanImmediately) {
+        Object[] mfs = this.copyMappedFiles(0);
+
+        if (null == mfs) {
+            return 0;
+        }
+
+        int mfsLength = mfs.length - 1;
+        int deleteCount = 0;
+        List<MappedFile> files = new ArrayList<MappedFile>();
+        for (int i = 0; i < mfsLength; i++) {
+            MappedFile mappedFile = (MappedFile) mfs[i];
+            long liveMaxTimestamp = mappedFile.getLastModifiedTimestamp() + expiredTime;
+            if (System.currentTimeMillis() >= liveMaxTimestamp || cleanImmediately) {
+                if (mappedFile.destroy(intervalForcibly)) {
+                    files.add(mappedFile);
+                    deleteCount++;
+
+                    if (files.size() >= DELETE_FILES_BATCH_MAX) {
+                        break;
+                    }
+
+                    if (deleteFilesInterval > 0 && (i + 1) < mfsLength) {
+                        try {
+                            Thread.sleep(deleteFilesInterval);
+                        } catch (InterruptedException ignored) {
+                        }
+                    }
+                } else {
+                    break;
+                }
+            } else {
+                //avoid deleting files in the middle
+                break;
+            }
+        }
+
+        deleteExpiredFile(files);
+
+        return deleteCount;
+    }
+
+    public int deleteExpiredFileByOffset(long offset, int unitSize) {
+        Object[] mfs = this.copyMappedFiles(0);
+
+        List<MappedFile> files = new ArrayList<MappedFile>();
+        int deleteCount = 0;
+        if (null != mfs) {
+
+            int mfsLength = mfs.length - 1;
+
+            for (int i = 0; i < mfsLength; i++) {
+                boolean destroy;
+                MappedFile mappedFile = (MappedFile) mfs[i];
+                SelectMappedBufferResult result = mappedFile.selectMappedBuffer(this.mappedFileSize - unitSize);
+                if (result != null) {
+                    long maxOffsetInLogicQueue = result.getByteBuffer().getLong();
+                    result.release();
+                    destroy = maxOffsetInLogicQueue < offset;
+                    if (destroy) {
+                        log.info("physic min offset " + offset + ", logics in current mappedFile max offset "
+                                + maxOffsetInLogicQueue + ", delete it");
+                    }
+                } else if (!mappedFile.isAvailable()) {
+                    log.warn("Found a hanged consume queue file, attempting to delete it.");
+                    destroy = true;
+                } else {
+                    log.warn("this being not executed forever.");
+                    break;
+                }
+
+                if (destroy && mappedFile.destroy(1000 * 60)) {
+                    files.add(mappedFile);
+                    deleteCount++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        deleteExpiredFile(files);
+
+        return deleteCount;
+    }
+
 
     public long remainHowManyDataToCommit() {
         return getMaxWrotePosition() - committedWhere;

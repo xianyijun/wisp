@@ -106,7 +106,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
     }
 
     @Override
-    public void sendOneway(Message msg) throws ClientException, RemotingException, InterruptedException {
+    public void sendOneWay(Message msg) throws ClientException, RemotingException, InterruptedException {
 
     }
 
@@ -131,7 +131,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
     }
 
     @Override
-    public void sendOneway(Message msg, MessageQueue mq) throws ClientException, RemotingException, InterruptedException {
+    public void sendOneWay(Message msg, MessageQueue mq) throws ClientException, RemotingException, InterruptedException {
 
     }
 
@@ -156,7 +156,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
     }
 
     @Override
-    public void sendOneway(Message msg, MessageQueueSelector selector, Object arg) throws ClientException, RemotingException, InterruptedException {
+    public void sendOneWay(Message msg, MessageQueueSelector selector, Object arg) throws ClientException, RemotingException, InterruptedException {
 
     }
 

@@ -17,7 +17,6 @@ public class MessageExtBrokerInner extends ExtMessage {
         if (StringUtils.isEmpty(tags)) {
             return 0;
         }
-
         return tags.hashCode();
     }
 }

@@ -23,7 +23,7 @@ public class PullRequestHoldService extends ServiceThread {
     private static final String TOPIC_QUEUE_ID_SEPARATOR = "@";
     private final BrokerController brokerController;
 
-    private ConcurrentMap<String/* topic@queueId */, ManyPullRequest> pullRequestTable =
+    private ConcurrentMap<String, ManyPullRequest> pullRequestTable =
             new ConcurrentHashMap<>(1024);
 
     private final SystemClock systemClock = new SystemClock();

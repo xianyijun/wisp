@@ -21,6 +21,10 @@ public class Message implements Serializable {
         this(topic, "", "", 0, body, true);
     }
 
+    public Message(String topic, String tags, byte[] body) {
+        this(topic, tags, "", 0, body, true);
+    }
+
     public Message(String topic, String tags, String keys, int flag, byte[] body, boolean waitStoreMsgOK) {
         this.topic = topic;
         this.flag = flag;
@@ -137,4 +141,14 @@ public class Message implements Serializable {
         putProperty(MessageConst.PROPERTY_BUYER_ID, buyerId);
     }
 
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "topic='" + topic + '\'' +
+                ", flag=" + flag +
+                ", properties=" + properties +
+                ", body=" + (body == null ? "": new String(body) ) +
+                '}';
+    }
 }

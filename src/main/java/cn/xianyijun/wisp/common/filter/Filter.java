@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.common.filter;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
 
+/**
+ * @author xianyijun
+ */
 public class Filter {
     public static String simpleClassName(final String className) {
         String simple = className;

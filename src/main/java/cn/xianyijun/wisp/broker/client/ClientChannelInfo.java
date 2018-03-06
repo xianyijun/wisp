@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.remoting.protocol.LanguageCode;
 import io.netty.channel.Channel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 /**
  * @author xianyijun
@@ -15,5 +16,6 @@ public class ClientChannelInfo {
     private final String clientId;
     private final LanguageCode language;
     private final int version;
+    @Setter
     private volatile long lastUpdateTimestamp = System.currentTimeMillis();
 }

@@ -17,12 +17,14 @@ import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.namesrv.TopAddressing;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
+import cn.xianyijun.wisp.common.protocol.body.CheckClientRequestBody;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.UnregisterClientRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.filtersrv.RegisterMessageFilterClassRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.namesrv.GetRouteInfoRequestHeader;
 import cn.xianyijun.wisp.common.protocol.heartbeat.HeartbeatData;
+import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.common.protocol.route.TopicRouteData;
 import cn.xianyijun.wisp.exception.BrokerException;
 import cn.xianyijun.wisp.exception.ClientException;
@@ -187,7 +189,7 @@ public class MQClient {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, requestHeader);
 
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
-        assert response != null;
+        log.info("[MQClient] getTopicRouteInfoFromNameServer, topic: {} , request: {},  response: {}", topic, request ,response);
         switch (response.getCode()) {
             case ResponseCode.TOPIC_NOT_EXIST: {
                 if (allowTopicNotExist && !topic.equals(MixAll.DEFAULT_TOPIC)) {
@@ -280,7 +282,6 @@ public class MQClient {
             case SYNC:
                 return this.sendMessageSync(addr, brokerName, msg, timeoutMillis, request);
             default:
-                assert false;
                 break;
         }
 
@@ -294,8 +295,8 @@ public class MQClient {
             final long timeoutMillis,
             final RemotingCommand request
     ) throws RemotingException, BrokerException, InterruptedException {
+        log.info("[MQClient] sendMessageSync ,addr :{} ,brokerName: {} , msg:{} , request :{}", addr,brokerName,msg, request);
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
-        assert response != null;
         return this.processSendResponse(brokerName, msg, response);
     }
 
@@ -347,30 +348,30 @@ public class MQClient {
                     producer.updateFaultItem(brokerName, System.currentTimeMillis() - responseFuture.getBeginTimestamp(), false);
                 } catch (Exception e) {
                     producer.updateFaultItem(brokerName, System.currentTimeMillis() - responseFuture.getBeginTimestamp(), true);
-                    onExceptionImpl(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
+                    onDoException(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
                             retryTimesWhenSendFailed, times, e, context, false, producer);
                 }
             } else {
                 producer.updateFaultItem(brokerName, System.currentTimeMillis() - responseFuture.getBeginTimestamp(), true);
                 if (!responseFuture.isSendRequestOK()) {
                     ClientException ex = new ClientException("send request failed", responseFuture.getCause());
-                    onExceptionImpl(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
+                    onDoException(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
                             retryTimesWhenSendFailed, times, ex, context, true, producer);
                 } else if (responseFuture.isTimeout()) {
                     ClientException ex = new ClientException("wait response timeout " + responseFuture.getTimeoutMillis() + "ms",
                             responseFuture.getCause());
-                    onExceptionImpl(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
+                    onDoException(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
                             retryTimesWhenSendFailed, times, ex, context, true, producer);
                 } else {
                     ClientException ex = new ClientException("unknow reseaon", responseFuture.getCause());
-                    onExceptionImpl(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
+                    onDoException(brokerName, msg, 0L, request, sendCallback, topicPublishInfo, instance,
                             retryTimesWhenSendFailed, times, ex, context, true, producer);
                 }
             }
         });
     }
 
-    private void onExceptionImpl(String brokerName, Message msg, long timeoutMillis, RemotingCommand request, SendCallback sendCallback, TopicPublishInfo topicPublishInfo, ClientInstance instance, int timesTotal, AtomicInteger curTimes, Exception e, SendMessageContext context, boolean needRetry, ProducerDelegate producer) {
+    private void onDoException(String brokerName, Message msg, long timeoutMillis, RemotingCommand request, SendCallback sendCallback, TopicPublishInfo topicPublishInfo, ClientInstance instance, int timesTotal, AtomicInteger curTimes, Exception e, SendMessageContext context, boolean needRetry, ProducerDelegate producer) {
         int tmp = curTimes.incrementAndGet();
         if (needRetry && tmp <= timesTotal) {
             String retryBrokerName = brokerName;
@@ -386,11 +387,11 @@ public class MQClient {
                 sendMessageAsync(addr, retryBrokerName, msg, timeoutMillis, request, sendCallback, topicPublishInfo, instance,
                         timesTotal, curTimes, context, producer);
             } catch (InterruptedException | RemotingTooMuchRequestException e1) {
-                onExceptionImpl(retryBrokerName, msg, timeoutMillis, request, sendCallback, topicPublishInfo, instance, timesTotal, curTimes, e1,
+                onDoException(retryBrokerName, msg, timeoutMillis, request, sendCallback, topicPublishInfo, instance, timesTotal, curTimes, e1,
                         context, false, producer);
             } catch (RemotingException e1) {
                 producer.updateFaultItem(brokerName, 3000, true);
-                onExceptionImpl(retryBrokerName, msg, timeoutMillis, request, sendCallback, topicPublishInfo, instance, timesTotal, curTimes, e1,
+                onDoException(retryBrokerName, msg, timeoutMillis, request, sendCallback, topicPublishInfo, instance, timesTotal, curTimes, e1,
                         context, true, producer);
             }
         } else {
@@ -412,6 +413,7 @@ public class MQClient {
             final Message msg,
             final RemotingCommand response
     ) throws BrokerException {
+        log.info("[MQClient] processSendResponse, msg:{} ,response: {}", msg ,response);
         switch (response.getCode()) {
             case ResponseCode.FLUSH_DISK_TIMEOUT:
             case ResponseCode.FLUSH_SLAVE_TIMEOUT:
@@ -433,7 +435,6 @@ public class MQClient {
                         sendStatus = SendStatus.SEND_OK;
                         break;
                     default:
-                        assert false;
                         break;
                 }
 
@@ -474,4 +475,24 @@ public class MQClient {
         throw new BrokerException(response.getCode(), response.getRemark());
     }
 
+    public void checkClientInBroker(final String brokerAddr, final String consumerGroup,
+                                    final String clientId, final SubscriptionData subscriptionData,
+                                    final long timeoutMillis)
+            throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException,
+            RemotingConnectException, ClientException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.CHECK_CLIENT_CONFIG, null);
+
+        CheckClientRequestBody requestBody = new CheckClientRequestBody();
+        requestBody.setClientId(clientId);
+        requestBody.setGroup(consumerGroup);
+        requestBody.setSubscriptionData(subscriptionData);
+
+        request.setBody(requestBody.encode());
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), brokerAddr), request, timeoutMillis);
+
+        if (ResponseCode.SUCCESS != response.getCode()) {
+            throw new ClientException(response.getCode(), response.getRemark());
+        }
+    }
 }

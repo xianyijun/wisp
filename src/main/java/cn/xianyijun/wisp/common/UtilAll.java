@@ -1,7 +1,9 @@
 package cn.xianyijun.wisp.common;
 
 import cn.xianyijun.wisp.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -11,17 +13,28 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 /**
  * @author xianyijun
  */
+@Slf4j
 public class UtilAll {
 
-    final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+
+    public static final String YYYY_MM_DD_HH_MM_SS = "yyyy-MM-dd HH:mm:ss";
+    public static final String YYYY_MM_DD_HH_MM_SS_SSS = "yyyy-MM-dd#HH:mm:ss:SSS";
+    public static final String YYYYMMDDHHMMSS = "yyyyMMddHHmmss";
+
+    private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     public static long computeNextMorningTimeMillis() {
         Calendar cal = Calendar.getInstance();
@@ -182,7 +195,7 @@ public class UtilAll {
     }
 
 
-    public static boolean isInternalIP(byte[] ip) {
+    private static boolean isInternalIP(byte[] ip) {
         if (ip.length != 4) {
             throw new RuntimeException("illegal ipv4 bytes");
         }
@@ -253,5 +266,100 @@ public class UtilAll {
     private static byte charToByte(char c) {
         return (byte) "0123456789ABCDEF".indexOf(c);
     }
+
+    public static byte[] unCompress(final byte[] src) throws IOException {
+        byte[] result = src;
+        byte[] uncompressData = new byte[src.length];
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(src);
+        InflaterInputStream inflaterInputStream = new InflaterInputStream(byteArrayInputStream);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(src.length);
+
+        try {
+            while (true) {
+                int len = inflaterInputStream.read(uncompressData, 0, uncompressData.length);
+                if (len <= 0) {
+                    break;
+                }
+                byteArrayOutputStream.write(uncompressData, 0, len);
+            }
+            byteArrayOutputStream.flush();
+            result = byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            throw e;
+        } finally {
+            try {
+                byteArrayInputStream.close();
+            } catch (IOException e) {
+                log.error("Failed to close the stream", e);
+            }
+            try {
+                inflaterInputStream.close();
+            } catch (IOException e) {
+                log.error("Failed to close the stream", e);
+            }
+            try {
+                byteArrayOutputStream.close();
+            } catch (IOException e) {
+                log.error("Failed to close the stream", e);
+            }
+        }
+
+        return result;
+    }
+
+    public static Date parseDate(String date, String pattern) {
+        SimpleDateFormat df = new SimpleDateFormat(pattern);
+        try {
+            return df.parse(date);
+        } catch (ParseException e) {
+            return null;
+        }
+    }
+
+
+    public static String jstack() {
+        return jstack(Thread.getAllStackTraces());
+    }
+
+    public static String jstack(Map<Thread, StackTraceElement[]> map) {
+        StringBuilder result = new StringBuilder();
+        try {
+            for (Map.Entry<Thread, StackTraceElement[]> entry : map.entrySet()) {
+                StackTraceElement[] elements = entry.getValue();
+                Thread thread = entry.getKey();
+                if (elements != null && elements.length > 0) {
+                    String threadName = entry.getKey().getName();
+                    result.append(String.format("%-40sTID: %d STATE: %s%n", threadName, thread.getId(), thread.getState()));
+                    for (StackTraceElement el : elements) {
+                        result.append(String.format("%-40s%s%n", threadName, el.toString()));
+                    }
+                    result.append("\n");
+                }
+            }
+        } catch (Throwable e) {
+            result.append(RemotingHelper.exceptionSimpleDesc(e));
+        }
+
+        return result.toString();
+    }
+
+    public static boolean isItTimeToDo(final String when) {
+        String[] whiles = when.split(";");
+        if (whiles.length > 0) {
+            Calendar now = Calendar.getInstance();
+            for (String w : whiles) {
+                int nowHour = Integer.parseInt(w);
+                if (nowHour == now.get(Calendar.HOUR_OF_DAY)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static long computeTimeMilliseconds(final long beginTime) {
+        return System.currentTimeMillis() - beginTime;
+    }
+
 
 }

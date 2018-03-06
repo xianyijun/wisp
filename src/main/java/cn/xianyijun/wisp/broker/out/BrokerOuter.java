@@ -36,6 +36,7 @@ import java.util.List;
 @Slf4j
 @Getter
 public class BrokerOuter {
+    private static final long DEFAULT_BROKER_TIME_OUT = 30000;
 
     private final RemotingClient remotingClient;
 
@@ -86,7 +87,7 @@ public class BrokerOuter {
             RemotingTimeoutException, InterruptedException, BrokerException {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_TOPIC_CONFIG, null);
 
-        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(true, addr), request, 3000);
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(true, addr), request, DEFAULT_BROKER_TIME_OUT);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
@@ -102,7 +103,7 @@ public class BrokerOuter {
             final String addr) throws InterruptedException, RemotingTimeoutException,
             RemotingSendRequestException, RemotingConnectException, BrokerException {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_CONSUMER_OFFSET, null);
-        RemotingCommand response = this.remotingClient.invokeSync(addr, request, 3000);
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, DEFAULT_BROKER_TIME_OUT);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
@@ -119,7 +120,7 @@ public class BrokerOuter {
             final String addr) throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException,
             RemotingConnectException, BrokerException, UnsupportedEncodingException {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_DELAY_OFFSET, null);
-        RemotingCommand response = this.remotingClient.invokeSync(addr, request, 3000);
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, DEFAULT_BROKER_TIME_OUT);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
@@ -135,7 +136,7 @@ public class BrokerOuter {
             final String addr) throws InterruptedException, RemotingTimeoutException,
             RemotingSendRequestException, RemotingConnectException, BrokerException {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_SUBSCRIPTIONGROUP_CONFIG, null);
-        RemotingCommand response = this.remotingClient.invokeSync(addr, request, 3000);
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, DEFAULT_BROKER_TIME_OUT);
         assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
@@ -155,7 +156,7 @@ public class BrokerOuter {
             final String haServerAddr,
             final TopicConfigSerializeWrapper topicConfigWrapper,
             final List<String> filterServerList,
-            final boolean oneway,
+            final boolean oneWay,
             final int timeoutMills) {
         RegisterBrokerResult registerBrokerResult = null;
 
@@ -164,7 +165,7 @@ public class BrokerOuter {
             for (String nameServerAddr : nameServerAddressList) {
                 try {
                     RegisterBrokerResult result = this.registerBroker(nameServerAddr, clusterName, brokerAddr, brokerName, brokerId,
-                            haServerAddr, topicConfigWrapper, filterServerList, oneway, timeoutMills);
+                            haServerAddr, topicConfigWrapper, filterServerList, oneWay, timeoutMills);
                     if (result != null) {
                         registerBrokerResult = result;
                     }

@@ -4,9 +4,11 @@ import cn.xianyijun.wisp.broker.BrokerController;
 import cn.xianyijun.wisp.broker.BrokerPathConfigHelper;
 import cn.xianyijun.wisp.common.AbstractConfigManager;
 import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
+import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.filter.FilterFactory;
 import cn.xianyijun.wisp.filter.utils.BloomFilter;
+import cn.xianyijun.wisp.filter.utils.BloomFilterData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,6 +123,81 @@ public class ConsumerFilterManager extends AbstractConfigManager {
         return this.filterDataByTopic.get(topic).getGroupFilterData().get(consumerGroup);
     }
 
+    public void register(final String consumerGroup, final Collection<SubscriptionData> subList) {
+        for (SubscriptionData subscriptionData : subList) {
+            register(
+                    subscriptionData.getTopic(),
+                    consumerGroup,
+                    subscriptionData.getSubString(),
+                    subscriptionData.getExpressionType(),
+                    subscriptionData.getSubVersion()
+            );
+        }
+
+        // make illegal topic dead.
+        Collection<ConsumerFilterData> groupFilterData = getByGroup(consumerGroup);
+
+        for (ConsumerFilterData filterData : groupFilterData) {
+            boolean exist = false;
+            for (SubscriptionData subscriptionData : subList) {
+                if (subscriptionData.getTopic().equals(filterData.getTopic())) {
+                    exist = true;
+                    break;
+                }
+            }
+
+            if (!exist && !filterData.isDead()) {
+                filterData.setDeadTime(System.currentTimeMillis());
+                log.info("Consumer filter changed: {}, make illegal topic dead:{}", consumerGroup, filterData);
+            }
+        }
+    }
+
+    public boolean register(final String topic, final String consumerGroup, final String expression,
+                            final String type, final long clientVersion) {
+        if (ExpressionType.isTagType(type)) {
+            return false;
+        }
+
+        if (expression == null || expression.length() == 0) {
+            return false;
+        }
+
+        FilterDataMapByTopic filterDataMapByTopic = this.filterDataByTopic.get(topic);
+
+        if (filterDataMapByTopic == null) {
+            FilterDataMapByTopic temp = new FilterDataMapByTopic(topic);
+            FilterDataMapByTopic prev = this.filterDataByTopic.putIfAbsent(topic, temp);
+            filterDataMapByTopic = prev != null ? prev : temp;
+        }
+
+        BloomFilterData bloomFilterData = bloomFilter.generate(consumerGroup + "#" + topic);
+
+        return filterDataMapByTopic.register(consumerGroup, expression, type, bloomFilterData, clientVersion);
+    }
+
+    public void unRegister(final String consumerGroup) {
+        for (String topic : filterDataByTopic.keySet()) {
+            this.filterDataByTopic.get(topic).unRegister(consumerGroup);
+        }
+    }
+
+    private Collection<ConsumerFilterData> getByGroup(final String consumerGroup) {
+        Collection<ConsumerFilterData> ret = new HashSet<ConsumerFilterData>();
+
+        for (FilterDataMapByTopic filterDataMapByTopic : this.filterDataByTopic.values()) {
+            for (ConsumerFilterData filterData : filterDataMapByTopic.getGroupFilterData().values()) {
+                if (filterData.getConsumerGroup().equals(consumerGroup)) {
+                    ret.add(filterData);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+
+
 
     @Getter
     @NoArgsConstructor
@@ -131,7 +209,110 @@ public class ConsumerFilterManager extends AbstractConfigManager {
         @NonNull
         private String topic;
 
-        protected void reAlive(ConsumerFilterData filterData) {
+        void unRegister(String consumerGroup) {
+            if (!this.groupFilterData.containsKey(consumerGroup)) {
+                return;
+            }
+
+            ConsumerFilterData data = this.groupFilterData.get(consumerGroup);
+
+            if (data == null || data.isDead()) {
+                return;
+            }
+
+            long now = System.currentTimeMillis();
+
+            log.info("Unregister consumer filter: {}, deadTime: {}", data, now);
+
+            data.setDeadTime(now);
+        }
+
+        public boolean register(String consumerGroup, String expression, String type, BloomFilterData bloomFilterData,
+                                long clientVersion) {
+            ConsumerFilterData old = this.groupFilterData.get(consumerGroup);
+
+            if (old == null) {
+                ConsumerFilterData consumerFilterData = build(topic, consumerGroup, expression, type, clientVersion);
+                if (consumerFilterData == null) {
+                    return false;
+                }
+                consumerFilterData.setBloomFilterData(bloomFilterData);
+
+                old = this.groupFilterData.putIfAbsent(consumerGroup, consumerFilterData);
+                if (old == null) {
+                    log.info("New consumer filter registered: {}", consumerFilterData);
+                    return true;
+                } else {
+                    if (clientVersion <= old.getClientVersion()) {
+                        if (!type.equals(old.getExpressionType()) || !expression.equals(old.getExpression())) {
+                            log.warn("Ignore consumer({} : {}) filter(concurrent), because of version {} <= {}, but maybe info changed!old={}:{}, ignored={}:{}",
+                                    consumerGroup, topic,
+                                    clientVersion, old.getClientVersion(),
+                                    old.getExpressionType(), old.getExpression(),
+                                    type, expression);
+                        }
+                        if (clientVersion == old.getClientVersion() && old.isDead()) {
+                            reAlive(old);
+                            return true;
+                        }
+
+                        return false;
+                    } else {
+                        this.groupFilterData.put(consumerGroup, consumerFilterData);
+                        log.info("New consumer filter registered(concurrent): {}, old: {}", consumerFilterData, old);
+                        return true;
+                    }
+                }
+            } else {
+                if (clientVersion <= old.getClientVersion()) {
+                    if (!type.equals(old.getExpressionType()) || !expression.equals(old.getExpression())) {
+                        log.info("Ignore consumer({}:{}) filter, because of version {} <= {}, but maybe info changed!old={}:{}, ignored={}:{}",
+                                consumerGroup, topic,
+                                clientVersion, old.getClientVersion(),
+                                old.getExpressionType(), old.getExpression(),
+                                type, expression);
+                    }
+                    if (clientVersion == old.getClientVersion() && old.isDead()) {
+                        reAlive(old);
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                boolean change = !old.getExpression().equals(expression) || !old.getExpressionType().equals(type);
+                if (old.getBloomFilterData() == null && bloomFilterData != null) {
+                    change = true;
+                }
+                if (old.getBloomFilterData() != null && !old.getBloomFilterData().equals(bloomFilterData)) {
+                    change = true;
+                }
+
+                if (change) {
+                    ConsumerFilterData consumerFilterData = build(topic, consumerGroup, expression, type, clientVersion);
+                    if (consumerFilterData == null) {
+                        this.groupFilterData.remove(consumerGroup);
+                        return false;
+                    }
+                    consumerFilterData.setBloomFilterData(bloomFilterData);
+
+                    this.groupFilterData.put(consumerGroup, consumerFilterData);
+
+                    log.info("Consumer filter info change, old: {}, new: {}, change: {}",
+                            old, consumerFilterData, change);
+
+                    return true;
+                } else {
+                    old.setClientVersion(clientVersion);
+                    if (old.isDead()) {
+                        reAlive(old);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        void reAlive(ConsumerFilterData filterData) {
             long oldDeadTime = filterData.getDeadTime();
             filterData.setDeadTime(0);
             log.info("Re alive consumer filter: {}, oldDeadTime: {}", filterData, oldDeadTime);
@@ -170,5 +351,6 @@ public class ConsumerFilterManager extends AbstractConfigManager {
 
         return consumerFilterData;
     }
+
 
 }

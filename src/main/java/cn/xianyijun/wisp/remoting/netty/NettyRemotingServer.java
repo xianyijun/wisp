@@ -42,8 +42,6 @@ import java.security.cert.CertificateException;
 import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -74,9 +72,6 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
 
     private final Timer timer = new Timer("ServerHouseKeepingService", true);
-
-    protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
-            new ConcurrentHashMap<>(256);
 
     /**
      * Instantiates a new Netty remoting server.
@@ -407,6 +402,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
 
         @Override
         protected void channelRead0(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
+            log.info("[NettyServerHandler] channelRead , msg: {}", msg);
             processMessageReceived(ctx, msg);
         }
     }
@@ -418,21 +414,21 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
         @Override
         public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
             final String remoteAddress = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
-            log.info("NETTY SERVER PIPELINE: channelRegistered {}", remoteAddress);
+            log.info("[NettyConnectManageHandler.channelRegistered] NETTY SERVER PIPELINE: channelRegistered {}", remoteAddress);
             super.channelRegistered(ctx);
         }
 
         @Override
         public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
             final String remoteAddress = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
-            log.info("NETTY SERVER PIPELINE: channelUnregistered, the channel[{}]", remoteAddress);
+            log.info("[NettyConnectManageHandler.channelUnregistered]NETTY SERVER PIPELINE: channelUnregistered, the channel[{}]", remoteAddress);
             super.channelUnregistered(ctx);
         }
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             final String remoteAddress = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
-            log.info("NETTY SERVER PIPELINE: channelActive, the channel[{}]", remoteAddress);
+            log.info("[NettyConnectManageHandler.channelActive] NETTY SERVER PIPELINE: channelActive, the channel[{}]", remoteAddress);
             super.channelActive(ctx);
 
             if (NettyRemotingServer.this.channelEventListener != null) {
@@ -443,7 +439,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
         @Override
         public void channelInactive(ChannelHandlerContext ctx) throws Exception {
             final String remoteAddress = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
-            log.info("NETTY SERVER PIPELINE: channelInactive, the channel[{}]", remoteAddress);
+            log.info("[NettyConnectManageHandler.channelInactive]NETTY SERVER PIPELINE: channelInactive, the channel[{}]", remoteAddress);
             super.channelInactive(ctx);
 
             if (NettyRemotingServer.this.channelEventListener != null) {

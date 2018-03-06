@@ -1,12 +1,15 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.ServiceThread;
+import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.store.config.BrokerRole;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
@@ -105,7 +108,86 @@ public class AllocateMappedFileService extends ServiceThread {
 
     @Override
     public void run() {
+        log.info(this.getServiceName() + " service started");
 
+        while (!this.isStopped() && this.mmapOperation()) {
+
+        }
+        log.info(this.getServiceName() + " service end");
+    }
+
+    private boolean mmapOperation() {
+        boolean isSuccess = false;
+        AllocateRequest req = null;
+        try {
+            req = this.requestQueue.take();
+            AllocateRequest expectedRequest = this.requestTable.get(req.getFilePath());
+            if (null == expectedRequest) {
+                log.warn("this mmap request expired, maybe cause timeout " + req.getFilePath() + " "
+                        + req.getFileSize());
+                return true;
+            }
+            if (expectedRequest != req) {
+                log.warn("never expected here,  maybe cause timeout " + req.getFilePath() + " "
+                        + req.getFileSize() + ", req:" + req + ", expectedRequest:" + expectedRequest);
+                return true;
+            }
+
+            if (req.getMappedFile() == null) {
+                long beginTime = System.currentTimeMillis();
+
+                MappedFile mappedFile;
+                if (messageStore.getMessageStoreConfig().isTransientStorePoolEnable()) {
+                    try {
+                        mappedFile = ServiceLoader.load(MappedFile.class).iterator().next();
+                        mappedFile.init(req.getFilePath(), req.getFileSize(), messageStore.getTransientStorePool());
+                    } catch (RuntimeException e) {
+                        log.warn("Use default implementation.");
+                        mappedFile = new MappedFile(req.getFilePath(), req.getFileSize(), messageStore.getTransientStorePool());
+                    }
+                } else {
+                    mappedFile = new MappedFile(req.getFilePath(), req.getFileSize());
+                }
+
+                long eclipseTime = UtilAll.computeTimeMilliseconds(beginTime);
+                if (eclipseTime > 10) {
+                    int queueSize = this.requestQueue.size();
+                    log.warn("create mappedFile spent time(ms) " + eclipseTime + " queue size " + queueSize
+                            + " " + req.getFilePath() + " " + req.getFileSize());
+                }
+
+                if (mappedFile.getFileSize() >= this.messageStore.getMessageStoreConfig()
+                        .getMappedFileSizeCommitLog()
+                        &&
+                        this.messageStore.getMessageStoreConfig().isWarmMappedFileEnable()) {
+                    mappedFile.warmMappedFile(this.messageStore.getMessageStoreConfig().getFlushDiskType(),
+                            this.messageStore.getMessageStoreConfig().getFlushLeastPagesWhenWarmMappedFile());
+                }
+
+                req.setMappedFile(mappedFile);
+                this.hasException = false;
+                isSuccess = true;
+            }
+        } catch (InterruptedException e) {
+            log.warn(this.getServiceName() + " interrupted, possibly by shutdown.");
+            this.hasException = true;
+            return false;
+        } catch (IOException e) {
+            log.warn(this.getServiceName() + " service has exception. ", e);
+            this.hasException = true;
+            if (null != req) {
+                requestQueue.offer(req);
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        } finally {
+            if (req != null && isSuccess) {
+                req.getCountDownLatch().countDown();
+            }
+        }
+        return true;
     }
 
     @Data

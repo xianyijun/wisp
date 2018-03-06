@@ -337,6 +337,7 @@ public class NettyRemotingClient extends AbstractNettyRemoting implements Remoti
     @Override
     public RemotingCommand invokeSync(String addr, RemotingCommand request, long timeoutMillis)
             throws InterruptedException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException {
+        log.info("[NettyRemotingClient] addr :{} ,request :{} ",addr, request);
         final Channel channel = this.getAndCreateChannel(addr);
         if (channel != null && channel.isActive()) {
             try {

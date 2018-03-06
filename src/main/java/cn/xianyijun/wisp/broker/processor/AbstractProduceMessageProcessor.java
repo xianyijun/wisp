@@ -39,7 +39,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
     @Setter
     private List<ProduceMessageHook> produceMessageHookList;
 
-    public AbstractProduceMessageProcessor(final BrokerController brokerController) {
+    AbstractProduceMessageProcessor(final BrokerController brokerController) {
         this.brokerController = brokerController;
         this.storeHost =
                 new InetSocketAddress(brokerController.getBrokerConfig().getBrokerIP1(), brokerController
@@ -47,40 +47,44 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
     }
 
 
-    protected ProduceMessageRequestHeader parseRequestHeader(RemotingCommand request) {
+    ProduceMessageRequestHeader parseRequestHeader(RemotingCommand request) {
+        log.info("[AbstractProduceMessageProcessor] parseRequestHeader , request: {}", request);
         ProduceMessageRequestHeader requestHeader = null;
-
         switch (request.getCode()) {
             case RequestCode.SEND_BATCH_MESSAGE:
             case RequestCode.SEND_MESSAGE:
-                requestHeader =
-                        (ProduceMessageRequestHeader) request
+                requestHeader = (ProduceMessageRequestHeader) request
                                 .decodeCommandCustomHeader(ProduceMessageRequestHeader.class);
             default:
                 break;
         }
+        log.info("[AbstractProduceMessageProcessor] parseRequestHeader , requestHeader: {}", requestHeader);
         return requestHeader;
     }
 
-    protected RemotingCommand msgCheck(final ChannelHandlerContext ctx,
-                                       final ProduceMessageRequestHeader requestHeader, final RemotingCommand response) {
+    void msgCheck(final ChannelHandlerContext ctx,
+                  final ProduceMessageRequestHeader requestHeader, final RemotingCommand response) {
+        log.info("[AbstractProduceMessageProcessor] msgCheck , requestHeader:{} , response:{} ",requestHeader, response);
+
         if (!PermName.isWriteable(this.brokerController.getBrokerConfig().getBrokerPermission())
                 && this.brokerController.getTopicConfigManager().isOrderTopic(requestHeader.getTopic())) {
             response.setCode(ResponseCode.NO_PERMISSION);
             response.setRemark("the broker[" + this.brokerController.getBrokerConfig().getBrokerIP1()
                     + "] sending message is forbidden");
-            return response;
+            return;
         }
+
         if (!this.brokerController.getTopicConfigManager().isTopicCanProduceMessage(requestHeader.getTopic())) {
             String errorMsg = "the topic[" + requestHeader.getTopic() + "] is conflict with system reserved words.";
             log.warn(errorMsg);
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark(errorMsg);
-            return response;
+            return;
         }
 
         TopicConfig topicConfig =
                 this.brokerController.getTopicConfigManager().selectTopicConfig(requestHeader.getTopic());
+
         if (null == topicConfig) {
             int topicSysFlag = 0;
             if (requestHeader.isUnitMode()) {
@@ -97,7 +101,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
                     requestHeader.getDefaultTopic(),
                     RemotingHelper.parseChannelRemoteAddr(ctx.channel()),
                     requestHeader.getDefaultTopicQueueNums(), topicSysFlag);
-
+            log.info("[AbstractProduceProcessor] msgCheck , createTopic, topicConfig: {}", topicConfig);
             if (null == topicConfig) {
                 if (requestHeader.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                     topicConfig =
@@ -110,7 +114,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
             if (null == topicConfig) {
                 response.setCode(ResponseCode.TOPIC_NOT_EXIST);
                 response.setRemark("topic[" + requestHeader.getTopic() + "] not exist, apply first please!");
-                return response;
+                return;
             }
         }
 
@@ -125,17 +129,14 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
             log.warn(errorInfo);
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark(errorInfo);
-
-            return response;
         }
-        return response;
     }
 
-    public boolean hasProduceMessageHook() {
+    boolean hasProduceMessageHook() {
         return CollectionUtils.isEmpty(produceMessageHookList);
     }
 
-    protected void executeSendMessageHookBefore(ChannelHandlerContext ctx, RemotingCommand request, ProduceMessageContext context) {
+    void executeSendMessageHookBefore(ChannelHandlerContext ctx, RemotingCommand request, ProduceMessageContext context) {
         if (!hasProduceMessageHook()) {
             return;
         }

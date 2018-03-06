@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.common.constant.PermName;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 /**
  * @author xianyijun
@@ -11,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class TopicConfig {
 
     private static final String SEPARATOR = " ";

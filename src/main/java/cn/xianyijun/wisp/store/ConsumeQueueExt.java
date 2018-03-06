@@ -39,11 +39,11 @@ public class ConsumeQueueExt {
      * @param mappedFileSize file size
      * @param bitMapLength   bit map length.
      */
-    public ConsumeQueueExt(final String topic,
-                           final int queueId,
-                           final String storePath,
-                           final int mappedFileSize,
-                           final int bitMapLength) {
+    ConsumeQueueExt(final String topic,
+                    final int queueId,
+                    final String storePath,
+                    final int mappedFileSize,
+                    final int bitMapLength) {
 
         this.storePath = storePath;
         this.mappedFileSize = mappedFileSize;
@@ -234,7 +234,7 @@ public class ConsumeQueueExt {
             log.warn("[BUG] Consume queue extend unit({}) is not found!", realOffset);
             return false;
         }
-        boolean ret = false;
+        boolean ret;
         try {
             ret = cqExtUnit.read(bufferResult.getByteBuffer());
         } finally {
@@ -242,6 +242,10 @@ public class ConsumeQueueExt {
         }
 
         return ret;
+    }
+
+    public void checkSelf() {
+        this.mappedFileQueue.checkSelf();
     }
 
     public void truncateByMinAddress(final long minAddress) {
@@ -271,7 +275,7 @@ public class ConsumeQueueExt {
         this.mappedFileQueue.deleteExpiredFile(willRemoveFiles);
     }
 
-    public long unDecorate(final long address) {
+    private long unDecorate(final long address) {
         if (isExtAddr(address)) {
             return address - Long.MIN_VALUE;
         }

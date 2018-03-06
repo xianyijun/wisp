@@ -91,4 +91,61 @@ public class ProducerManager {
             log.error("", e);
         }
     }
+
+    public void registerProducer(final String group, final ClientChannelInfo clientChannelInfo) {
+        try {
+            ClientChannelInfo clientChannelInfoFound;
+
+            if (this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+                try {
+                    HashMap<Channel, ClientChannelInfo> channelTable = this.groupChannelTable.computeIfAbsent(group, k -> new HashMap<>());
+
+                    clientChannelInfoFound = channelTable.get(clientChannelInfo.getChannel());
+                    if (null == clientChannelInfoFound) {
+                        channelTable.put(clientChannelInfo.getChannel(), clientChannelInfo);
+                        log.info("new producer connected, group: {} channel: {}", group,
+                                clientChannelInfo.toString());
+                    }
+                } finally {
+                    this.groupChannelLock.unlock();
+                }
+
+                if (clientChannelInfoFound != null) {
+                    clientChannelInfoFound.setLastUpdateTimestamp(System.currentTimeMillis());
+                }
+            } else {
+                log.warn("ProducerManager registerProducer lock timeout");
+            }
+        } catch (InterruptedException e) {
+            log.error("", e);
+        }
+    }
+
+    public void unregisterProducer(final String group, final ClientChannelInfo clientChannelInfo) {
+        try {
+            if (this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
+                try {
+                    HashMap<Channel, ClientChannelInfo> channelTable = this.groupChannelTable.get(group);
+                    if (null != channelTable && !channelTable.isEmpty()) {
+                        ClientChannelInfo old = channelTable.remove(clientChannelInfo.getChannel());
+                        if (old != null) {
+                            log.info("unregister a producer[{}] from groupChannelTable {}", group,
+                                    clientChannelInfo.toString());
+                        }
+
+                        if (channelTable.isEmpty()) {
+                            this.groupChannelTable.remove(group);
+                            log.info("unregister a producer group[{}] from groupChannelTable", group);
+                        }
+                    }
+                } finally {
+                    this.groupChannelLock.unlock();
+                }
+            } else {
+                log.warn("ProducerManager unregisterProducer lock timeout");
+            }
+        } catch (InterruptedException e) {
+            log.error("", e);
+        }
+    }
 }
