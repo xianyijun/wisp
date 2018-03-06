@@ -141,7 +141,7 @@ public abstract class AbstractNettyRemoting {
                     } else {
                         responseFuture.setSendRequestOK(false);
                     }
-
+                    log.info("[AbstractNettyRemoting] doInvokeAsync listener putResponse failure");
                     responseFuture.putResponse(null);
                     responseTable.remove(opaque);
                     try {
@@ -196,7 +196,7 @@ public abstract class AbstractNettyRemoting {
             log.info("[AbstractNettyRemoting] class:{} , doInvokeSync , opaque: {} , request:{} , response:{} ",this.getClass().getSimpleName(), opaque ,request, responseFuture);
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
-
+            log.info("{}.doInvokeSync , type:{} request:{}",this.getClass().getSimpleName(),request.getType(),request);
             channel.writeAndFlush(request).addListener((ChannelFutureListener) f -> {
                 if (f.isSuccess()) {
                     responseFuture.setSendRequestOK(true);
@@ -206,13 +206,11 @@ public abstract class AbstractNettyRemoting {
                 }
 
                 ResponseFuture prev = responseTable.remove(opaque);
-                log.info("[AbstractNettyRemoting.donInvokeSync] prev :{}", prev);
+                log.info("[AbstractNettyRemoting.donInvokeSync] failure putResponse prev :{}", prev);
                 responseFuture.setCause(f.cause());
                 responseFuture.putResponse(null);
                 log.warn("send a request command to channel <" + addr + "> failed.");
             });
-
-
 
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
             if (null == responseCommand) {
@@ -282,11 +280,11 @@ public abstract class AbstractNettyRemoting {
      * @param msg the msg
      * @throws Exception the exception
      */
-    void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) throws Exception {
-        log.info("[AbstractNettyRemoting] processMessageReceived msg :{} ", msg);
+    void processMessageReceived(ChannelHandlerContext ctx, RemotingCommand msg) {
         if (msg == null) {
             return;
         }
+        log.info("[AbstractNettyRemoting] processMessageReceived, type: {} , msg :{} ", msg.getType(), msg);
         switch (msg.getType()) {
             case REQUEST_COMMAND:
                 processRequestCommand(ctx, msg);
@@ -325,7 +323,7 @@ public abstract class AbstractNettyRemoting {
                     rpcHook.doAfterResponse(RemotingHelper.parseChannelRemoteAddr(ctx.channel()), cmd, response);
                 }
 
-                if (cmd.isOneWayRPC()) {
+                if (!cmd.isOneWayRPC()) {
                     if (response != null) {
                         response.setOpaque(opaque);
                         response.markResponseType();
@@ -390,6 +388,7 @@ public abstract class AbstractNettyRemoting {
         final int opaque = response.getOpaque();
         final ResponseFuture responseFuture = responseTable.get(opaque);
         if (responseFuture != null) {
+            log.info("[AbstractNettyRemoting] class:{} putResponse response:{} ",this.getClass().getSimpleName(),response);
             responseFuture.setResponseCommand(response);
 
             responseTable.remove(opaque);

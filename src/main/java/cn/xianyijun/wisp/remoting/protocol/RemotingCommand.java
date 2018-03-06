@@ -249,7 +249,7 @@ public class RemotingCommand {
     }
 
     @JSONField(serialize = false)
-    private boolean isResponseType() {
+    public boolean isResponseType() {
         int bits = 1 << RPC_TYPE;
         return (this.flag & bits) == bits;
     }

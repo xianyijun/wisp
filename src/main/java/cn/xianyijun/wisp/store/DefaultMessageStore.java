@@ -1484,8 +1484,13 @@ public class DefaultMessageStore implements MessageStore {
 
                 fileReservedTime *= 60 * 60 * 1000;
 
-                DefaultMessageStore.this.commitLog.deleteExpiredFile(fileReservedTime, deletePhysicFilesInterval,
+                deleteCount = DefaultMessageStore.this.commitLog.deleteExpiredFile(fileReservedTime, deletePhysicFilesInterval,
                         destroyMapedFileIntervalForcibly, cleanAtOnce);
+
+                if (deleteCount > 0) {
+                } else if (spacefull) {
+                    log.warn("disk space will be full soon, but delete file failed.");
+                }
             }
         }
 

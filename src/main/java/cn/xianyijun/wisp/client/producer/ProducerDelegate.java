@@ -298,7 +298,7 @@ public class ProducerDelegate implements MQProducerInner {
                     break;
                 }
             }
-
+            log.info("[doSend] send success , result :{}",sendResult);
             if (sendResult != null) {
                 return sendResult;
             }

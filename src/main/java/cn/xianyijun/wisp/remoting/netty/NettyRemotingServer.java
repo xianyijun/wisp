@@ -225,7 +225,7 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
 
     @Override
     public void start() {
-        log.info("[NettyRemotingSerer] invoke start, config: {}  ", JSON.toJSONString(nettyServerConfig));
+        log.info("[NettyRemotingServer] invoke start, config: {}  ", JSON.toJSONString(nettyServerConfig));
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
                 nettyServerConfig.getServerWorkerThreads(),
                 new ThreadFactory() {

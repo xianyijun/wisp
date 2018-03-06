@@ -24,7 +24,6 @@ public class Producer {
             );
 
             SendResult sendResult = producer.send(msg);
-
             System.out.printf("%s%n", sendResult);
         } catch (Exception e) {
             e.printStackTrace();
@@ -34,7 +33,7 @@ public class Producer {
         /*
          * Shut down once the producer instance is not longer in use.
          */
-//        producer.shutdown();
+        producer.shutdown();
     }
 
 }
