@@ -46,7 +46,7 @@ public interface ConsumerInner {
      *
      * @return the set
      */
-    Set<SubscriptionData> subScriptions();
+    Set<SubscriptionData> subscription();
 
     /**
      * Do rebalance.

@@ -9,12 +9,14 @@ import cn.xianyijun.wisp.client.admin.MQAdminExtInner;
 import cn.xianyijun.wisp.client.consumer.ConsumerInner;
 import cn.xianyijun.wisp.client.consumer.ConsumerPullDelegate;
 import cn.xianyijun.wisp.client.consumer.ConsumerPushDelegate;
+import cn.xianyijun.wisp.client.consumer.FindBrokerResult;
 import cn.xianyijun.wisp.client.consumer.ProcessQueue;
 import cn.xianyijun.wisp.client.consumer.PullMessageService;
 import cn.xianyijun.wisp.client.consumer.ReBalanceService;
 import cn.xianyijun.wisp.client.producer.DefaultProducer;
 import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
 import cn.xianyijun.wisp.client.producer.inner.MQProducerInner;
+import cn.xianyijun.wisp.client.stat.ConsumerStatsManager;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.ServiceState;
@@ -80,6 +82,8 @@ public class ClientInstance {
 
     private final ClientRemotingProcessor clientRemotingProcessor;
 
+    private final ConsumerStatsManager consumerStatsManager;
+
     private final MQClient client;
 
     private final DefaultAdmin admin;
@@ -137,6 +141,8 @@ public class ClientInstance {
         this.defaultProducer = new DefaultProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
         this.defaultProducer.resetClientConfig(clientConfig);
 
+        this.consumerStatsManager = new ConsumerStatsManager(this.scheduledExecutorService);
+
         log.info("created a new client Instance, FactoryIndex: {} ClinetID: {} {} {}, serializeType={}",
                 this.instanceIndex,
                 this.clientId,
@@ -156,7 +162,7 @@ public class ClientInstance {
                 this.lockHeartbeat.unlock();
             }
         } else {
-            log.warn("lock heartBeat, but failed.");
+            log.warn("[sendHeartbeatToAllBrokerWithLock] lock heartBeat, but failed.");
         }
     }
 
@@ -226,7 +232,7 @@ public class ClientInstance {
                 consumerData.setConsumeType(impl.consumeType());
                 consumerData.setMessageModel(impl.messageModel());
                 consumerData.setConsumeWhere(impl.consumeFromWhere());
-                consumerData.getSubscriptionDataSet().addAll(impl.subScriptions());
+                consumerData.getSubscriptionDataSet().addAll(impl.subscription());
                 consumerData.setUnitMode(impl.isUnitMode());
 
                 heartbeatData.getConsumerDataSet().add(consumerData);
@@ -263,7 +269,7 @@ public class ClientInstance {
         for (Map.Entry<String, ConsumerInner> next : this.consumerTable.entrySet()) {
             ConsumerInner consumer = next.getValue();
             if (ConsumeType.CONSUME_PASSIVELY == consumer.consumeType()) {
-                Set<SubscriptionData> subscriptions = consumer.subScriptions();
+                Set<SubscriptionData> subscriptions = consumer.subscription();
                 for (SubscriptionData sub : subscriptions) {
                     if (sub.isClassFilterMode() && sub.getFilterClassSource() != null) {
                         final String consumerGroup = consumer.groupName();
@@ -417,7 +423,7 @@ public class ClientInstance {
             for (Map.Entry<String, ConsumerInner> entry : this.consumerTable.entrySet()) {
                 ConsumerInner impl = entry.getValue();
                 if (impl != null) {
-                    Set<SubscriptionData> subList = impl.subScriptions();
+                    Set<SubscriptionData> subList = impl.subscription();
                     if (subList != null) {
                         for (SubscriptionData subData : subList) {
                             topicList.add(subData.getTopic());
@@ -734,7 +740,7 @@ public class ClientInstance {
                     this.lockHeartbeat.unlock();
                 }
             } else {
-                log.warn("lock heartBeat, but failed.");
+                log.warn("[unregisterClientWithLock] lock heartBeat, but failed.");
             }
         } catch (InterruptedException e) {
             log.warn("unregisterClientWithLock exception", e);
@@ -889,7 +895,7 @@ public class ClientInstance {
     public void checkClientInBroker() throws ClientException {
 
         for (Map.Entry<String, ConsumerInner> entry : this.consumerTable.entrySet()) {
-            Set<SubscriptionData> subscriptionInner = entry.getValue().subScriptions();
+            Set<SubscriptionData> subscriptionInner = entry.getValue().subscription();
             if (subscriptionInner == null || subscriptionInner.isEmpty()) {
                 return;
             }
@@ -984,4 +990,95 @@ public class ClientInstance {
         return null;
     }
 
+
+    public List<String> findConsumerIdList(final String topic, final String group) {
+        String brokerAddr = this.findBrokerAddrByTopic(topic);
+        if (null == brokerAddr) {
+            this.updateTopicRouteInfoFromNameServer(topic);
+            brokerAddr = this.findBrokerAddrByTopic(topic);
+        }
+
+        if (null != brokerAddr) {
+            try {
+                return this.client.getConsumerIdListByGroup(brokerAddr, group, 3000);
+            } catch (Exception e) {
+                log.warn("getConsumerIdListByGroup exception, " + brokerAddr + " " + group, e);
+            }
+        }
+
+        return null;
+    }
+
+    public FindBrokerResult findBrokerAddressInSubscribe(
+            final String brokerName,
+            final long brokerId,
+            final boolean onlyThisBroker
+    ) {
+        String brokerAddr = null;
+        boolean slave = false;
+        boolean found = false;
+
+        HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
+        if (map != null && !map.isEmpty()) {
+            brokerAddr = map.get(brokerId);
+            slave = brokerId != MixAll.MASTER_ID;
+            found = brokerAddr != null;
+
+            if (!found && !onlyThisBroker) {
+                Map.Entry<Long, String> entry = map.entrySet().iterator().next();
+                brokerAddr = entry.getValue();
+                slave = entry.getKey() != MixAll.MASTER_ID;
+                found = true;
+            }
+        }
+
+        if (found) {
+            return new FindBrokerResult(brokerAddr, slave, findBrokerVersion(brokerName, brokerAddr));
+        }
+
+        return null;
+    }
+
+    public int findBrokerVersion(String brokerName, String brokerAddr) {
+        if (this.brokerVersionTable.containsKey(brokerName)) {
+            if (this.brokerVersionTable.get(brokerName).containsKey(brokerAddr)) {
+                return this.brokerVersionTable.get(brokerName).get(brokerAddr);
+            }
+        }
+        return 0;
+    }
+
+    public FindBrokerResult findBrokerAddressInAdmin(final String brokerName) {
+        String brokerAddr = null;
+        boolean slave = false;
+        boolean found = false;
+
+        HashMap<Long/* brokerId */, String/* address */> map = this.brokerAddrTable.get(brokerName);
+        if (map != null && !map.isEmpty()) {
+            for (Map.Entry<Long, String> entry : map.entrySet()) {
+                Long id = entry.getKey();
+                brokerAddr = entry.getValue();
+                if (brokerAddr != null) {
+                    found = true;
+                    if (MixAll.MASTER_ID == id) {
+                        slave = false;
+                    } else {
+                        slave = true;
+                    }
+                    break;
+
+                }
+            } // end of for
+        }
+
+        if (found) {
+            return new FindBrokerResult(brokerAddr, slave, findBrokerVersion(brokerName, brokerAddr));
+        }
+        return null;
+    }
+
+
+    public ConsumerInner selectConsumer(final String group) {
+        return this.consumerTable.get(group);
+    }
 }

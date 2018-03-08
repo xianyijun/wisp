@@ -75,7 +75,7 @@ public class TopAddressing {
                     "connect to " + url + " failed, maybe the domain name " + MixAll.getWSAddr() + " not bind in /etc/hosts";
             log.warn(errorMsg);
         }
-        return null;
+        return MixAll.DEFAULT_NAME_SERVER_ADDR_LOOKUP;
     }
 
 }

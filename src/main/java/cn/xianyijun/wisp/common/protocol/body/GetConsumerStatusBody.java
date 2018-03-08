@@ -7,6 +7,9 @@ import lombok.Data;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author xianyijun
+ */
 @Data
 public class GetConsumerStatusBody extends RemotingSerializable {
     private Map<MessageQueue, Long> messageQueueTable = new HashMap<>();

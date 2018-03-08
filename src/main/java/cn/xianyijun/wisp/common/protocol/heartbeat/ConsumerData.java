@@ -16,6 +16,6 @@ public class ConsumerData {
     private ConsumeType consumeType;
     private MessageModel messageModel;
     private ConsumeWhereEnum consumeWhere;
-    private Set<SubscriptionData> subscriptionDataSet = new HashSet<SubscriptionData>();
+    private Set<SubscriptionData> subscriptionDataSet = new HashSet<>();
     private boolean unitMode;
 }

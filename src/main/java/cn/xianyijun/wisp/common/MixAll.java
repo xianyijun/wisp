@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author xianyijun
@@ -45,7 +46,7 @@ public class MixAll {
     public static final String RETRY_GROUP_TOPIC_PREFIX = "%RETRY%";
     public static final String CID_RMQ_SYS_PREFIX = "CID_RMQ_SYS_";
     public static final String DLQ_GROUP_TOPIC_PREFIX = "%DLQ%";
-    private static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "localhost:9876";
+    public static final String DEFAULT_NAME_SERVER_ADDR_LOOKUP = "localhost:9876";
     public static final String WS_DOMAIN_NAME = System.getProperty("wisp.name.server.domain", DEFAULT_NAME_SERVER_ADDR_LOOKUP);
 
     public static final String DEFAULT_PRODUCER_GROUP = "DEFAULT_PRODUCER";
@@ -53,6 +54,9 @@ public class MixAll {
     public static final String UNIQUE_MSG_QUERY_FLAG = "_UNIQUE_KEY_QUERY";
 
     public static final String DEFAULT_CONSUMER_GROUP = "DEFAULT_CONSUMER";
+
+    public static final String CONSUME_CONTEXT_TYPE = "ConsumeContextType";
+
 
     public static void properties2Object(final Properties properties, final Object object) {
         Method[] methods = object.getClass().getMethods();
@@ -278,6 +282,17 @@ public class MixAll {
         }
     }
 
+    public static boolean compareAndIncreaseOnly(final AtomicLong target, final long value) {
+        long prev = target.get();
+        while (value > prev) {
+            boolean updated = target.compareAndSet(prev, value);
+            if (updated) {
+                return true;
+            }
+            prev = target.get();
+        }
+        return false;
+    }
     public static boolean isSysConsumerGroup(final String consumerGroup) {
         return consumerGroup.startsWith(CID_RMQ_SYS_PREFIX);
     }

@@ -9,7 +9,9 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -169,8 +171,7 @@ public class MessageDecoder {
                     + 8 // 14 Prepared Transaction Offset
                     + 4 + bodyLength // 14 BODY
                     + 1 + topicLen // 15 TOPIC
-                    + 2 + propertiesLength // 16 propertiesLength
-                    + 0;
+                    + 2 + propertiesLength;
             byteBuffer = ByteBuffer.allocate(storeSize);
         }
         // 1 TOTALSIZE
@@ -346,6 +347,23 @@ public class MessageDecoder {
         }
 
         return null;
+    }
+
+    public static List<ExtMessage> decodes(java.nio.ByteBuffer byteBuffer) {
+        return decodes(byteBuffer, true);
+    }
+
+    private static List<ExtMessage> decodes(java.nio.ByteBuffer byteBuffer, final boolean readBody) {
+        List<ExtMessage> extMessages = new ArrayList<>();
+        while (byteBuffer.hasRemaining()) {
+            ExtMessage msgExt = clientDecode(byteBuffer, readBody);
+            if (null != msgExt) {
+                extMessages.add(msgExt);
+            } else {
+                break;
+            }
+        }
+        return extMessages;
     }
 
 }

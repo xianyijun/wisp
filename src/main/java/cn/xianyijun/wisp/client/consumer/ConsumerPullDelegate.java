@@ -39,6 +39,8 @@ public class ConsumerPullDelegate implements ConsumerInner {
     private OffsetStore offsetStore;
     private AbstractReBalance reBalance = new PullReBalance(this);
 
+
+
     @Override
     public String groupName() {
         return null;
@@ -60,7 +62,7 @@ public class ConsumerPullDelegate implements ConsumerInner {
     }
 
     @Override
-    public Set<SubscriptionData> subScriptions() {
+    public Set<SubscriptionData> subscription() {
         return null;
     }
 
