@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.ServiceThread;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class PullMessageService extends ServiceThread {
 
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
 
     private final LinkedBlockingQueue<PullRequest> pullRequestQueue = new LinkedBlockingQueue<>();
 

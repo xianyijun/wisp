@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.filter;
 
 /**
  * The interface Expression.
+ * @author xianyijun
  */
 public interface Expression {
 

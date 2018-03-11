@@ -4,7 +4,7 @@ import cn.xianyijun.wisp.broker.mqtrace.ConsumeMessageHook;
 import cn.xianyijun.wisp.client.QueryResult;
 import cn.xianyijun.wisp.client.consumer.store.OffsetStore;
 import cn.xianyijun.wisp.client.hook.FilterMessageHook;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.ServiceState;
@@ -49,7 +49,7 @@ public class ConsumerPullDelegate implements ConsumerInner {
     private final ArrayList<ConsumeMessageHook> consumeMessageHookList = new ArrayList<ConsumeMessageHook>();
     private final ArrayList<FilterMessageHook> filterMessageHookList = new ArrayList<FilterMessageHook>();
     private volatile ServiceState serviceState = ServiceState.CREATE_JUST;
-    private ClientInstance clientFactory;
+    private ClientFactory clientFactory;
     private PullConsumerWrapper pullAPIWrapper;
     private OffsetStore offsetStore;
     private AbstractReBalance reBalance = new PullReBalance(this);

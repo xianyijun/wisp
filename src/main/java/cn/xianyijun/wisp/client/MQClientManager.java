@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.client;
 
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -22,7 +22,7 @@ public class MQClientManager {
 
     private AtomicInteger factoryIndexGenerator = new AtomicInteger();
 
-    private ConcurrentMap<String, ClientInstance> factoryTable =
+    private ConcurrentMap<String, ClientFactory> factoryTable =
             new ConcurrentHashMap<>();
 
 
@@ -30,14 +30,14 @@ public class MQClientManager {
         return instance;
     }
 
-    public ClientInstance getAndCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
+    public ClientFactory getAndCreateMQClientInstance(final ClientConfig clientConfig, RPCHook rpcHook) {
         String clientId = clientConfig.buildMQClientId();
-        ClientInstance instance = this.factoryTable.get(clientId);
+        ClientFactory instance = this.factoryTable.get(clientId);
         if (null == instance) {
             instance =
-                    new ClientInstance(clientConfig.cloneClientConfig(),
+                    new ClientFactory(clientConfig.cloneClientConfig(),
                             this.factoryIndexGenerator.getAndIncrement(), clientId, rpcHook);
-            ClientInstance prev = this.factoryTable.putIfAbsent(clientId, instance);
+            ClientFactory prev = this.factoryTable.putIfAbsent(clientId, instance);
             if (prev != null) {
                 instance = prev;
                 log.warn("Returned Previous MQClientInstance for clientId:[{}]", clientId);

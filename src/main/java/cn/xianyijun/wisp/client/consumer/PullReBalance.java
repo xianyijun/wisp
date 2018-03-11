@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;
 import cn.xianyijun.wisp.common.protocol.heartbeat.MessageModel;
@@ -23,7 +23,7 @@ public class PullReBalance extends AbstractReBalance {
 
     public PullReBalance(String consumerGroup, MessageModel messageModel,
                          AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                         ClientInstance clientFactory, ConsumerPullDelegate consumerPullDelegate) {
+                         ClientFactory clientFactory, ConsumerPullDelegate consumerPullDelegate) {
         super(consumerGroup, messageModel, allocateMessageQueueStrategy, clientFactory);
         this.consumerPullDelegate = consumerPullDelegate;
     }

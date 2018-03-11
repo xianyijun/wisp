@@ -69,7 +69,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 @Slf4j
 @Getter
-public class ClientInstance {
+public class ClientFactory {
 
     private final static long LOCK_TIMEOUT_MILLIS = 3000;
 
@@ -107,7 +107,7 @@ public class ClientInstance {
 
     private Random random = new Random();
 
-    public ClientInstance(ClientConfig clientConfig, int instanceIndex, String clientId, RPCHook rpcHook) {
+    public ClientFactory(ClientConfig clientConfig, int instanceIndex, String clientId, RPCHook rpcHook) {
         this.clientConfig = clientConfig;
         this.instanceIndex = instanceIndex;
         this.nettyClientConfig = new NettyClientConfig();
@@ -421,7 +421,7 @@ public class ClientInstance {
         if (null == this.clientConfig.getNameServerAddr()) {
             this.scheduledExecutorService.scheduleAtFixedRate(() -> {
                 try {
-                    ClientInstance.this.client.fetchNameServerAddr();
+                    ClientFactory.this.client.fetchNameServerAddr();
                 } catch (Exception e) {
                     log.error("ScheduledTask fetchNameServerAddr exception", e);
                 }
@@ -430,7 +430,7 @@ public class ClientInstance {
 
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
-                ClientInstance.this.updateTopicRouteInfoFromNameServer();
+                ClientFactory.this.updateTopicRouteInfoFromNameServer();
             } catch (Exception e) {
                 log.error("ScheduledTask updateTopicRouteInfoFromNameServer exception", e);
             }
@@ -438,8 +438,8 @@ public class ClientInstance {
 
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
-                ClientInstance.this.cleanOfflineBroker();
-                ClientInstance.this.sendHeartbeatToAllBrokerWithLock();
+                ClientFactory.this.cleanOfflineBroker();
+                ClientFactory.this.sendHeartbeatToAllBrokerWithLock();
             } catch (Exception e) {
                 log.error("ScheduledTask sendHeartbeatToAllBroker exception", e);
             }
@@ -447,7 +447,7 @@ public class ClientInstance {
 
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
-                ClientInstance.this.persistAllConsumerOffset();
+                ClientFactory.this.persistAllConsumerOffset();
             } catch (Exception e) {
                 log.error("ScheduledTask persistAllConsumerOffset exception", e);
             }
@@ -455,7 +455,7 @@ public class ClientInstance {
 
         this.scheduledExecutorService.scheduleAtFixedRate(() -> {
             try {
-                ClientInstance.this.adjustThreadPool();
+                ClientFactory.this.adjustThreadPool();
             } catch (Exception e) {
                 log.error("ScheduledTask adjustThreadPool exception", e);
             }
@@ -749,17 +749,14 @@ public class ClientInstance {
     }
 
     public void shutdown() {
-        // Consumer
         if (!this.consumerTable.isEmpty()) {
             return;
         }
 
-        // AdminExt
         if (!this.adminExtTable.isEmpty()) {
             return;
         }
 
-        // Producer
         if (this.producerTable.size() > 1) {
             return;
         }
@@ -1033,10 +1030,11 @@ public class ClientInstance {
     }
 
     public int findBrokerVersion(String brokerName, String brokerAddr) {
-        if (this.brokerVersionTable.containsKey(brokerName)) {
-            if (this.brokerVersionTable.get(brokerName).containsKey(brokerAddr)) {
-                return this.brokerVersionTable.get(brokerName).get(brokerAddr);
-            }
+        if (!this.brokerVersionTable.containsKey(brokerName)) {
+            return 0;
+        }
+        if (this.brokerVersionTable.get(brokerName).containsKey(brokerAddr)) {
+            return this.brokerVersionTable.get(brokerName).get(brokerAddr);
         }
         return 0;
     }

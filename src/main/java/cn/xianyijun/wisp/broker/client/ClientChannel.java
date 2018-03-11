@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @RequiredArgsConstructor
 @Getter
-public class ClientChannelInfo {
+public class ClientChannel {
     private final Channel channel;
     private final String clientId;
     private final LanguageCode language;

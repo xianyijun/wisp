@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.ServiceThread;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ public class ReBalanceService extends ServiceThread {
             Long.parseLong(System.getProperty(
                     "wisp.client.rebalance.waitInterval", "20000"));
 
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
 
     @Override
     public String getServiceName() {

@@ -2,7 +2,7 @@ package cn.xianyijun.wisp.client.admin;
 
 import cn.xianyijun.wisp.client.QueryResult;
 import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.TopicConfig;
 import cn.xianyijun.wisp.common.message.ExtMessage;
@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Getter
 public class DefaultAdmin {
 
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
     private long timeoutMillis = 6000;
 
 
@@ -50,7 +50,7 @@ public class DefaultAdmin {
         try {
             TopicRouteData topicRouteData = this.clientFactory.getClient().getTopicRouteInfoFromNameServer(topic, timeoutMillis);
             if (topicRouteData != null) {
-                TopicPublishInfo topicPublishInfo = ClientInstance.topicRouteData2TopicPublishInfo(topic, topicRouteData);
+                TopicPublishInfo topicPublishInfo = ClientFactory.topicRouteData2TopicPublishInfo(topic, topicRouteData);
                 if (topicPublishInfo != null && topicPublishInfo.ok()) {
                     return topicPublishInfo.getMessageQueueList();
                 }

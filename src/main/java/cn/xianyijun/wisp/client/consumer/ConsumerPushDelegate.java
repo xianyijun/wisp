@@ -14,7 +14,7 @@ import cn.xianyijun.wisp.client.consumer.store.RemoteBrokerOffsetStore;
 import cn.xianyijun.wisp.client.hook.ConsumeMessageContext;
 import cn.xianyijun.wisp.client.hook.ConsumeMessageHook;
 import cn.xianyijun.wisp.client.hook.FilterMessageHook;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.client.stat.ConsumerStatsManager;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
@@ -83,7 +83,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
     private volatile boolean pause = false;
     private boolean consumeOrderly = false;
     private volatile ServiceState serviceState = ServiceState.CREATE_JUST;
-    private ClientInstance clientFactory;
+    private ClientFactory clientFactory;
     private PullConsumerWrapper pullConsumerWrapper;
     @Setter
     private MessageListener messageListenerInner;

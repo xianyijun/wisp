@@ -8,7 +8,7 @@ import cn.xianyijun.wisp.client.hook.CheckForbiddenHook;
 import cn.xianyijun.wisp.client.hook.SendMessageContext;
 import cn.xianyijun.wisp.client.hook.SendMessageHook;
 import cn.xianyijun.wisp.client.latency.FaultStrategy;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.client.producer.inner.MQProducerInner;
 import cn.xianyijun.wisp.common.ClientErrorCode;
 import cn.xianyijun.wisp.common.MixAll;
@@ -74,7 +74,7 @@ public class ProducerDelegate implements MQProducerInner {
     private final Random random = new Random();
     private int zipCompressLevel = Integer.parseInt(System.getProperty(MixAll.MESSAGE_COMPRESS_LEVEL, "5"));
     private ServiceState serviceState = ServiceState.CREATE_JUST;
-    private ClientInstance clientFactory;
+    private ClientFactory clientFactory;
     private FaultStrategy faultStrategy = new FaultStrategy();
     private ArrayList<CheckForbiddenHook> checkForbiddenHookList = new ArrayList<>();
     private ExecutorService checkExecutor;

@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer.store;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.exception.BrokerException;
@@ -29,13 +29,13 @@ public class LocalFileOffsetStore implements OffsetStore {
             System.getProperty("user.home") + File.separator + ".wisp_offsets");
 
 
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
     private final String groupName;
     private final String storePath;
     private ConcurrentMap<MessageQueue, AtomicLong> offsetTable =
             new ConcurrentHashMap<>();
 
-    public LocalFileOffsetStore(ClientInstance clientFactory, String groupName) {
+    public LocalFileOffsetStore(ClientFactory clientFactory, String groupName) {
         this.clientFactory = clientFactory;
         this.groupName = groupName;
         this.storePath = LOCAL_OFFSET_STORE_DIR + File.separator +

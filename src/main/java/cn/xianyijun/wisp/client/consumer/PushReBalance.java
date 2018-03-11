@@ -2,7 +2,7 @@ package cn.xianyijun.wisp.client.consumer;
 
 import cn.xianyijun.wisp.client.consumer.store.OffsetStore;
 import cn.xianyijun.wisp.client.consumer.store.ReadOffsetType;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.consumer.ConsumeWhereEnum;
@@ -33,7 +33,7 @@ public class PushReBalance extends AbstractReBalance {
 
     public PushReBalance(String consumerGroup, MessageModel messageModel,
                          AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                         ClientInstance mQClientFactory, ConsumerPushDelegate pushDelegate) {
+                         ClientFactory mQClientFactory, ConsumerPushDelegate pushDelegate) {
         super(consumerGroup, messageModel, allocateMessageQueueStrategy, mQClientFactory);
         this.pushDelegate = pushDelegate;
     }

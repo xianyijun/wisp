@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.body.LockBatchRequestBody;
@@ -64,7 +64,7 @@ public abstract class AbstractReBalance {
     @Setter
     protected AllocateMessageQueueStrategy allocateMessageQueueStrategy;
     @Setter
-    private ClientInstance clientFactory;
+    private ClientFactory clientFactory;
 
     /**
      * Instantiates a new Abstract re balance.
@@ -76,7 +76,7 @@ public abstract class AbstractReBalance {
      */
     AbstractReBalance(String consumerGroup, MessageModel messageModel,
                       AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                      ClientInstance clientFactory) {
+                      ClientFactory clientFactory) {
         this.consumerGroup = consumerGroup;
         this.messageModel = messageModel;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;

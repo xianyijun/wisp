@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.client.consumer;
 import cn.xianyijun.wisp.client.CommunicationMode;
 import cn.xianyijun.wisp.client.hook.FilterMessageContext;
 import cn.xianyijun.wisp.client.hook.FilterMessageHook;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.MessageAccessor;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 @Slf4j
 public class PullConsumerWrapper {
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
     private final String consumerGroup;
     private final boolean unitMode;
     private ConcurrentMap<MessageQueue, AtomicLong/* brokerId */> pullFromWhichNodeTable =
@@ -47,7 +47,7 @@ public class PullConsumerWrapper {
     @Setter
     private ArrayList<FilterMessageHook> filterMessageHookList = new ArrayList<>();
 
-    public PullConsumerWrapper(ClientInstance clientFactory, String consumerGroup, boolean unitMode) {
+    public PullConsumerWrapper(ClientFactory clientFactory, String consumerGroup, boolean unitMode) {
         this.clientFactory = clientFactory;
         this.consumerGroup = consumerGroup;
         this.unitMode = unitMode;

@@ -10,7 +10,7 @@ import cn.xianyijun.wisp.client.producer.SendCallback;
 import cn.xianyijun.wisp.client.producer.SendResult;
 import cn.xianyijun.wisp.client.producer.SendStatus;
 import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.TopicConfig;
 import cn.xianyijun.wisp.common.WispVersion;
@@ -289,7 +289,7 @@ public class MQClient {
             final CommunicationMode communicationMode,
             final SendCallback sendCallback,
             final TopicPublishInfo topicPublishInfo,
-            final ClientInstance instance,
+            final ClientFactory instance,
             final int retryTimesWhenSendFailed,
             final SendMessageContext context,
             final ProducerDelegate producer
@@ -341,7 +341,7 @@ public class MQClient {
             final RemotingCommand request,
             final SendCallback sendCallback,
             final TopicPublishInfo topicPublishInfo,
-            final ClientInstance instance,
+            final ClientFactory instance,
             final int retryTimesWhenSendFailed,
             final AtomicInteger times,
             final SendMessageContext context,
@@ -404,7 +404,7 @@ public class MQClient {
         });
     }
 
-    private void onDoException(String brokerName, Message msg, long timeoutMillis, RemotingCommand request, SendCallback sendCallback, TopicPublishInfo topicPublishInfo, ClientInstance instance, int timesTotal, AtomicInteger curTimes, Exception e, SendMessageContext context, boolean needRetry, ProducerDelegate producer) {
+    private void onDoException(String brokerName, Message msg, long timeoutMillis, RemotingCommand request, SendCallback sendCallback, TopicPublishInfo topicPublishInfo, ClientFactory instance, int timesTotal, AtomicInteger curTimes, Exception e, SendMessageContext context, boolean needRetry, ProducerDelegate producer) {
         int tmp = curTimes.incrementAndGet();
         if (needRetry && tmp <= timesTotal) {
             String retryBrokerName = brokerName;

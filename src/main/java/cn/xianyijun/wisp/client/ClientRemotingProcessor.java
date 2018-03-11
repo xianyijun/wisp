@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client;
 
-import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
+import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.client.producer.inner.MQProducerInner;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.UtilAll;
@@ -37,7 +37,7 @@ import java.util.Map;
 @Slf4j
 public class ClientRemotingProcessor implements NettyRequestProcessor {
 
-    private final ClientInstance clientFactory;
+    private final ClientFactory clientFactory;
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
