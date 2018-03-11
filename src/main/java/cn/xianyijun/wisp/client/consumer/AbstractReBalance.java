@@ -48,27 +48,23 @@ public abstract class AbstractReBalance {
      */
     protected final ConcurrentMap<String, Set<MessageQueue>> topicSubscribeInfoTable =
             new ConcurrentHashMap<>();
-
-    @Setter
-    private  ClientInstance clientFactory;
-
     /**
      * The Consumer group.
      */
     @Setter
     protected String consumerGroup;
-
     /**
      * The Message model.
      */
     @Setter
     protected MessageModel messageModel;
-
     /**
      * The Allocate message queue strategy.
      */
     @Setter
     protected AllocateMessageQueueStrategy allocateMessageQueueStrategy;
+    @Setter
+    private ClientInstance clientFactory;
 
     /**
      * Instantiates a new Abstract re balance.

@@ -47,6 +47,33 @@ public class ConsumerFilterManager extends AbstractConfigManager {
         );
     }
 
+    public static ConsumerFilterData build(final String topic, final String consumerGroup,
+                                           final String expression, final String type,
+                                           final long clientVersion) {
+        if (ExpressionType.isTagType(type)) {
+            return null;
+        }
+
+        ConsumerFilterData consumerFilterData = new ConsumerFilterData();
+        consumerFilterData.setTopic(topic);
+        consumerFilterData.setConsumerGroup(consumerGroup);
+        consumerFilterData.setBornTime(System.currentTimeMillis());
+        consumerFilterData.setDeadTime(0);
+        consumerFilterData.setExpression(expression);
+        consumerFilterData.setExpressionType(type);
+        consumerFilterData.setClientVersion(clientVersion);
+        try {
+            consumerFilterData.setCompiledExpression(
+                    FilterFactory.INSTANCE.get(type).compile(expression)
+            );
+        } catch (Throwable e) {
+            log.error("parse error: expr={}, topic={}, group={}, error={}", expression, topic, consumerGroup, e.getMessage());
+            return null;
+        }
+
+        return consumerFilterData;
+    }
+
     @Override
     public String configFilePath() {
         if (this.brokerController != null) {
@@ -196,9 +223,6 @@ public class ConsumerFilterManager extends AbstractConfigManager {
         return ret;
     }
 
-
-
-
     @Getter
     @NoArgsConstructor
     @RequiredArgsConstructor
@@ -322,34 +346,6 @@ public class ConsumerFilterManager extends AbstractConfigManager {
             return this.groupFilterData.get(consumerGroup);
         }
 
-    }
-
-
-    public static ConsumerFilterData build(final String topic, final String consumerGroup,
-                                           final String expression, final String type,
-                                           final long clientVersion) {
-        if (ExpressionType.isTagType(type)) {
-            return null;
-        }
-
-        ConsumerFilterData consumerFilterData = new ConsumerFilterData();
-        consumerFilterData.setTopic(topic);
-        consumerFilterData.setConsumerGroup(consumerGroup);
-        consumerFilterData.setBornTime(System.currentTimeMillis());
-        consumerFilterData.setDeadTime(0);
-        consumerFilterData.setExpression(expression);
-        consumerFilterData.setExpressionType(type);
-        consumerFilterData.setClientVersion(clientVersion);
-        try {
-            consumerFilterData.setCompiledExpression(
-                    FilterFactory.INSTANCE.get(type).compile(expression)
-            );
-        } catch (Throwable e) {
-            log.error("parse error: expr={}, topic={}, group={}, error={}", expression, topic, consumerGroup, e.getMessage());
-            return null;
-        }
-
-        return consumerFilterData;
     }
 
 

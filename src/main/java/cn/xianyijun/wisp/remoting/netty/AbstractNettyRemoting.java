@@ -64,6 +64,7 @@ public abstract class AbstractNettyRemoting {
     Pair<NettyRequestProcessor, ExecutorService> defaultRequestProcessor;
 
     SslContext sslContext;
+
     /**
      * Instantiates a new Abstract netty remoting.
      *
@@ -190,13 +191,13 @@ public abstract class AbstractNettyRemoting {
                                  final long timeoutMillis)
             throws InterruptedException, RemotingSendRequestException, RemotingTimeoutException {
         final int opaque = request.getOpaque();
-        log.info("[AbstractNettyRemoting] class :{} , doInvokeSync , channel :{} , request: {} , timeoutMillis :{} ,isOneWay:{} ,",this.getClass().getSimpleName(), channel, request, timeoutMillis, request.isOneWayRPC());
+        log.info("[AbstractNettyRemoting] class :{} , doInvokeSync , channel :{} , request: {} , timeoutMillis :{} ,isOneWay:{} ,", this.getClass().getSimpleName(), channel, request, timeoutMillis, request.isOneWayRPC());
         try {
             final ResponseFuture responseFuture = new ResponseFuture(opaque, timeoutMillis, null, null);
-            log.info("[AbstractNettyRemoting] class:{} , doInvokeSync , opaque: {} , request:{} , response:{} ",this.getClass().getSimpleName(), opaque ,request, responseFuture);
+            log.info("[AbstractNettyRemoting] class:{} , doInvokeSync , opaque: {} , request:{} , response:{} ", this.getClass().getSimpleName(), opaque, request, responseFuture);
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
-            log.info("{}.doInvokeSync , type:{} request:{}",this.getClass().getSimpleName(),request.getType(),request);
+            log.info("{}.doInvokeSync , type:{} request:{}", this.getClass().getSimpleName(), request.getType(), request);
             channel.writeAndFlush(request).addListener((ChannelFutureListener) f -> {
                 if (f.isSuccess()) {
                     responseFuture.setSendRequestOK(true);
@@ -303,11 +304,11 @@ public abstract class AbstractNettyRemoting {
      * @param cmd the cmd
      */
     private void processRequestCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
-        log.info("[processRequestCommand] process RequestCommand ,code :{} ,body :{}, remark:{} , header:{} " ,cmd.getCode() , cmd.getBody() == null ? "": new String(cmd.getBody()),cmd.getRemark(), cmd.getCustomHeader());
+        log.info("[processRequestCommand] process RequestCommand ,code :{} ,body :{}, remark:{} , header:{} ", cmd.getCode(), cmd.getBody() == null ? "" : new String(cmd.getBody()), cmd.getRemark(), cmd.getCustomHeader());
         final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
 
-        log.info("[AbstractNettyRemoting.processRequestCommand] pair, code: {} ,processor:{}", cmd.getCode() ,pair.getFirst().getClass().getSimpleName());
+        log.info("[AbstractNettyRemoting.processRequestCommand] pair, code: {} ,processor:{}", cmd.getCode(), pair.getFirst().getClass().getSimpleName());
         final int opaque = cmd.getOpaque();
 
         Runnable run = () -> {
@@ -379,7 +380,7 @@ public abstract class AbstractNettyRemoting {
     /**
      * Process response from remote peer to the previous issued requests.
      *
-     * @param ctx channel handler context.
+     * @param ctx      channel handler context.
      * @param response response command instance.
      */
     private void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand response) {
@@ -387,7 +388,7 @@ public abstract class AbstractNettyRemoting {
         final int opaque = response.getOpaque();
         final ResponseFuture responseFuture = responseTable.get(opaque);
         if (responseFuture != null) {
-            log.info("[AbstractNettyRemoting] class:{} putResponse response:{} ",this.getClass().getSimpleName(),response);
+            log.info("[AbstractNettyRemoting] class:{} putResponse response:{} ", this.getClass().getSimpleName(), response);
             responseFuture.setResponseCommand(response);
 
             responseTable.remove(opaque);

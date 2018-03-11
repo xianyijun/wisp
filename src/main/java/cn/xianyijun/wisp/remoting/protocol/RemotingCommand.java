@@ -62,7 +62,6 @@ public class RemotingCommand {
     }
 
 
-
     private static byte[] markProtocolType(int source, SerializeType type) {
         byte[] result = new byte[4];
 
@@ -161,6 +160,10 @@ public class RemotingCommand {
                 configVersion = value;
             }
         }
+    }
+
+    public static int createNewRequestId() {
+        return requestId.incrementAndGet();
     }
 
     public void markOneWayRPC() {
@@ -346,11 +349,6 @@ public class RemotingCommand {
         extFields.put(key, value);
     }
 
-
-    public static int createNewRequestId() {
-        return requestId.incrementAndGet();
-    }
-
     @Override
     public String toString() {
         return "RemotingCommand{" +
@@ -358,7 +356,7 @@ public class RemotingCommand {
                 ", opaque=" + opaque +
                 ", extFields=" + extFields +
                 ", serializeTypeCurrentRPC=" + serializeTypeCurrentRPC +
-                ", body=" + (body != null ? new String(body): "") +
+                ", body=" + (body != null ? new String(body) : "") +
                 ", customHeader=" + customHeader +
                 ", code=" + code +
                 ", version=" + version +

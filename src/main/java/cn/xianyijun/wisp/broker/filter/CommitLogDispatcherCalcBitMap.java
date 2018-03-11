@@ -32,7 +32,7 @@ public class CommitLogDispatcherCalcBitMap implements CommitLogDispatcher {
 
         Collection<ConsumerFilterData> filterDataCollection = consumerFilterManager.get(request.getTopic());
 
-        if (CollectionUtils.isEmpty(filterDataCollection)){
+        if (CollectionUtils.isEmpty(filterDataCollection)) {
             return;
         }
         Iterator<ConsumerFilterData> iterator = Objects.requireNonNull(filterDataCollection).iterator();

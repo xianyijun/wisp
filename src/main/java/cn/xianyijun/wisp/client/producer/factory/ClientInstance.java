@@ -89,33 +89,20 @@ public class ClientInstance {
     private final DefaultAdmin admin;
 
     private final Lock lockHeartbeat = new ReentrantLock();
-
-    private ServiceState serviceState = ServiceState.CREATE_JUST;
-
     private final ConcurrentMap<String, HashMap<Long, String>> brokerAddrTable =
             new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, HashMap<String, Integer>> brokerVersionTable =
             new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, MQProducerInner> producerTable = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, ConsumerInner> consumerTable = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, MQAdminExtInner> adminExtTable = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, TopicRouteData> topicRouteTable = new ConcurrentHashMap<>();
-
     private final AtomicLong sendHeartbeatTimesTotal = new AtomicLong(0);
-
     private final Lock nameServerLock = new ReentrantLock();
-
     private final PullMessageService pullMessageService;
-
     private final ReBalanceService reBalanceService;
-
     private final ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "MQClientFactoryScheduledThread"));
-
+    private ServiceState serviceState = ServiceState.CREATE_JUST;
     private DatagramSocket datagramSocket;
 
     private Random random = new Random();
@@ -150,6 +137,68 @@ public class ClientInstance {
                 WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION), RemotingCommand.getSerializeTypeConfigInThisServer());
     }
 
+    public static TopicPublishInfo topicRouteData2TopicPublishInfo(final String topic, final TopicRouteData route) {
+        TopicPublishInfo info = new TopicPublishInfo();
+        info.setTopicRouteData(route);
+        if (route.getOrderTopicConf() != null && route.getOrderTopicConf().length() > 0) {
+            String[] brokers = route.getOrderTopicConf().split(";");
+            for (String broker : brokers) {
+                String[] item = broker.split(":");
+                int nums = Integer.parseInt(item[1]);
+                for (int i = 0; i < nums; i++) {
+                    MessageQueue mq = new MessageQueue(topic, item[0], i);
+                    info.getMessageQueueList().add(mq);
+                }
+            }
+
+            info.setOrderTopic(true);
+        } else {
+            List<QueueData> qds = route.getQueueDatas();
+            Collections.sort(qds);
+            for (QueueData qd : qds) {
+                if (PermName.isWriteable(qd.getPerm())) {
+                    BrokerData brokerData = null;
+                    for (BrokerData bd : route.getBrokerDatas()) {
+                        if (bd.getBrokerName().equals(qd.getBrokerName())) {
+                            brokerData = bd;
+                            break;
+                        }
+                    }
+
+                    if (null == brokerData) {
+                        continue;
+                    }
+
+                    if (!brokerData.getBrokerAddrs().containsKey(MixAll.MASTER_ID)) {
+                        continue;
+                    }
+
+                    for (int i = 0; i < qd.getWriteQueueNums(); i++) {
+                        MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
+                        info.getMessageQueueList().add(mq);
+                    }
+                }
+            }
+
+            info.setOrderTopic(false);
+        }
+
+        return info;
+    }
+
+    private static Set<MessageQueue> topicRouteData2TopicSubscribeInfo(final String topic, final TopicRouteData route) {
+        Set<MessageQueue> mqList = new HashSet<MessageQueue>();
+        List<QueueData> qds = route.getQueueDatas();
+        for (QueueData qd : qds) {
+            if (PermName.isReadable(qd.getPerm())) {
+                for (int i = 0; i < qd.getReadQueueNums(); i++) {
+                    MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
+                    mqList.add(mq);
+                }
+            }
+        }
+        return mqList;
+    }
 
     public void sendHeartbeatToAllBrokerWithLock() {
         if (this.lockHeartbeat.tryLock()) {
@@ -368,7 +417,6 @@ public class ClientInstance {
         }
     }
 
-
     private void startScheduledTask() {
         if (null == this.clientConfig.getNameServerAddr()) {
             this.scheduledExecutorService.scheduleAtFixedRate(() -> {
@@ -414,7 +462,6 @@ public class ClientInstance {
         }, 1, 1, TimeUnit.MINUTES);
     }
 
-
     public void updateTopicRouteInfoFromNameServer() {
         Set<String> topicList = new HashSet<String>();
 
@@ -454,7 +501,7 @@ public class ClientInstance {
     }
 
     public boolean updateTopicRouteInfoFromNameServer(final String topic, boolean isDefault,
-                                                       DefaultProducer defaultProducer) {
+                                                      DefaultProducer defaultProducer) {
         try {
             if (this.nameServerLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
@@ -533,7 +580,6 @@ public class ClientInstance {
         return false;
     }
 
-
     private boolean isBrokerAddrExistInTopicRouteTable(final String addr) {
         for (Map.Entry<String, TopicRouteData> entry : this.topicRouteTable.entrySet()) {
             TopicRouteData topicRouteData = entry.getValue();
@@ -550,7 +596,6 @@ public class ClientInstance {
 
         return false;
     }
-
 
     private boolean topicRouteDataIsChange(TopicRouteData oldData, TopicRouteData nowData) {
         if (oldData == null || nowData == null) {
@@ -590,71 +635,6 @@ public class ClientInstance {
         }
 
         return result;
-    }
-
-
-    public static TopicPublishInfo topicRouteData2TopicPublishInfo(final String topic, final TopicRouteData route) {
-        TopicPublishInfo info = new TopicPublishInfo();
-        info.setTopicRouteData(route);
-        if (route.getOrderTopicConf() != null && route.getOrderTopicConf().length() > 0) {
-            String[] brokers = route.getOrderTopicConf().split(";");
-            for (String broker : brokers) {
-                String[] item = broker.split(":");
-                int nums = Integer.parseInt(item[1]);
-                for (int i = 0; i < nums; i++) {
-                    MessageQueue mq = new MessageQueue(topic, item[0], i);
-                    info.getMessageQueueList().add(mq);
-                }
-            }
-
-            info.setOrderTopic(true);
-        } else {
-            List<QueueData> qds = route.getQueueDatas();
-            Collections.sort(qds);
-            for (QueueData qd : qds) {
-                if (PermName.isWriteable(qd.getPerm())) {
-                    BrokerData brokerData = null;
-                    for (BrokerData bd : route.getBrokerDatas()) {
-                        if (bd.getBrokerName().equals(qd.getBrokerName())) {
-                            brokerData = bd;
-                            break;
-                        }
-                    }
-
-                    if (null == brokerData) {
-                        continue;
-                    }
-
-                    if (!brokerData.getBrokerAddrs().containsKey(MixAll.MASTER_ID)) {
-                        continue;
-                    }
-
-                    for (int i = 0; i < qd.getWriteQueueNums(); i++) {
-                        MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
-                        info.getMessageQueueList().add(mq);
-                    }
-                }
-            }
-
-            info.setOrderTopic(false);
-        }
-
-        return info;
-    }
-
-
-    private static Set<MessageQueue> topicRouteData2TopicSubscribeInfo(final String topic, final TopicRouteData route) {
-        Set<MessageQueue> mqList = new HashSet<MessageQueue>();
-        List<QueueData> qds = route.getQueueDatas();
-        for (QueueData qd : qds) {
-            if (PermName.isReadable(qd.getPerm())) {
-                for (int i = 0; i < qd.getReadQueueNums(); i++) {
-                    MessageQueue mq = new MessageQueue(topic, qd.getBrokerName(), i);
-                    mqList.add(mq);
-                }
-            }
-        }
-        return mqList;
     }
 
     private void cleanOfflineBroker() {

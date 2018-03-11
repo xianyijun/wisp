@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.client.consumer.listener;
 /**
  * The enum Consume orderly status.
  */
-public enum  ConsumeOrderlyStatus {
+public enum ConsumeOrderlyStatus {
     /**
      * Success consume orderly status.
      */

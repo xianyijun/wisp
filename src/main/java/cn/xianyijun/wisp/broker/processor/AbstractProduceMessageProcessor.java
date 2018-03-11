@@ -54,7 +54,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
             case RequestCode.SEND_BATCH_MESSAGE:
             case RequestCode.SEND_MESSAGE:
                 requestHeader = (ProduceMessageRequestHeader) request
-                                .decodeCommandCustomHeader(ProduceMessageRequestHeader.class);
+                        .decodeCommandCustomHeader(ProduceMessageRequestHeader.class);
             default:
                 break;
         }
@@ -64,7 +64,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
 
     void msgCheck(final ChannelHandlerContext ctx,
                   final ProduceMessageRequestHeader requestHeader, final RemotingCommand response) {
-        log.info("[AbstractProduceMessageProcessor] msgCheck , requestHeader:{} , response:{} ",requestHeader, response);
+        log.info("[AbstractProduceMessageProcessor] msgCheck , requestHeader:{} , response:{} ", requestHeader, response);
 
         if (!PermName.isWriteable(this.brokerController.getBrokerConfig().getBrokerPermission())
                 && this.brokerController.getTopicConfigManager().isOrderTopic(requestHeader.getTopic())) {

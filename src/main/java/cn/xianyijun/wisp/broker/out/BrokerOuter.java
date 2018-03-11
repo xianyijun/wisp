@@ -54,6 +54,15 @@ public class BrokerOuter {
         this.remotingClient.registerRPCHook(rpcHook);
     }
 
+    public static void main(String[] args) {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, null);
+        System.out.println(request.isResponseType());
+        System.out.println(request.isOneWayRPC());
+        System.out.println(request.getType());
+        request.markResponseType();
+        System.out.println(request.getType());
+    }
+
     public void start() {
         log.info("[BrokerOuter] start");
         this.remotingClient.start();
@@ -65,7 +74,6 @@ public class BrokerOuter {
         Collections.addAll(lst, addrArray);
         this.remotingClient.updateNameServerAddressList(lst);
     }
-
 
     public void fetchNameServerAddr() {
         try {
@@ -231,14 +239,5 @@ public class BrokerOuter {
         }
 
         throw new BrokerException(response.getCode(), response.getRemark());
-    }
-
-    public static void main(String[] args) {
-        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.REGISTER_BROKER, null);
-        System.out.println(request.isResponseType());
-        System.out.println(request.isOneWayRPC());
-        System.out.println(request.getType());
-        request.markResponseType();
-        System.out.println(request.getType());
     }
 }

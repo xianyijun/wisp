@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.client.consumer.listener;
 
-public enum  ConsumeReturnType {
+public enum ConsumeReturnType {
     /**
      * consume return success
      */

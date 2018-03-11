@@ -14,6 +14,7 @@ public class ReBalanceService extends ServiceThread {
                     "wisp.client.rebalance.waitInterval", "20000"));
 
     private final ClientInstance clientFactory;
+
     @Override
     public String getServiceName() {
         return ReBalanceService.class.getSimpleName();

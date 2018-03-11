@@ -6,6 +6,6 @@ import lombok.Data;
 import java.util.HashSet;
 
 @Data
-public class GroupList extends RemotingSerializable{
+public class GroupList extends RemotingSerializable {
     private HashSet<String> groupList = new HashSet<>();
 }

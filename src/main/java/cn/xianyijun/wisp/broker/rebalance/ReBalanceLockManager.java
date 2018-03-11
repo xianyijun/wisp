@@ -124,7 +124,7 @@ public class ReBalanceLockManager {
             this.lock.lockInterruptibly();
             try {
                 ConcurrentHashMap<MessageQueue, LockEntry> groupValue = this.mqLockTable.get(group);
-                if (groupValue == null){
+                if (groupValue == null) {
                     log.warn("unlockBatch, group not exist, Group: {} {}", group, clientId);
                     return;
                 }

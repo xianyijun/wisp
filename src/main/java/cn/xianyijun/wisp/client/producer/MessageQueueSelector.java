@@ -7,6 +7,7 @@ import java.util.List;
 
 /**
  * The interface Message queue selector.
+ *
  * @author xianyijun
  */
 public interface MessageQueueSelector {

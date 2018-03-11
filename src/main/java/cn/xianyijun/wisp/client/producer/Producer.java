@@ -12,9 +12,10 @@ import java.util.List;
 
 /**
  * The interface Mq producer.
+ *
  * @author xianyijun
  */
-public interface Producer extends MQAdmin{
+public interface Producer extends MQAdmin {
 
     /**
      * Start.

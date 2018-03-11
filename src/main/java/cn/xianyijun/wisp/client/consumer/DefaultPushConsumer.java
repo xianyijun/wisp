@@ -89,7 +89,7 @@ public class DefaultPushConsumer extends ClientConfig implements PushConsumer {
     }
 
     public DefaultPushConsumer(final String consumerGroup, RPCHook rpcHook,
-                                 AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+                               AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
         this.consumerGroup = consumerGroup;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
         consumerPushDelegate = new ConsumerPushDelegate(this, rpcHook);

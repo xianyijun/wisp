@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * @author xianyijun
  */
 @Slf4j
-public class PushReBalance extends AbstractReBalance{
+public class PushReBalance extends AbstractReBalance {
 
     private final static long UNLOCK_DELAY_TIME_MILLS = Long.parseLong(System.getProperty("wisp.client.unlockDelayTimeMills", "20000"));
 
@@ -32,8 +32,8 @@ public class PushReBalance extends AbstractReBalance{
     }
 
     public PushReBalance(String consumerGroup, MessageModel messageModel,
-                             AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                             ClientInstance mQClientFactory, ConsumerPushDelegate pushDelegate) {
+                         AllocateMessageQueueStrategy allocateMessageQueueStrategy,
+                         ClientInstance mQClientFactory, ConsumerPushDelegate pushDelegate) {
         super(consumerGroup, messageModel, allocateMessageQueueStrategy, mQClientFactory);
         this.pushDelegate = pushDelegate;
     }
@@ -101,8 +101,7 @@ public class PushReBalance extends AbstractReBalance{
                 long lastOffset = offsetStore.readOffset(mq, ReadOffsetType.READ_FROM_STORE);
                 if (lastOffset >= 0) {
                     result = lastOffset;
-                }
-                else if (-1 == lastOffset) {
+                } else if (-1 == lastOffset) {
                     if (mq.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
                         result = 0L;
                     } else {

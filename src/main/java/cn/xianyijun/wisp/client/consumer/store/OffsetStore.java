@@ -10,6 +10,7 @@ import java.util.Set;
 
 /**
  * The interface Offset store.
+ *
  * @author xianyijun
  */
 public interface OffsetStore {

@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.client.producer;
 
 /**
  * The interface Send callback.
+ *
  * @author xianyijun
  */
 public interface SendCallback {

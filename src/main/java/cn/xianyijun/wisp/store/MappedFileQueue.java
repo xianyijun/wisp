@@ -39,6 +39,18 @@ public class MappedFileQueue {
 
     private volatile long storeTimestamp = 0;
 
+    public static void main(String[] args) {
+        String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
+                + File.separator + "commitlog";
+        MappedFileQueue mappedFileQueue = new MappedFileQueue(storePathCommitLog, 1024 * 1024 * 1024, new AllocateMappedFileService(null));
+
+        mappedFileQueue.load();
+        System.out.println(mappedFileQueue.getMaxOffset());
+
+        for (MappedFile file : mappedFileQueue.getMappedFiles()) {
+        }
+    }
+
     public MappedFile getLastMappedFile() {
         MappedFile mappedFileLast = null;
 
@@ -54,7 +66,6 @@ public class MappedFileQueue {
         }
         return mappedFileLast;
     }
-
 
     public MappedFile getLastMappedFile(final long startOffset) {
         return getLastMappedFile(startOffset, true);
@@ -102,7 +113,6 @@ public class MappedFileQueue {
         return mappedFileLast;
     }
 
-
     public long getMaxOffset() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {
@@ -142,7 +152,6 @@ public class MappedFileQueue {
         return true;
     }
 
-
     public boolean load() {
         File dir = new File(this.storePath);
         File[] files = dir.listFiles();
@@ -172,7 +181,6 @@ public class MappedFileQueue {
         }
         return true;
     }
-
 
     public void truncateDirtyFiles(long offset) {
         List<MappedFile> willRemoveFiles = new ArrayList<>();
@@ -235,7 +243,6 @@ public class MappedFileQueue {
         }
     }
 
-
     public MappedFile getFirstMappedFile() {
         MappedFile mappedFileFirst = null;
         if (!this.mappedFiles.isEmpty()) {
@@ -285,7 +292,6 @@ public class MappedFileQueue {
         return null;
     }
 
-
     public void deleteLastMappedFile() {
         MappedFile lastMappedFile = getLastMappedFile();
         if (lastMappedFile != null) {
@@ -295,7 +301,6 @@ public class MappedFileQueue {
 
         }
     }
-
 
     public void destroy() {
         for (MappedFile mf : this.mappedFiles) {
@@ -310,7 +315,6 @@ public class MappedFileQueue {
         }
     }
 
-
     public boolean commit(final int commitLeastPages) {
         boolean result = true;
         MappedFile mappedFile = this.findMappedFileByOffset(this.committedWhere, this.committedWhere == 0);
@@ -323,7 +327,6 @@ public class MappedFileQueue {
 
         return result;
     }
-
 
     public boolean flush(final int flushLeastPages) {
         boolean result = true;
@@ -350,7 +353,6 @@ public class MappedFileQueue {
         return 0;
     }
 
-
     public MappedFile getMappedFileByTime(final long timestamp) {
         Object[] mfs = this.copyMappedFiles(0);
 
@@ -366,7 +368,6 @@ public class MappedFileQueue {
         }
         return (MappedFile) mfs[mfs.length - 1];
     }
-
 
     private Object[] copyMappedFiles(final int reservedMappedFiles) {
         Object[] mfs;
@@ -489,20 +490,7 @@ public class MappedFileQueue {
         return deleteCount;
     }
 
-
     public long remainHowManyDataToCommit() {
         return getMaxWrotePosition() - committedWhere;
-    }
-
-    public static void main(String[] args) {
-        String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
-                + File.separator + "commitlog";
-        MappedFileQueue mappedFileQueue = new MappedFileQueue(storePathCommitLog, 1024*1024*1024,new AllocateMappedFileService(null));
-
-        mappedFileQueue.load();
-        System.out.println(mappedFileQueue.getMaxOffset());
-
-        for (MappedFile file : mappedFileQueue.getMappedFiles()){
-        }
     }
 }

@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public class Producer {
     public static void main(String[] args) throws ClientException, InterruptedException {
-        System.setProperty(MixAll.NAME_SERVER_ADDR_PROPERTY,"localhost:9876");
+        System.setProperty(MixAll.NAME_SERVER_ADDR_PROPERTY, "localhost:9876");
         /*
          * Instantiate with a producer group name.
          */

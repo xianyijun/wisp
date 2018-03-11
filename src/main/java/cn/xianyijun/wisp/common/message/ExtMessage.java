@@ -41,14 +41,6 @@ public class ExtMessage extends Message {
         return TopicFilterType.SINGLE_TAG;
     }
 
-    public ByteBuffer getStoreHostBytes() {
-        return socketAddress2ByteBuffer(this.storeHost);
-    }
-
-    public ByteBuffer getStoreHostBytes(ByteBuffer byteBuffer) {
-        return socketAddress2ByteBuffer(this.storeHost, byteBuffer);
-    }
-
     private static ByteBuffer socketAddress2ByteBuffer(final SocketAddress socketAddress, final ByteBuffer byteBuffer) {
         InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
         byteBuffer.put(inetSocketAddress.getAddress().getAddress(), 0, 4);
@@ -62,6 +54,13 @@ public class ExtMessage extends Message {
         return socketAddress2ByteBuffer(socketAddress, byteBuffer);
     }
 
+    public ByteBuffer getStoreHostBytes() {
+        return socketAddress2ByteBuffer(this.storeHost);
+    }
+
+    public ByteBuffer getStoreHostBytes(ByteBuffer byteBuffer) {
+        return socketAddress2ByteBuffer(this.storeHost, byteBuffer);
+    }
 
     public ByteBuffer getBornHostBytes() {
         return socketAddress2ByteBuffer(this.bornHost);

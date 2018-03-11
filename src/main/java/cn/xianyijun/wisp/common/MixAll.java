@@ -293,6 +293,7 @@ public class MixAll {
         }
         return false;
     }
+
     public static boolean isSysConsumerGroup(final String consumerGroup) {
         return consumerGroup.startsWith(CID_RMQ_SYS_PREFIX);
     }

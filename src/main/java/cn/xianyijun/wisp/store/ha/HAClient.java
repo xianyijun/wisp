@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author xianyijun
  */
 @Slf4j
-public class HAClient extends ServiceThread{
+public class HAClient extends ServiceThread {
     private static final int READ_MAX_BUFFER_SIZE = 1024 * 1024 * 4;
     private final AtomicReference<String> masterAddress = new AtomicReference<>();
     private final ByteBuffer reportOffset = ByteBuffer.allocate(8);
@@ -262,7 +262,7 @@ public class HAClient extends ServiceThread{
                     }
 
                     long interval = haService.getDefaultMessageStore().getSystemClock().now()
-                                    - this.lastWriteTimestamp;
+                            - this.lastWriteTimestamp;
                     if (interval > haService.getDefaultMessageStore().getMessageStoreConfig()
                             .getHaHousekeepingInterval()) {
                         log.warn("HAClient, housekeeping, found this connection[" + this.masterAddress

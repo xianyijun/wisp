@@ -2,9 +2,10 @@ package cn.xianyijun.wisp.filter;
 
 /**
  * The type Expression type.
+ *
  * @author xianyijun
  */
-public class  ExpressionType {
+public class ExpressionType {
     /**
      * The constant SQL92.
      */

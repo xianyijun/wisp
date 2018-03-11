@@ -22,8 +22,8 @@ public class PullReBalance extends AbstractReBalance {
     }
 
     public PullReBalance(String consumerGroup, MessageModel messageModel,
-                             AllocateMessageQueueStrategy allocateMessageQueueStrategy,
-                             ClientInstance clientFactory, ConsumerPullDelegate consumerPullDelegate) {
+                         AllocateMessageQueueStrategy allocateMessageQueueStrategy,
+                         ClientInstance clientFactory, ConsumerPullDelegate consumerPullDelegate) {
         super(consumerGroup, messageModel, allocateMessageQueueStrategy, clientFactory);
         this.consumerPullDelegate = consumerPullDelegate;
     }

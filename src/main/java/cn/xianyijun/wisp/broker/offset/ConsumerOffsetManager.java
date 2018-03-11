@@ -41,11 +41,12 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
 
     @Override
     public void decode(String jsonString) {
-        if (!StringUtils.isEmpty(jsonString)) {
-            ConsumerOffsetManager obj = RemotingSerializable.fromJson(jsonString, ConsumerOffsetManager.class);
-            if (obj != null) {
-                this.offsetTable = obj.offsetTable;
-            }
+        if (StringUtils.isEmpty(jsonString)) {
+            return;
+        }
+        ConsumerOffsetManager obj = RemotingSerializable.fromJson(jsonString, ConsumerOffsetManager.class);
+        if (obj != null) {
+            this.offsetTable = obj.offsetTable;
         }
     }
 
@@ -152,7 +153,6 @@ public class ConsumerOffsetManager extends AbstractConfigManager {
 
     public void commitOffset(final String clientHost, final String group, final String topic, final int queueId,
                              final long offset) {
-        // topic@group
         String key = topic + TOPIC_GROUP_SEPARATOR + group;
         this.commitOffset(clientHost, key, queueId, offset);
     }

@@ -34,7 +34,6 @@ public class FilterServerManager {
             .newSingleThreadScheduledExecutor(new WispThreadFactory("FilterServerManagerScheduledThread"));
 
 
-
     public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
         FilterServerInfo old = this.filterServerTable.remove(channel);
         if (old != null) {

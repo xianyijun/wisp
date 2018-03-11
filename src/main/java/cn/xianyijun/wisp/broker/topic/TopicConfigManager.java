@@ -167,7 +167,7 @@ public class TopicConfigManager extends AbstractConfigManager {
 
     public TopicConfig createTopicInProduceMessageMethod(final String topic, final String defaultTopic,
                                                          final String remoteAddress, final int clientDefaultTopicQueueNums, final int topicSysFlag) {
-        log.info("[TopicConfigManager] createTopicInProduceMessageMethod , topic :{} , defaultTopic:{} , remoteAddress:{}, clientDefaultTopicQueueNums:{} ,topicSysFlag:{}",topic, defaultTopic, remoteAddress, clientDefaultTopicQueueNums, topicSysFlag);
+        log.info("[TopicConfigManager] createTopicInProduceMessageMethod , topic :{} , defaultTopic:{} , remoteAddress:{}, clientDefaultTopicQueueNums:{} ,topicSysFlag:{}", topic, defaultTopic, remoteAddress, clientDefaultTopicQueueNums, topicSysFlag);
         TopicConfig topicConfig = null;
         boolean createNew = false;
 

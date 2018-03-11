@@ -120,7 +120,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             } catch (RejectedExecutionException e) {
                 this.submitConsumeRequestLater(consumeRequest);
             }
-        }else {
+        } else {
             for (int total = 0; total < msgs.size(); ) {
                 List<ExtMessage> msgThis = new ArrayList<>(consumeBatchSize);
                 for (int i = 0; i < consumeBatchSize; i++, total++) {
@@ -161,6 +161,96 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
         this.scheduledExecutorService.schedule(() -> ConsumeMessageConcurrentlyService.this.submitConsumeRequest(msgs, processQueue, messageQueue, true), 5000, TimeUnit.MILLISECONDS);
     }
 
+    private void resetRetryTopic(final List<ExtMessage> msgs) {
+        final String groupTopic = MixAll.getRetryTopic(consumerGroup);
+        for (ExtMessage msg : msgs) {
+            String retryTopic = msg.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
+            if (retryTopic != null && groupTopic.equals(msg.getTopic())) {
+                msg.setTopic(retryTopic);
+            }
+        }
+    }
+
+    public ConsumerStatsManager getConsumerStatsManager() {
+        return this.consumerPushDelegate.getConsumerStatsManager();
+    }
+
+    public void processConsumeResult(
+            final ConsumeConcurrentlyStatus status,
+            final ConsumeConcurrentlyContext context,
+            final ConsumeRequest consumeRequest
+    ) {
+        int ackIndex = context.getAckIndex();
+
+        if (consumeRequest.getMsgs().isEmpty()) {
+            return;
+        }
+
+        switch (status) {
+            case CONSUME_SUCCESS:
+                if (ackIndex >= consumeRequest.getMsgs().size()) {
+                    ackIndex = consumeRequest.getMsgs().size() - 1;
+                }
+                int ok = ackIndex + 1;
+                int failed = consumeRequest.getMsgs().size() - ok;
+                this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), ok);
+                this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), failed);
+                break;
+            case RECONSUME_LATER:
+                ackIndex = -1;
+                this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(),
+                        consumeRequest.getMsgs().size());
+                break;
+            default:
+                break;
+        }
+
+        switch (this.defaultPushConsumer.getMessageModel()) {
+            case BROADCASTING:
+                for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
+                    ExtMessage msg = consumeRequest.getMsgs().get(i);
+                    log.warn("BROADCASTING, the message consume failed, drop it, {}", msg.toString());
+                }
+                break;
+            case CLUSTERING:
+                List<ExtMessage> msgBackFailed = new ArrayList<>(consumeRequest.getMsgs().size());
+                for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
+                    ExtMessage msg = consumeRequest.getMsgs().get(i);
+                    boolean result = this.sendMessageBack(msg, context);
+                    if (!result) {
+                        msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
+                        msgBackFailed.add(msg);
+                    }
+                }
+
+                if (!msgBackFailed.isEmpty()) {
+                    consumeRequest.getMsgs().removeAll(msgBackFailed);
+
+                    this.submitConsumeRequestLater(msgBackFailed, consumeRequest.getProcessQueue(), consumeRequest.getMessageQueue());
+                }
+                break;
+            default:
+                break;
+        }
+
+        long offset = consumeRequest.getProcessQueue().removeMessage(consumeRequest.getMsgs());
+        if (offset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
+            this.consumerPushDelegate.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), offset, true);
+        }
+    }
+
+    private boolean sendMessageBack(final ExtMessage msg, final ConsumeConcurrentlyContext context) {
+        int delayLevel = context.getDelayLevelWhenNextConsume();
+
+        try {
+            this.consumerPushDelegate.sendMessageBack(msg, delayLevel, context.getMessageQueue().getBrokerName());
+            return true;
+        } catch (Exception e) {
+            log.error("sendMessageBack exception, group: " + this.consumerGroup + " msg: " + msg.toString(), e);
+        }
+
+        return false;
+    }
 
     @RequiredArgsConstructor
     @Getter
@@ -257,97 +347,6 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             return messageQueue;
         }
 
-    }
-
-    private void resetRetryTopic(final List<ExtMessage> msgs) {
-        final String groupTopic = MixAll.getRetryTopic(consumerGroup);
-        for (ExtMessage msg : msgs) {
-            String retryTopic = msg.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
-            if (retryTopic != null && groupTopic.equals(msg.getTopic())) {
-                msg.setTopic(retryTopic);
-            }
-        }
-    }
-
-    public ConsumerStatsManager getConsumerStatsManager() {
-        return this.consumerPushDelegate.getConsumerStatsManager();
-    }
-
-    public void processConsumeResult(
-            final ConsumeConcurrentlyStatus status,
-            final ConsumeConcurrentlyContext context,
-            final ConsumeRequest consumeRequest
-    ) {
-        int ackIndex = context.getAckIndex();
-
-        if (consumeRequest.getMsgs().isEmpty()) {
-            return;
-        }
-
-        switch (status) {
-            case CONSUME_SUCCESS:
-                if (ackIndex >= consumeRequest.getMsgs().size()) {
-                    ackIndex = consumeRequest.getMsgs().size() - 1;
-                }
-                int ok = ackIndex + 1;
-                int failed = consumeRequest.getMsgs().size() - ok;
-                this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), ok);
-                this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), failed);
-                break;
-            case RECONSUME_LATER:
-                ackIndex = -1;
-                this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(),
-                        consumeRequest.getMsgs().size());
-                break;
-            default:
-                break;
-        }
-
-        switch (this.defaultPushConsumer.getMessageModel()) {
-            case BROADCASTING:
-                for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
-                    ExtMessage msg = consumeRequest.getMsgs().get(i);
-                    log.warn("BROADCASTING, the message consume failed, drop it, {}", msg.toString());
-                }
-                break;
-            case CLUSTERING:
-                List<ExtMessage> msgBackFailed = new ArrayList<>(consumeRequest.getMsgs().size());
-                for (int i = ackIndex + 1; i < consumeRequest.getMsgs().size(); i++) {
-                    ExtMessage msg = consumeRequest.getMsgs().get(i);
-                    boolean result = this.sendMessageBack(msg, context);
-                    if (!result) {
-                        msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
-                        msgBackFailed.add(msg);
-                    }
-                }
-
-                if (!msgBackFailed.isEmpty()) {
-                    consumeRequest.getMsgs().removeAll(msgBackFailed);
-
-                    this.submitConsumeRequestLater(msgBackFailed, consumeRequest.getProcessQueue(), consumeRequest.getMessageQueue());
-                }
-                break;
-            default:
-                break;
-        }
-
-        long offset = consumeRequest.getProcessQueue().removeMessage(consumeRequest.getMsgs());
-        if (offset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
-            this.consumerPushDelegate.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), offset, true);
-        }
-    }
-
-    private boolean sendMessageBack(final ExtMessage msg, final ConsumeConcurrentlyContext context) {
-        int delayLevel = context.getDelayLevelWhenNextConsume();
-
-        try {
-            this.consumerPushDelegate.sendMessageBack(msg, delayLevel, context.getMessageQueue().getBrokerName());
-            return true;
-        } catch (Exception e) {
-            log.error("sendMessageBack exception, group: " + this.consumerGroup + " msg: " + msg.toString(), e);
-        }
-
-        return false;
     }
 
 }

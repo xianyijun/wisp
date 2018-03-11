@@ -10,6 +10,7 @@ import java.nio.channels.WritableByteChannel;
 
 /**
  * The type File region encoder.
+ *
  * @author xianyijun
  */
 public class FileRegionEncoder extends MessageToByteEncoder<FileRegion> {

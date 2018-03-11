@@ -46,6 +46,7 @@ public class QueryMessageProcessor implements NettyRequestProcessor {
     public boolean rejectRequest() {
         return false;
     }
+
     public RemotingCommand queryMessage(ChannelHandlerContext ctx, RemotingCommand request) {
         final RemotingCommand response =
                 RemotingCommand.createResponseCommand(QueryMessageResponseHeader.class);

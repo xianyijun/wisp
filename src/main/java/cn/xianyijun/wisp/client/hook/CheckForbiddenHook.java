@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.exception.ClientException;
 
 /**
  * The interface Check forbidden hook.
+ *
  * @author xianyijun
  */
 public interface CheckForbiddenHook {

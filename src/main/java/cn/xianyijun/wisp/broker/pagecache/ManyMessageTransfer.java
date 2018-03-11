@@ -16,9 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ManyMessageTransfer extends AbstractReferenceCounted implements FileRegion {
 
-    private long transferred;
     private final ByteBuffer byteBufferHeader;
     private final GetMessageResult getMessageResult;
+    private long transferred;
 
     @Override
     public long position() {

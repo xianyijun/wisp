@@ -7,6 +7,6 @@ import lombok.Data;
  * @author xianyijun
  */
 @Data
-public class GetMinOffsetResponseHeader implements CommandCustomHeader{
+public class GetMinOffsetResponseHeader implements CommandCustomHeader {
     private Long offset;
 }

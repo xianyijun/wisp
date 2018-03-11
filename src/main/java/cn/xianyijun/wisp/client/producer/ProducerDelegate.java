@@ -66,30 +66,19 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class ProducerDelegate implements MQProducerInner {
 
-    private int zipCompressLevel = Integer.parseInt(System.getProperty(MixAll.MESSAGE_COMPRESS_LEVEL, "5"));
-
     private final DefaultProducer defaultMQProducer;
-
     private final RPCHook rpcHook;
-
-    private ServiceState serviceState = ServiceState.CREATE_JUST;
-
-    private ClientInstance clientFactory;
-
-    private FaultStrategy faultStrategy = new FaultStrategy();
-
     private final ConcurrentMap<String, TopicPublishInfo> topicPublishInfoTable =
             new ConcurrentHashMap<>();
-
     private final ArrayList<SendMessageHook> sendMessageHookList = new ArrayList<>();
-
-    private ArrayList<CheckForbiddenHook> checkForbiddenHookList = new ArrayList<>();
-
-    private ExecutorService checkExecutor;
-
-    private BlockingQueue<Runnable> checkRequestQueue;
-
     private final Random random = new Random();
+    private int zipCompressLevel = Integer.parseInt(System.getProperty(MixAll.MESSAGE_COMPRESS_LEVEL, "5"));
+    private ServiceState serviceState = ServiceState.CREATE_JUST;
+    private ClientInstance clientFactory;
+    private FaultStrategy faultStrategy = new FaultStrategy();
+    private ArrayList<CheckForbiddenHook> checkForbiddenHookList = new ArrayList<>();
+    private ExecutorService checkExecutor;
+    private BlockingQueue<Runnable> checkRequestQueue;
 
     /**
      * Instantiates a new Producer delegate.
@@ -152,8 +141,8 @@ public class ProducerDelegate implements MQProducerInner {
         this.clientFactory.sendHeartbeatToAllBrokerWithLock();
     }
 
-    private void checkConfig() throws ClientException{
-        if (StringUtils.isEmpty(this.defaultMQProducer.getProducerGroup())){
+    private void checkConfig() throws ClientException {
+        if (StringUtils.isEmpty(this.defaultMQProducer.getProducerGroup())) {
             throw new ClientException("producerGroup is null", null);
         }
         if (this.defaultMQProducer.getProducerGroup().equals(MixAll.DEFAULT_PRODUCER_GROUP)) {
@@ -443,7 +432,7 @@ public class ProducerDelegate implements MQProducerInner {
             Message msg,
             final CommunicationMode communicationMode,
             final SendCallback sendCallback,
-            final long timeout)  throws ClientException, BrokerException, InterruptedException {
+            final long timeout) throws ClientException, BrokerException, InterruptedException {
         this.makeSureStateOK();
 
         final long invokeID = random.nextLong();
@@ -527,7 +516,7 @@ public class ProducerDelegate implements MQProducerInner {
                     break;
                 }
             }
-            log.info("[doSend] send success , result :{}",sendResult);
+            log.info("[doSend] send success , result :{}", sendResult);
             if (sendResult != null) {
                 return sendResult;
             }
@@ -555,7 +544,7 @@ public class ProducerDelegate implements MQProducerInner {
         List<String> nsList = this.clientFactory.getClient().getNameServerAddressList();
         if (null == nsList || nsList.isEmpty()) {
             throw new ClientException(
-                    "No name server address, please set it." , null).setResponseCode(ClientErrorCode.NO_NAME_SERVER_EXCEPTION);
+                    "No name server address, please set it.", null).setResponseCode(ClientErrorCode.NO_NAME_SERVER_EXCEPTION);
         }
 
         throw new ClientException("No route info of this topic, " + msg.getTopic(),
@@ -615,6 +604,7 @@ public class ProducerDelegate implements MQProducerInner {
                     null);
         }
     }
+
     private TopicPublishInfo tryToFindTopicPublishInfo(final String topic) {
         TopicPublishInfo topicPublishInfo = this.topicPublishInfoTable.get(topic);
         if (null == topicPublishInfo || !topicPublishInfo.ok()) {
@@ -657,12 +647,12 @@ public class ProducerDelegate implements MQProducerInner {
     }
 
     private SendResult doKernelSend(final Message msg,
-                                      final MessageQueue mq,
-                                      final CommunicationMode communicationMode,
-                                      final SendCallback sendCallback,
-                                      final TopicPublishInfo topicPublishInfo,
-                                      final long timeout) throws ClientException, RemotingException, BrokerException, InterruptedException {
-        log.info("[ProduceDelegate] doKernelSend , msg：{} ，mq :{} , topicPublishInfo :{}",msg,mq,topicPublishInfo);
+                                    final MessageQueue mq,
+                                    final CommunicationMode communicationMode,
+                                    final SendCallback sendCallback,
+                                    final TopicPublishInfo topicPublishInfo,
+                                    final long timeout) throws ClientException, RemotingException, BrokerException, InterruptedException {
+        log.info("[ProduceDelegate] doKernelSend , msg：{} ，mq :{} , topicPublishInfo :{}", msg, mq, topicPublishInfo);
         String brokerAddr = this.clientFactory.findBrokerAddressInPublish(mq.getBrokerName());
         if (null == brokerAddr) {
             tryToFindTopicPublishInfo(mq.getTopic());
@@ -904,7 +894,7 @@ public class ProducerDelegate implements MQProducerInner {
                 producer.getCheckThreadPoolMaxSize(),
                 1000 * 60,
                 TimeUnit.MILLISECONDS,
-                this.checkRequestQueue,new WispThreadFactory("CheckThread_"));
+                this.checkRequestQueue, new WispThreadFactory("CheckThread_"));
     }
 
     public void destroyTransactionEnv() {
@@ -959,7 +949,7 @@ public class ProducerDelegate implements MQProducerInner {
         this.clientFactory.getAdmin().createTopic(key, newTopic, queueNum, topicSysFlag);
     }
 
-    public TransactionSendResult sendMessageInTransaction(Message message, LocalTransactionExecutor executor, Object arg) throws ClientException{
+    public TransactionSendResult sendMessageInTransaction(Message message, LocalTransactionExecutor executor, Object arg) throws ClientException {
         if (null == executor) {
             throw new ClientException("tranExecutor is null", null);
         }

@@ -22,11 +22,9 @@ public class PullRequestHoldService extends ServiceThread {
 
     private static final String TOPIC_QUEUE_ID_SEPARATOR = "@";
     private final BrokerController brokerController;
-
+    private final SystemClock systemClock = new SystemClock();
     private ConcurrentMap<String, ManyPullRequest> pullRequestTable =
             new ConcurrentHashMap<>(1024);
-
-    private final SystemClock systemClock = new SystemClock();
 
     public PullRequestHoldService(final BrokerController brokerController) {
         this.brokerController = brokerController;
@@ -35,6 +33,7 @@ public class PullRequestHoldService extends ServiceThread {
     public void notifyMessageArriving(final String topic, final int queueId, final long maxOffset) {
         notifyMessageArriving(topic, queueId, maxOffset, null, 0, null, null);
     }
+
     public void notifyMessageArriving(final String topic, final int queueId, final long maxOffset, final Long tagsCode,
                                       long msgStoreTime, byte[] filterBitMap, Map<String, String> properties) {
         String key = this.buildKey(topic, queueId);
@@ -87,7 +86,6 @@ public class PullRequestHoldService extends ServiceThread {
             }
         }
     }
-
 
 
     private String buildKey(final String topic, final int queueId) {

@@ -4,7 +4,7 @@ package cn.xianyijun.wisp.client.consumer.store;
  * @author xianyijun
  */
 
-public enum  ReadOffsetType {
+public enum ReadOffsetType {
     /**
      * From memory
      */

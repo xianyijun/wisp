@@ -22,22 +22,22 @@ public class ProducerManager {
     private static final long LOCK_TIMEOUT_MILLIS = 3000;
     private static final long CHANNEL_EXPIRED_TIMEOUT = 1000 * 120;
     private final Lock groupChannelLock = new ReentrantLock();
-    private final HashMap<String, HashMap<Channel, ClientChannelInfo>> groupChannelTable =
+    private final HashMap<String, HashMap<Channel, ClientChannel>> groupChannelTable =
             new HashMap<>();
 
     public void scanNotActiveChannel() {
         try {
             if (this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
-                    for (final Map.Entry<String, HashMap<Channel, ClientChannelInfo>> entry : this.groupChannelTable
+                    for (final Map.Entry<String, HashMap<Channel, ClientChannel>> entry : this.groupChannelTable
                             .entrySet()) {
                         final String group = entry.getKey();
-                        final HashMap<Channel, ClientChannelInfo> chlMap = entry.getValue();
+                        final HashMap<Channel, ClientChannel> chlMap = entry.getValue();
 
-                        Iterator<Map.Entry<Channel, ClientChannelInfo>> it = chlMap.entrySet().iterator();
+                        Iterator<Map.Entry<Channel, ClientChannel>> it = chlMap.entrySet().iterator();
                         while (it.hasNext()) {
-                            Map.Entry<Channel, ClientChannelInfo> item = it.next();
-                            final ClientChannelInfo info = item.getValue();
+                            Map.Entry<Channel, ClientChannel> item = it.next();
+                            final ClientChannel info = item.getValue();
 
                             long diff = System.currentTimeMillis() - info.getLastUpdateTimestamp();
                             if (diff > CHANNEL_EXPIRED_TIMEOUT) {
@@ -70,17 +70,17 @@ public class ProducerManager {
                 return;
             }
             try {
-                for (final Map.Entry<String, HashMap<Channel, ClientChannelInfo>> entry : this.groupChannelTable
+                for (final Map.Entry<String, HashMap<Channel, ClientChannel>> entry : this.groupChannelTable
                         .entrySet()) {
                     final String group = entry.getKey();
-                    final HashMap<Channel, ClientChannelInfo> clientChannelInfoTable =
+                    final HashMap<Channel, ClientChannel> clientChannelInfoTable =
                             entry.getValue();
-                    final ClientChannelInfo clientChannelInfo =
+                    final ClientChannel clientChannel =
                             clientChannelInfoTable.remove(channel);
-                    if (clientChannelInfo != null) {
+                    if (clientChannel != null) {
                         log.info(
                                 "NETTY EVENT: remove channel[{}][{}] from ProducerManager groupChannelTable, producer group: {}",
-                                clientChannelInfo.toString(), remoteAddr, group);
+                                clientChannel.toString(), remoteAddr, group);
                     }
 
                 }
@@ -92,26 +92,26 @@ public class ProducerManager {
         }
     }
 
-    public void registerProducer(final String group, final ClientChannelInfo clientChannelInfo) {
+    public void registerProducer(final String group, final ClientChannel clientChannel) {
         try {
-            ClientChannelInfo clientChannelInfoFound;
+            ClientChannel clientChannelFound;
 
             if (this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
-                    HashMap<Channel, ClientChannelInfo> channelTable = this.groupChannelTable.computeIfAbsent(group, k -> new HashMap<>());
+                    HashMap<Channel, ClientChannel> channelTable = this.groupChannelTable.computeIfAbsent(group, k -> new HashMap<>());
 
-                    clientChannelInfoFound = channelTable.get(clientChannelInfo.getChannel());
-                    if (null == clientChannelInfoFound) {
-                        channelTable.put(clientChannelInfo.getChannel(), clientChannelInfo);
+                    clientChannelFound = channelTable.get(clientChannel.getChannel());
+                    if (null == clientChannelFound) {
+                        channelTable.put(clientChannel.getChannel(), clientChannel);
                         log.info("new producer connected, group: {} channel: {}", group,
-                                clientChannelInfo.toString());
+                                clientChannel.toString());
                     }
                 } finally {
                     this.groupChannelLock.unlock();
                 }
 
-                if (clientChannelInfoFound != null) {
-                    clientChannelInfoFound.setLastUpdateTimestamp(System.currentTimeMillis());
+                if (clientChannelFound != null) {
+                    clientChannelFound.setLastUpdateTimestamp(System.currentTimeMillis());
                 }
             } else {
                 log.warn("ProducerManager registerProducer lock timeout");
@@ -121,16 +121,16 @@ public class ProducerManager {
         }
     }
 
-    public void unregisterProducer(final String group, final ClientChannelInfo clientChannelInfo) {
+    public void unregisterProducer(final String group, final ClientChannel clientChannel) {
         try {
             if (this.groupChannelLock.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
                 try {
-                    HashMap<Channel, ClientChannelInfo> channelTable = this.groupChannelTable.get(group);
+                    HashMap<Channel, ClientChannel> channelTable = this.groupChannelTable.get(group);
                     if (null != channelTable && !channelTable.isEmpty()) {
-                        ClientChannelInfo old = channelTable.remove(clientChannelInfo.getChannel());
+                        ClientChannel old = channelTable.remove(clientChannel.getChannel());
                         if (old != null) {
                             log.info("unregister a producer[{}] from groupChannelTable {}", group,
-                                    clientChannelInfo.toString());
+                                    clientChannel.toString());
                         }
 
                         if (channelTable.isEmpty()) {

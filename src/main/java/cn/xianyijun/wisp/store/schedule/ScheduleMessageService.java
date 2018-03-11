@@ -43,13 +43,15 @@ public class ScheduleMessageService extends AbstractConfigManager {
     private final DefaultMessageStore defaultMessageStore;
     private final ConcurrentMap<Integer, Long> delayLevelTable =
             new ConcurrentHashMap<>(32);
+    private final Timer timer = new Timer("ScheduleMessageTimerThread", true);
+    private final ConcurrentMap<Integer /* level */, Long/* offset */> offsetTable =
+            new ConcurrentHashMap<>(32);
     @Setter
     private int maxDelayLevel;
 
-    private final Timer timer = new Timer("ScheduleMessageTimerThread", true);
-
-    private final ConcurrentMap<Integer /* level */, Long/* offset */> offsetTable =
-            new ConcurrentHashMap<>(32);
+    public static int delayLevelQueueId(final int delayLevel) {
+        return delayLevel - 1;
+    }
 
     @Override
     public String configFilePath() {
@@ -79,7 +81,6 @@ public class ScheduleMessageService extends AbstractConfigManager {
         delayOffsetSerializeWrapper.setOffsetTable(this.offsetTable);
         return delayOffsetSerializeWrapper.toJson(prettyFormat);
     }
-
 
     @Override
     public boolean load() {
@@ -115,7 +116,6 @@ public class ScheduleMessageService extends AbstractConfigManager {
             }
         }, 10000, this.defaultMessageStore.getMessageStoreConfig().getFlushDelayOffsetInterval());
     }
-
 
     public void shutdown() {
         this.timer.cancel();
@@ -153,18 +153,12 @@ public class ScheduleMessageService extends AbstractConfigManager {
         return true;
     }
 
-
     public long computeDeliverTimestamp(final int delayLevel, final long storeTimestamp) {
         Long time = this.delayLevelTable.get(delayLevel);
         if (time != null) {
             return time + storeTimestamp;
         }
         return storeTimestamp + 1000;
-    }
-
-
-    public static int delayLevelQueueId(final int delayLevel) {
-        return delayLevel - 1;
     }
 
     private void updateOffset(int delayLevel, long offset) {

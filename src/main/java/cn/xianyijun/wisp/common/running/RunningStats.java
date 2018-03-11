@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.common.running;
 /**
  * The enum Running stats.
  */
-public enum  RunningStats {
+public enum RunningStats {
     /**
      * Commit log max offset running stats.
      */

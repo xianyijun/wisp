@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.broker.processor;
 
 import cn.xianyijun.wisp.broker.BrokerController;
-import cn.xianyijun.wisp.broker.client.ConsumerGroupInfo;
+import cn.xianyijun.wisp.broker.client.ConsumerGroup;
 import cn.xianyijun.wisp.broker.filter.ConsumerFilterData;
 import cn.xianyijun.wisp.broker.filter.ConsumerFilterManager;
 import cn.xianyijun.wisp.broker.filter.ExpressionForRetryMessageFilter;
@@ -149,9 +149,9 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                 return response;
             }
         } else {
-            ConsumerGroupInfo consumerGroupInfo =
+            ConsumerGroup consumerGroup =
                     this.brokerController.getConsumerManager().getConsumerGroupInfo(requestHeader.getConsumerGroup());
-            if (null == consumerGroupInfo) {
+            if (null == consumerGroup) {
                 log.warn("the consumer's group info not exist, group: {}", requestHeader.getConsumerGroup());
                 response.setCode(ResponseCode.SUBSCRIPTION_NOT_EXIST);
                 response.setRemark("the consumer's group info not exist");
@@ -159,13 +159,13 @@ public class PullMessageProcessor implements NettyRequestProcessor {
             }
 
             if (!subscriptionGroupConfig.isConsumeBroadcastEnable()
-                    && consumerGroupInfo.getMessageModel() == MessageModel.BROADCASTING) {
+                    && consumerGroup.getMessageModel() == MessageModel.BROADCASTING) {
                 response.setCode(ResponseCode.NO_PERMISSION);
                 response.setRemark("the consumer group[" + requestHeader.getConsumerGroup() + "] can not consume by broadcast way");
                 return response;
             }
 
-            subscriptionData = consumerGroupInfo.findSubscriptionData(requestHeader.getTopic());
+            subscriptionData = consumerGroup.findSubscriptionData(requestHeader.getTopic());
             if (null == subscriptionData) {
                 response.setCode(ResponseCode.SUBSCRIPTION_NOT_EXIST);
                 response.setRemark("the consumer's subscription not exist");
@@ -217,7 +217,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         final GetMessageResult getMessageResult =
                 this.brokerController.getMessageStore().getMessage(requestHeader.getConsumerGroup(), requestHeader.getTopic(),
                         requestHeader.getQueueId(), requestHeader.getQueueOffset(), requestHeader.getMaxMsgNums(), messageFilter);
-        log.info("[processRequest] getMessageResult: {} ",getMessageResult);
+        log.info("[processRequest] getMessageResult: {} ", getMessageResult);
         if (getMessageResult != null) {
             response.setRemark(getMessageResult.getStatus().name());
             responseHeader.setNextBeginOffset(getMessageResult.getNextBeginOffset());

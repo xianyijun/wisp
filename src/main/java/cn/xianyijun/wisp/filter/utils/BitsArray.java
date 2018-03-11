@@ -11,18 +11,6 @@ public class BitsArray {
     private byte[] bytes;
     private int bitLength;
 
-    public static BitsArray create(int bitLength) {
-        return new BitsArray(bitLength);
-    }
-
-    public static BitsArray create(byte[] bytes, int bitLength) {
-        return new BitsArray(bytes, bitLength);
-    }
-
-    public static BitsArray create(byte[] bytes) {
-        return new BitsArray(bytes);
-    }
-
     private BitsArray(int bitLength) {
         this.bitLength = bitLength;
         // init bytes
@@ -64,6 +52,17 @@ public class BitsArray {
         System.arraycopy(bytes, 0, this.bytes, 0, this.bytes.length);
     }
 
+    public static BitsArray create(int bitLength) {
+        return new BitsArray(bitLength);
+    }
+
+    public static BitsArray create(byte[] bytes, int bitLength) {
+        return new BitsArray(bytes, bitLength);
+    }
+
+    public static BitsArray create(byte[] bytes) {
+        return new BitsArray(bytes);
+    }
 
     private int subscript(int bitPos) {
         return bitPos / Byte.SIZE;

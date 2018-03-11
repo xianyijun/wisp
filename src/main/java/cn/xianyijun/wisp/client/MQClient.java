@@ -87,19 +87,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Getter
 public class MQClient {
 
+    static {
+        System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
+    }
+
     private final RemotingClient remotingClient;
     private final TopAddressing topAddressing;
     private final ClientRemotingProcessor clientRemotingProcessor;
     private String nameSrvAddr = null;
     private ClientConfig clientConfig;
 
-    static {
-        System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
-    }
-
     public MQClient(final NettyClientConfig nettyClientConfig,
-                           final ClientRemotingProcessor clientRemotingProcessor,
-                           RPCHook rpcHook, final ClientConfig clientConfig) {
+                    final ClientRemotingProcessor clientRemotingProcessor,
+                    RPCHook rpcHook, final ClientConfig clientConfig) {
         this.clientConfig = clientConfig;
         topAddressing = new TopAddressing(MixAll.getWSAddr(), clientConfig.getUnitName());
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, null);
@@ -222,7 +222,7 @@ public class MQClient {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ROUTEINTO_BY_TOPIC, requestHeader);
 
         RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
-        log.info("[MQClient] getTopicRouteInfoFromNameServer, topic: {} , request: {},  response: {}", topic, request ,response);
+        log.info("[MQClient] getTopicRouteInfoFromNameServer, topic: {} , request: {},  response: {}", topic, request, response);
         switch (response.getCode()) {
             case ResponseCode.TOPIC_NOT_EXIST: {
                 if (allowTopicNotExist && !topic.equals(MixAll.DEFAULT_TOPIC)) {
@@ -328,7 +328,7 @@ public class MQClient {
             final long timeoutMillis,
             final RemotingCommand request
     ) throws RemotingException, BrokerException, InterruptedException {
-        log.info("[MQClient] sendMessageSync ,addr :{} ,brokerName: {} , msg:{} , request :{}", addr,brokerName,msg, request);
+        log.info("[MQClient] sendMessageSync ,addr :{} ,brokerName: {} , msg:{} , request :{}", addr, brokerName, msg, request);
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         return this.processSendResponse(brokerName, msg, response);
     }
@@ -446,7 +446,7 @@ public class MQClient {
             final Message msg,
             final RemotingCommand response
     ) throws BrokerException {
-        log.info("[MQClient] processSendResponse, msg:{} ,response: {}", msg ,response);
+        log.info("[MQClient] processSendResponse, msg:{} ,response: {}", msg, response);
         switch (response.getCode()) {
             case ResponseCode.FLUSH_DISK_TIMEOUT:
             case ResponseCode.FLUSH_SLAVE_TIMEOUT:

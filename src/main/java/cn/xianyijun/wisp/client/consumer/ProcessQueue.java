@@ -28,13 +28,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ToString
 public class ProcessQueue {
 
-    private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("wisp.client.pull.pullMaxIdleTime", "120000"));
     public final static long REBALANCE_LOCK_INTERVAL = Long.parseLong(System.getProperty("wisp.client.rebalance.lockInterval", "20000"));
     public final static long REBALANCE_LOCK_MAX_LIVE_TIME =
             Long.parseLong(System.getProperty("wisp.client.rebalance.lockMaxLiveTime", "30000"));
-
+    private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("wisp.client.pull.pullMaxIdleTime", "120000"));
     private final TreeMap<Long, ExtMessage> consumingMsgOrderlyTreeMap = new TreeMap<>();
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
+    private final AtomicLong msgCount = new AtomicLong();
+    private final AtomicLong msgSize = new AtomicLong();
+    private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
+    private final Lock lockConsume = new ReentrantLock();
+    private final TreeMap<Long, ExtMessage> msgTreeMap = new TreeMap<>();
     private volatile long queueOffsetMax = 0L;
     @Setter
     private volatile boolean dropped = false;
@@ -47,14 +51,6 @@ public class ProcessQueue {
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;
     private volatile long msgAccCnt = 0;
-
-    private final AtomicLong msgCount = new AtomicLong();
-    private final AtomicLong msgSize = new AtomicLong();
-
-    private final ReadWriteLock lockTreeMap = new ReentrantReadWriteLock();
-    private final Lock lockConsume = new ReentrantLock();
-
-    private final TreeMap<Long, ExtMessage> msgTreeMap = new TreeMap<>();
 
     public long commit() {
         try {

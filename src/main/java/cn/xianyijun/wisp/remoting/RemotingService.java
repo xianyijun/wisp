@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.remoting;
 
 /**
  * The interface Remoting service.
+ *
  * @author xianyijun
  */
 public interface RemotingService {

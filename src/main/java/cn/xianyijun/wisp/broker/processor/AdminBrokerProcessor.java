@@ -1,8 +1,8 @@
 package cn.xianyijun.wisp.broker.processor;
 
 import cn.xianyijun.wisp.broker.BrokerController;
-import cn.xianyijun.wisp.broker.client.ClientChannelInfo;
-import cn.xianyijun.wisp.broker.client.ConsumerGroupInfo;
+import cn.xianyijun.wisp.broker.client.ClientChannel;
+import cn.xianyijun.wisp.broker.client.ConsumerGroup;
 import cn.xianyijun.wisp.broker.filter.ConsumerFilterData;
 import cn.xianyijun.wisp.broker.filter.ExpressionMessageFilter;
 import cn.xianyijun.wisp.common.MixAll;
@@ -562,17 +562,17 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
         final GetConsumerConnectionListRequestHeader requestHeader =
                 (GetConsumerConnectionListRequestHeader) request.decodeCommandCustomHeader(GetConsumerConnectionListRequestHeader.class);
 
-        ConsumerGroupInfo consumerGroupInfo =
+        ConsumerGroup consumerGroup =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(requestHeader.getConsumerGroup());
-        if (consumerGroupInfo != null) {
+        if (consumerGroup != null) {
             ConsumerConnection bodyData = new ConsumerConnection();
-            bodyData.setConsumeFromWhere(consumerGroupInfo.getConsumeFromWhere());
-            bodyData.setConsumeType(consumerGroupInfo.getConsumeType());
-            bodyData.setMessageModel(consumerGroupInfo.getMessageModel());
-            bodyData.getSubscriptionTable().putAll(consumerGroupInfo.getSubscriptionTable());
+            bodyData.setConsumeFromWhere(consumerGroup.getConsumeFromWhere());
+            bodyData.setConsumeType(consumerGroup.getConsumeType());
+            bodyData.setMessageModel(consumerGroup.getMessageModel());
+            bodyData.getSubscriptionTable().putAll(consumerGroup.getSubscriptionTable());
 
-            for (Map.Entry<Channel, ClientChannelInfo> channelClientChannelInfoEntry : consumerGroupInfo.getChannelInfoTable().entrySet()) {
-                ClientChannelInfo info = channelClientChannelInfoEntry.getValue();
+            for (Map.Entry<Channel, ClientChannel> channelClientChannelInfoEntry : consumerGroup.getChannelInfoTable().entrySet()) {
+                ClientChannel info = channelClientChannelInfoEntry.getValue();
                 Connection connection = new Connection();
                 connection.setClientId(info.getClientId());
                 connection.setLanguage(info.getLanguage());
@@ -602,7 +602,7 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
                 (GetProducerConnectionListRequestHeader) request.decodeCommandCustomHeader(GetProducerConnectionListRequestHeader.class);
 
         ProducerConnection bodyData = new ProducerConnection();
-        HashMap<Channel, ClientChannelInfo> channelInfoHashMap =
+        HashMap<Channel, ClientChannel> channelInfoHashMap =
                 this.brokerController.getProducerManager().getGroupChannelTable().get(requestHeader.getProducerGroup());
         if (channelInfoHashMap != null) {
             channelInfoHashMap.forEach((key, info) -> {
@@ -1213,9 +1213,9 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
             final String consumerGroup,
             final String clientId) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
-        ClientChannelInfo clientChannelInfo = this.brokerController.getConsumerManager().findChannel(consumerGroup, clientId);
+        ClientChannel clientChannel = this.brokerController.getConsumerManager().findChannel(consumerGroup, clientId);
 
-        if (null == clientChannelInfo) {
+        if (null == clientChannel) {
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark(String.format("The Consumer <%s> <%s> not online", consumerGroup, clientId));
             return response;
@@ -1226,7 +1226,7 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
             newRequest.setExtFields(request.getExtFields());
             newRequest.setBody(request.getBody());
 
-            return this.brokerController.getBrokerClient().callClient(clientChannelInfo.getChannel(), newRequest);
+            return this.brokerController.getBrokerClient().callClient(clientChannel.getChannel(), newRequest);
         } catch (RemotingTimeoutException e) {
             response.setCode(ResponseCode.CONSUME_MSG_TIMEOUT);
             response

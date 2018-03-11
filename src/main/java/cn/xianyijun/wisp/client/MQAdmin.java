@@ -8,6 +8,7 @@ import cn.xianyijun.wisp.exception.RemotingException;
 
 /**
  * The interface Mq admin.
+ *
  * @author xianyijun
  */
 public interface MQAdmin {

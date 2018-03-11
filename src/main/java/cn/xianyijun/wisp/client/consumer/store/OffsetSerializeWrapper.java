@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OffsetSerializeWrapper extends RemotingSerializable{
+public class OffsetSerializeWrapper extends RemotingSerializable {
     private ConcurrentMap<MessageQueue, AtomicLong> offsetTable =
             new ConcurrentHashMap<>();
 

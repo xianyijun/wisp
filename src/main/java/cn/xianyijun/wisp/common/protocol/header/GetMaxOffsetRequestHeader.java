@@ -4,7 +4,7 @@ import cn.xianyijun.wisp.remoting.CommandCustomHeader;
 import lombok.Data;
 
 @Data
-public class GetMaxOffsetRequestHeader implements CommandCustomHeader{
+public class GetMaxOffsetRequestHeader implements CommandCustomHeader {
     private String topic;
     private Integer queueId;
 }

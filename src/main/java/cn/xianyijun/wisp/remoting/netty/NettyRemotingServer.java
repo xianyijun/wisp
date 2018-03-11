@@ -64,14 +64,13 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
     private final ExecutorService publicExecutor;
     private final EventLoopGroup eventLoopGroupSelector;
     private final EventLoopGroup eventLoopGroupBoss;
+    private final Timer timer = new Timer("ServerHouseKeepingService", true);
     /**
      * The Ssl context.
      */
     private int port = 0;
     private RPCHook rpcHook;
     private DefaultEventExecutorGroup defaultEventExecutorGroup;
-
-    private final Timer timer = new Timer("ServerHouseKeepingService", true);
 
     /**
      * Instantiates a new Netty remoting server.
@@ -292,7 +291,6 @@ public class NettyRemotingServer extends AbstractNettyRemoting implements Remoti
             }
         }, 1000 * 3, 1000);
     }
-
 
 
     @Override

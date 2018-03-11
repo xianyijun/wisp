@@ -6,10 +6,11 @@ import lombok.Data;
 
 import java.util.HashSet;
 import java.util.Set;
+
 /**
  * @author xianyijun
  */
 @Data
-public class LockBatchResponseBody extends RemotingSerializable{
+public class LockBatchResponseBody extends RemotingSerializable {
     private Set<MessageQueue> lockOKMQSet = new HashSet<>();
 }

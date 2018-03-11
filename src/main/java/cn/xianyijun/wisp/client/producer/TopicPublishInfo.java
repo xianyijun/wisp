@@ -28,8 +28,8 @@ public class TopicPublishInfo {
 
 
     public int getQueueIdByBroker(final String brokerName) {
-        for (QueueData queueData : topicRouteData.getQueueDatas()){
-            if (queueData.getBrokerName().equals(brokerName)){
+        for (QueueData queueData : topicRouteData.getQueueDatas()) {
+            if (queueData.getBrokerName().equals(brokerName)) {
                 return queueData.getWriteQueueNums();
             }
         }

@@ -4,6 +4,6 @@ import cn.xianyijun.wisp.remoting.CommandCustomHeader;
 import lombok.Data;
 
 @Data
-public class GetTopicStatsInfoRequestHeader implements CommandCustomHeader{
+public class GetTopicStatsInfoRequestHeader implements CommandCustomHeader {
     private String topic;
 }

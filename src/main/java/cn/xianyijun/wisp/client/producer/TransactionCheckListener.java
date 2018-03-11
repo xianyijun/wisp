@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.common.message.ExtMessage;
 
 /**
  * The interface Transaction check listener.
+ *
  * @author xianyijun
  */
 public interface TransactionCheckListener {

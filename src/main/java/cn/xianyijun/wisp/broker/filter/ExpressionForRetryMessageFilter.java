@@ -16,8 +16,8 @@ import java.util.Map;
  */
 @Slf4j
 public class ExpressionForRetryMessageFilter extends ExpressionMessageFilter {
-     public ExpressionForRetryMessageFilter(SubscriptionData subscriptionData, ConsumerFilterData consumerFilterData,
-                                            ConsumerFilterManager consumerFilterManager) {
+    public ExpressionForRetryMessageFilter(SubscriptionData subscriptionData, ConsumerFilterData consumerFilterData,
+                                           ConsumerFilterManager consumerFilterManager) {
         super(subscriptionData, consumerFilterData, consumerFilterManager);
     }
 

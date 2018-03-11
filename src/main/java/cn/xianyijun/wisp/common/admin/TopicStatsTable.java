@@ -10,7 +10,7 @@ import java.util.HashMap;
  * @author xianyijun
  */
 @Data
-public class TopicStatsTable extends RemotingSerializable{
+public class TopicStatsTable extends RemotingSerializable {
 
     private HashMap<MessageQueue, TopicOffset> offsetTable = new HashMap<>();
 }

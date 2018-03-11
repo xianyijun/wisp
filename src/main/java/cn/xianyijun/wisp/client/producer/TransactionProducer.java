@@ -11,7 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class TransactionProducer extends DefaultProducer{
+public class TransactionProducer extends DefaultProducer {
 
     private TransactionCheckListener transactionCheckListener;
     private int checkThreadPoolMinSize = 1;

@@ -74,29 +74,17 @@ public class ConsumerPushDelegate implements ConsumerInner {
     private final DefaultPushConsumer defaultPushConsumer;
 
     private final RPCHook rpcHook;
-
-    private ConsumeMessageService consumeMessageService;
-
     private final ArrayList<ConsumeMessageHook> consumeMessageHookList = new ArrayList<ConsumeMessageHook>();
-
-    private AbstractReBalance reBalance = new PushReBalance(this);
-
-    private OffsetStore offsetStore;
-
-    private volatile boolean pause = false;
-
-    private boolean consumeOrderly = false;
-
-    private volatile ServiceState serviceState = ServiceState.CREATE_JUST;
-
-    private ClientInstance clientFactory;
-
-    private PullConsumerWrapper pullConsumerWrapper;
-
     private final ArrayList<FilterMessageHook> filterMessageHookList = new ArrayList<>();
-
     private final long consumerStartTimestamp = System.currentTimeMillis();
-
+    private ConsumeMessageService consumeMessageService;
+    private AbstractReBalance reBalance = new PushReBalance(this);
+    private OffsetStore offsetStore;
+    private volatile boolean pause = false;
+    private boolean consumeOrderly = false;
+    private volatile ServiceState serviceState = ServiceState.CREATE_JUST;
+    private ClientInstance clientFactory;
+    private PullConsumerWrapper pullConsumerWrapper;
     @Setter
     private MessageListener messageListenerInner;
 
@@ -825,7 +813,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
         try {
             SubscriptionData subscriptionData = Filter.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
                     topic, subExpression);
-            log.info("[subscribe] topic :{} ,subscriptionData:{} ", topic , subscriptionData);
+            log.info("[subscribe] topic :{} ,subscriptionData:{} ", topic, subscriptionData);
             this.reBalance.getSubscriptionInner().put(topic, subscriptionData);
             if (this.clientFactory != null) {
                 this.clientFactory.sendHeartbeatToAllBrokerWithLock();
@@ -851,7 +839,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
         return this.clientFactory.getAdmin().earliestMsgStoreTime(mq);
     }
 
-    public ExtMessage viewMessage(String offsetMsgId) throws RemotingException, BrokerException, InterruptedException, ClientException{
+    public ExtMessage viewMessage(String offsetMsgId) throws RemotingException, BrokerException, InterruptedException, ClientException {
         return this.clientFactory.getAdmin().viewMessage(offsetMsgId);
     }
 

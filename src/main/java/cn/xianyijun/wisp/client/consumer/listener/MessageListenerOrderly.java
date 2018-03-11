@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * The interface Message listener orderly.
  */
-public interface MessageListenerOrderly extends MessageListener  {
+public interface MessageListenerOrderly extends MessageListener {
     /**
      * Consume message consume orderly status.
      *

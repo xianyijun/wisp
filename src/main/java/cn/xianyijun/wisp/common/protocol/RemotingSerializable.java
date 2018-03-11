@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 
 /**
  * The type Remoting serializable.
+ *
  * @author xianyijun
  */
 public abstract class RemotingSerializable {

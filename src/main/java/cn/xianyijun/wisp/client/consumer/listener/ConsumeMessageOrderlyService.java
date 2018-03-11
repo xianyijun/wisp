@@ -126,6 +126,151 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
         }
     }
 
+    public void tryLockLaterAndReConsume(final MessageQueue mq, final ProcessQueue processQueue,
+                                         final long delayMills) {
+        this.scheduledExecutorService.schedule(() -> {
+            boolean lockOK = ConsumeMessageOrderlyService.this.lockOneMQ(mq);
+            if (lockOK) {
+                ConsumeMessageOrderlyService.this.submitConsumeRequestLater(processQueue, mq, 10);
+            } else {
+                ConsumeMessageOrderlyService.this.submitConsumeRequestLater(processQueue, mq, 3000);
+            }
+        }, delayMills, TimeUnit.MILLISECONDS);
+    }
+
+    public synchronized boolean lockOneMQ(final MessageQueue mq) {
+        return !this.stopped && this.consumerPushDelegate.getReBalance().lock(mq);
+    }
+
+    private void submitConsumeRequestLater(
+            final ProcessQueue processQueue,
+            final MessageQueue messageQueue,
+            final long suspendTimeMillis
+    ) {
+        long timeMillis = suspendTimeMillis;
+        if (timeMillis == -1) {
+            timeMillis = this.defaultPushConsumer.getSuspendCurrentQueueTimeMillis();
+        }
+
+        if (timeMillis < 10) {
+            timeMillis = 10;
+        } else if (timeMillis > 30000) {
+            timeMillis = 30000;
+        }
+
+        this.scheduledExecutorService.schedule(() -> ConsumeMessageOrderlyService.this.submitConsumeRequest(null, processQueue, messageQueue, true), timeMillis, TimeUnit.MILLISECONDS);
+    }
+
+    public ConsumerStatsManager getConsumerStatsManager() {
+        return this.consumerPushDelegate.getConsumerStatsManager();
+    }
+
+    public boolean processConsumeResult(
+            final List<ExtMessage> msgs,
+            final ConsumeOrderlyStatus status,
+            final ConsumeOrderlyContext context,
+            final ConsumeRequest consumeRequest
+    ) {
+        boolean continueConsume = true;
+        long commitOffset = -1L;
+        if (context.isAutoCommit()) {
+            switch (status) {
+                case SUCCESS:
+                    commitOffset = consumeRequest.getProcessQueue().commit();
+                    this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
+                    break;
+                case SUSPEND_CURRENT_QUEUE_A_MOMENT:
+                    this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
+                    if (checkReConsumeTimes(msgs)) {
+                        consumeRequest.getProcessQueue().makeMessageToConsumeAgain(msgs);
+                        this.submitConsumeRequestLater(
+                                consumeRequest.getProcessQueue(),
+                                consumeRequest.getMessageQueue(),
+                                context.getSuspendCurrentQueueTimeMillis());
+                        continueConsume = false;
+                    } else {
+                        commitOffset = consumeRequest.getProcessQueue().commit();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            switch (status) {
+                case SUCCESS:
+                    this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
+                    break;
+                case SUSPEND_CURRENT_QUEUE_A_MOMENT:
+                    this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
+                    if (checkReConsumeTimes(msgs)) {
+                        consumeRequest.getProcessQueue().makeMessageToConsumeAgain(msgs);
+                        this.submitConsumeRequestLater(
+                                consumeRequest.getProcessQueue(),
+                                consumeRequest.getMessageQueue(),
+                                context.getSuspendCurrentQueueTimeMillis());
+                        continueConsume = false;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (commitOffset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
+            this.consumerPushDelegate.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), commitOffset, false);
+        }
+
+        return continueConsume;
+    }
+
+    private boolean checkReConsumeTimes(List<ExtMessage> msgs) {
+        boolean suspend = false;
+        if (msgs != null && !msgs.isEmpty()) {
+            for (ExtMessage msg : msgs) {
+                if (msg.getReConsumeTimes() >= getMaxReConsumeTimes()) {
+                    MessageAccessor.setReConsumeTime(msg, String.valueOf(msg.getReConsumeTimes()));
+                    if (!sendMessageBack(msg)) {
+                        suspend = true;
+                        msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
+                    }
+                } else {
+                    suspend = true;
+                    msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
+                }
+            }
+        }
+        return suspend;
+    }
+
+    private int getMaxReConsumeTimes() {
+        if (this.defaultPushConsumer.getMaxReConsumeTimes() == -1) {
+            return Integer.MAX_VALUE;
+        } else {
+            return this.defaultPushConsumer.getMaxReConsumeTimes();
+        }
+    }
+
+    public boolean sendMessageBack(final ExtMessage msg) {
+        try {
+            Message newMsg = new Message(MixAll.getRetryTopic(this.defaultPushConsumer.getConsumerGroup()), msg.getBody());
+            String originMsgId = MessageAccessor.getOriginMessageId(msg);
+            MessageAccessor.setOriginMessageId(newMsg, StringUtils.isBlank(originMsgId) ? msg.getMsgId() : originMsgId);
+            newMsg.setFlag(msg.getFlag());
+            MessageAccessor.setProperties(newMsg, msg.getProperties());
+            MessageAccessor.putProperty(newMsg, MessageConst.PROPERTY_RETRY_TOPIC, msg.getTopic());
+            MessageAccessor.setReConsumeTime(newMsg, String.valueOf(msg.getReConsumeTimes()));
+            MessageAccessor.setMaxReConsumeTimes(newMsg, String.valueOf(getMaxReConsumeTimes()));
+            newMsg.setDelayTimeLevel(3 + msg.getReConsumeTimes());
+
+            this.defaultPushConsumer.getConsumerPushDelegate().getClientFactory().getDefaultProducer().send(newMsg);
+            return true;
+        } catch (Exception e) {
+            log.error("sendMessageBack exception, group: " + this.consumerGroup + " msg: " + msg.toString(), e);
+        }
+
+        return false;
+    }
+
     @RequiredArgsConstructor
     @Getter
     class ConsumeRequest implements Runnable {
@@ -271,152 +416,6 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
                 }
             }
         }
-    }
-
-
-    public void tryLockLaterAndReConsume(final MessageQueue mq, final ProcessQueue processQueue,
-                                         final long delayMills) {
-        this.scheduledExecutorService.schedule(() -> {
-            boolean lockOK = ConsumeMessageOrderlyService.this.lockOneMQ(mq);
-            if (lockOK) {
-                ConsumeMessageOrderlyService.this.submitConsumeRequestLater(processQueue, mq, 10);
-            } else {
-                ConsumeMessageOrderlyService.this.submitConsumeRequestLater(processQueue, mq, 3000);
-            }
-        }, delayMills, TimeUnit.MILLISECONDS);
-    }
-
-    public synchronized boolean lockOneMQ(final MessageQueue mq) {
-        return !this.stopped && this.consumerPushDelegate.getReBalance().lock(mq);
-    }
-
-    private void submitConsumeRequestLater(
-            final ProcessQueue processQueue,
-            final MessageQueue messageQueue,
-            final long suspendTimeMillis
-    ) {
-        long timeMillis = suspendTimeMillis;
-        if (timeMillis == -1) {
-            timeMillis = this.defaultPushConsumer.getSuspendCurrentQueueTimeMillis();
-        }
-
-        if (timeMillis < 10) {
-            timeMillis = 10;
-        } else if (timeMillis > 30000) {
-            timeMillis = 30000;
-        }
-
-        this.scheduledExecutorService.schedule(() -> ConsumeMessageOrderlyService.this.submitConsumeRequest(null, processQueue, messageQueue, true), timeMillis, TimeUnit.MILLISECONDS);
-    }
-
-    public ConsumerStatsManager getConsumerStatsManager() {
-        return this.consumerPushDelegate.getConsumerStatsManager();
-    }
-
-    public boolean processConsumeResult(
-            final List<ExtMessage> msgs,
-            final ConsumeOrderlyStatus status,
-            final ConsumeOrderlyContext context,
-            final ConsumeRequest consumeRequest
-    ) {
-        boolean continueConsume = true;
-        long commitOffset = -1L;
-        if (context.isAutoCommit()) {
-            switch (status) {
-                case SUCCESS:
-                    commitOffset = consumeRequest.getProcessQueue().commit();
-                    this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
-                    break;
-                case SUSPEND_CURRENT_QUEUE_A_MOMENT:
-                    this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
-                    if (checkReConsumeTimes(msgs)) {
-                        consumeRequest.getProcessQueue().makeMessageToConsumeAgain(msgs);
-                        this.submitConsumeRequestLater(
-                                consumeRequest.getProcessQueue(),
-                                consumeRequest.getMessageQueue(),
-                                context.getSuspendCurrentQueueTimeMillis());
-                        continueConsume = false;
-                    } else {
-                        commitOffset = consumeRequest.getProcessQueue().commit();
-                    }
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            switch (status) {
-                case SUCCESS:
-                    this.getConsumerStatsManager().incConsumeOKTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
-                    break;
-                case SUSPEND_CURRENT_QUEUE_A_MOMENT:
-                    this.getConsumerStatsManager().incConsumeFailedTPS(consumerGroup, consumeRequest.getMessageQueue().getTopic(), msgs.size());
-                    if (checkReConsumeTimes(msgs)) {
-                        consumeRequest.getProcessQueue().makeMessageToConsumeAgain(msgs);
-                        this.submitConsumeRequestLater(
-                                consumeRequest.getProcessQueue(),
-                                consumeRequest.getMessageQueue(),
-                                context.getSuspendCurrentQueueTimeMillis());
-                        continueConsume = false;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if (commitOffset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
-            this.consumerPushDelegate.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), commitOffset, false);
-        }
-
-        return continueConsume;
-    }
-
-    private boolean checkReConsumeTimes(List<ExtMessage> msgs) {
-        boolean suspend = false;
-        if (msgs != null && !msgs.isEmpty()) {
-            for (ExtMessage msg : msgs) {
-                if (msg.getReConsumeTimes() >= getMaxReConsumeTimes()) {
-                    MessageAccessor.setReConsumeTime(msg, String.valueOf(msg.getReConsumeTimes()));
-                    if (!sendMessageBack(msg)) {
-                        suspend = true;
-                        msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
-                    }
-                } else {
-                    suspend = true;
-                    msg.setReConsumeTimes(msg.getReConsumeTimes() + 1);
-                }
-            }
-        }
-        return suspend;
-    }
-
-    private int getMaxReConsumeTimes() {
-        if (this.defaultPushConsumer.getMaxReConsumeTimes() == -1) {
-            return Integer.MAX_VALUE;
-        } else {
-            return this.defaultPushConsumer.getMaxReConsumeTimes();
-        }
-    }
-
-    public boolean sendMessageBack(final ExtMessage msg) {
-        try {
-            Message newMsg = new Message(MixAll.getRetryTopic(this.defaultPushConsumer.getConsumerGroup()), msg.getBody());
-            String originMsgId = MessageAccessor.getOriginMessageId(msg);
-            MessageAccessor.setOriginMessageId(newMsg, StringUtils.isBlank(originMsgId) ? msg.getMsgId() : originMsgId);
-            newMsg.setFlag(msg.getFlag());
-            MessageAccessor.setProperties(newMsg, msg.getProperties());
-            MessageAccessor.putProperty(newMsg, MessageConst.PROPERTY_RETRY_TOPIC, msg.getTopic());
-            MessageAccessor.setReConsumeTime(newMsg, String.valueOf(msg.getReConsumeTimes()));
-            MessageAccessor.setMaxReConsumeTimes(newMsg, String.valueOf(getMaxReConsumeTimes()));
-            newMsg.setDelayTimeLevel(3 + msg.getReConsumeTimes());
-
-            this.defaultPushConsumer.getConsumerPushDelegate().getClientFactory().getDefaultProducer().send(newMsg);
-            return true;
-        } catch (Exception e) {
-            log.error("sendMessageBack exception, group: " + this.consumerGroup + " msg: " + msg.toString(), e);
-        }
-
-        return false;
     }
 
 

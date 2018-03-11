@@ -351,11 +351,11 @@ public class DefaultAdmin {
     }
 
 
-    public ExtMessage queryMessageByUniqueKey(String topic, String uniqueKey) throws InterruptedException ,ClientException {
-        QueryResult queryResult = queryMessage(topic, uniqueKey,32, MessageClientIDSetter.getNearlyTimeFromID(uniqueKey).getTime() - 1000, Long.MAX_VALUE, true);
-        if (queryResult != null && queryResult.getMessageList() != null && !queryResult.getMessageList().isEmpty()){
+    public ExtMessage queryMessageByUniqueKey(String topic, String uniqueKey) throws InterruptedException, ClientException {
+        QueryResult queryResult = queryMessage(topic, uniqueKey, 32, MessageClientIDSetter.getNearlyTimeFromID(uniqueKey).getTime() - 1000, Long.MAX_VALUE, true);
+        if (queryResult != null && queryResult.getMessageList() != null && !queryResult.getMessageList().isEmpty()) {
             return queryResult.getMessageList().get(0);
-        }else {
+        } else {
             return null;
         }
     }

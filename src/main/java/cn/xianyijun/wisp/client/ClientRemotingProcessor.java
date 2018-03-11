@@ -38,6 +38,7 @@ import java.util.Map;
 public class ClientRemotingProcessor implements NettyRequestProcessor {
 
     private final ClientInstance clientFactory;
+
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
         switch (request.getCode()) {

@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * The interface Message listener concurrently.
+ *
  * @author xianyijun
  */
 public interface MessageListenerConcurrently extends MessageListener {

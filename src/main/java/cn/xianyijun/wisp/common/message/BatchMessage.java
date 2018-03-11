@@ -10,19 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 
 @RequiredArgsConstructor
-public class BatchMessage extends Message implements Iterable<Message>{
+public class BatchMessage extends Message implements Iterable<Message> {
 
     @NonNull
     private final List<Message> messages;
-
-    @Override
-    public Iterator<Message> iterator() {
-        return messages.iterator();
-    }
-
-    public byte[] encode() {
-        return MessageDecoder.encodeMessages(messages);
-    }
 
     public static BatchMessage generateFromList(Collection<Message> messages) {
         assert messages != null;
@@ -53,6 +44,15 @@ public class BatchMessage extends Message implements Iterable<Message>{
         batchMessage.setTopic(first.getTopic());
         batchMessage.setWaitStoreMsgOK(first.isWaitStoreMsgOK());
         return batchMessage;
+    }
+
+    @Override
+    public Iterator<Message> iterator() {
+        return messages.iterator();
+    }
+
+    public byte[] encode() {
+        return MessageDecoder.encodeMessages(messages);
     }
 
 }

@@ -55,7 +55,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) {
-        log.info("[ProduceMessageProcessor] processRequest , request: {}",request);
+        log.info("[ProduceMessageProcessor] processRequest , request: {}", request);
         ProduceMessageContext mqTraceContext;
         switch (request.getCode()) {
             case RequestCode.CONSUMER_SEND_MSG_BACK:
@@ -148,13 +148,13 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
 
         PutMessageResult putMessageResult = this.brokerController.getMessageStore().putMessage(msgInner);
 
-        log.info("[ProduceMessageProcessor.produceMessage] putMessageResult: {} , msgInner: {} ", putMessageResult , msgInner);
+        log.info("[ProduceMessageProcessor.produceMessage] putMessageResult: {} , msgInner: {} ", putMessageResult, msgInner);
         return handlePutMessageResult(putMessageResult, response, request, msgInner, responseHeader, produceMessageContext, ctx, queueIdInt);
 
     }
 
     private RemotingCommand produceBatchMessage(ChannelHandlerContext ctx, RemotingCommand request, ProduceMessageContext produceMessageContext, ProduceMessageRequestHeader requestHeader) {
-        log.info("[ProduceMessageProcessor] produceBatchMessage , request:{} , requestHeader: {}", request, requestHeader );
+        log.info("[ProduceMessageProcessor] produceBatchMessage , request:{} , requestHeader: {}", request, requestHeader);
         final RemotingCommand response = RemotingCommand.createResponseCommand(ProduceMessageResponseHeader.class);
         final ProduceMessageResponseHeader responseHeader = (ProduceMessageResponseHeader) response.getCustomHeader();
 
@@ -221,7 +221,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
                                                    RemotingCommand request, ExtMessage msg,
                                                    ProduceMessageResponseHeader responseHeader, ProduceMessageContext produceMessageContext, ChannelHandlerContext ctx,
                                                    int queueIdInt) {
-        log.info("[ProduceMessageProcessor.handlePutMessageResult]  request :{} ,response:{} , msg:{} ,responseHeader:{}", request , response ,msg , responseHeader.getClass().getSimpleName());
+        log.info("[ProduceMessageProcessor.handlePutMessageResult]  request :{} ,response:{} , msg:{} ,responseHeader:{}", request, response, msg, responseHeader.getClass().getSimpleName());
         if (putMessageResult == null) {
             response.setCode(ResponseCode.SYSTEM_ERROR);
             response.setRemark("store putMessage return null");

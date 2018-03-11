@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.remoting.netty.ResponseFuture;
 
 /**
  * The interface Invoke callback.
+ *
  * @author xianyijun
  */
 public interface InvokeCallback {

@@ -4,6 +4,7 @@ import io.netty.channel.Channel;
 
 /**
  * The interface Channel event listener.
+ *
  * @author xianyijun
  */
 public interface ChannelEventListener {

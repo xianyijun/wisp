@@ -148,7 +148,7 @@ public class Message implements Serializable {
                 "topic='" + topic + '\'' +
                 ", flag=" + flag +
                 ", properties=" + properties +
-                ", body=" + (body == null ? "": new String(body) ) +
+                ", body=" + (body == null ? "" : new String(body)) +
                 '}';
     }
 }

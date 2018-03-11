@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.broker.processor;
 
 import cn.xianyijun.wisp.broker.BrokerController;
-import cn.xianyijun.wisp.broker.client.ConsumerGroupInfo;
+import cn.xianyijun.wisp.broker.client.ConsumerGroup;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
@@ -56,11 +56,11 @@ public class ConsumerManageProcessor implements NettyRequestProcessor {
                 (GetConsumerListByGroupRequestHeader) request
                         .decodeCommandCustomHeader(GetConsumerListByGroupRequestHeader.class);
 
-        ConsumerGroupInfo consumerGroupInfo =
+        ConsumerGroup consumerGroup =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(
                         requestHeader.getConsumerGroup());
-        if (consumerGroupInfo != null) {
-            List<String> clientIds = consumerGroupInfo.getAllClientId();
+        if (consumerGroup != null) {
+            List<String> clientIds = consumerGroup.getAllClientId();
             if (!clientIds.isEmpty()) {
                 GetConsumerListByGroupResponseBody body = new GetConsumerListByGroupResponseBody();
                 body.setConsumerIdList(clientIds);

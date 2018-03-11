@@ -48,7 +48,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
      * Constructor specifying both producer group and RPC hook.
      *
      * @param producerGroup Producer group, see the name-sake field.
-     * @param rpcHook RPC hook to execute per each remoting command execution.
+     * @param rpcHook       RPC hook to execute per each remoting command execution.
      */
     public DefaultProducer(final String producerGroup, RPCHook rpcHook) {
         this.producerGroup = producerGroup;
@@ -189,12 +189,12 @@ public class DefaultProducer extends ClientConfig implements Producer {
     }
 
     @Override
-    public void createTopic(String key, String newTopic, int queueNum) throws ClientException{
+    public void createTopic(String key, String newTopic, int queueNum) throws ClientException {
         createTopic(key, newTopic, queueNum, 0);
     }
 
     @Override
-    public void createTopic(String key, String newTopic, int queueNum, int topicSysFlag) throws ClientException{
+    public void createTopic(String key, String newTopic, int queueNum, int topicSysFlag) throws ClientException {
         this.producerDelegate.createTopic(key, newTopic, queueNum, topicSysFlag);
     }
 

@@ -15,9 +15,9 @@ public abstract class ServiceThread implements Runnable {
 
     private static final long JOIN_TIME = 90 * 1000;
     protected final Thread thread;
+    protected final WispCountDownLatch waitPoint = new WispCountDownLatch(1);
     protected volatile AtomicBoolean hasNotified = new AtomicBoolean(false);
     protected volatile boolean stopped = false;
-    protected final WispCountDownLatch waitPoint = new WispCountDownLatch(1);
 
     public ServiceThread() {
         this.thread = new Thread(this, this.getServiceName());
@@ -25,7 +25,7 @@ public abstract class ServiceThread implements Runnable {
 
 
     public void start() {
-        log.info("[ServiceThread] {} start",this.getServiceName());
+        log.info("[ServiceThread] {} start", this.getServiceName());
         this.thread.start();
     }
 
@@ -92,6 +92,7 @@ public abstract class ServiceThread implements Runnable {
         this.stopped = true;
         log.info("makestop thread " + this.getServiceName());
     }
+
     public abstract String getServiceName();
 
 }

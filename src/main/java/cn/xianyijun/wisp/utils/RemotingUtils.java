@@ -145,8 +145,8 @@ public class RemotingUtils {
     }
 
     public static String socketAddress2String(final SocketAddress addr) {
-        return ((InetSocketAddress)addr).getAddress().getHostAddress() +
+        return ((InetSocketAddress) addr).getAddress().getHostAddress() +
                 ":" +
-                ((InetSocketAddress)addr).getPort();
+                ((InetSocketAddress) addr).getPort();
     }
 }

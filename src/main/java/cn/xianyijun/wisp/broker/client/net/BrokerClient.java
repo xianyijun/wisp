@@ -1,8 +1,8 @@
 package cn.xianyijun.wisp.broker.client.net;
 
 import cn.xianyijun.wisp.broker.BrokerController;
-import cn.xianyijun.wisp.broker.client.ClientChannelInfo;
-import cn.xianyijun.wisp.broker.client.ConsumerGroupInfo;
+import cn.xianyijun.wisp.broker.client.ClientChannel;
+import cn.xianyijun.wisp.broker.client.ConsumerGroup;
 import cn.xianyijun.wisp.common.TopicConfig;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
@@ -88,20 +88,20 @@ public class BrokerClient {
         body.setOffsetTable(offsetTable);
         request.setBody(body.encode());
 
-        ConsumerGroupInfo consumerGroupInfo =
+        ConsumerGroup consumerGroup =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(group);
 
-        if (consumerGroupInfo != null && !consumerGroupInfo.getAllChannel().isEmpty()) {
-            ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
-                    consumerGroupInfo.getChannelInfoTable();
-            for (Map.Entry<Channel, ClientChannelInfo> entry : channelInfoTable.entrySet()) {
+        if (consumerGroup != null && !consumerGroup.getAllChannel().isEmpty()) {
+            ConcurrentMap<Channel, ClientChannel> channelInfoTable =
+                    consumerGroup.getChannelInfoTable();
+            for (Map.Entry<Channel, ClientChannel> entry : channelInfoTable.entrySet()) {
                 try {
                     this.brokerController.getRemotingServer().invokeOneWay(entry.getKey(), request, 5000);
                     log.info("[reset-offset] reset offset success. topic={}, group={}, clientId={}",
                             topic, group, entry.getValue().getClientId());
                 } catch (Exception e) {
                     log.error("[reset-offset] reset offset exception. topic={}, group={}",
-                            new Object[] {topic, group}, e);
+                            new Object[]{topic, group}, e);
                 }
             }
         } else {
@@ -134,7 +134,7 @@ public class BrokerClient {
 
         Map<String, Map<MessageQueue, Long>> consumerStatusTable =
                 new HashMap<>();
-        ConcurrentMap<Channel, ClientChannelInfo> channelInfoTable =
+        ConcurrentMap<Channel, ClientChannel> channelInfoTable =
                 this.brokerController.getConsumerManager().getConsumerGroupInfo(group).getChannelInfoTable();
         if (null == channelInfoTable || channelInfoTable.isEmpty()) {
             result.setCode(ResponseCode.SYSTEM_ERROR);
@@ -142,7 +142,7 @@ public class BrokerClient {
             return result;
         }
 
-        for (Map.Entry<Channel, ClientChannelInfo> entry : channelInfoTable.entrySet()) {
+        for (Map.Entry<Channel, ClientChannel> entry : channelInfoTable.entrySet()) {
             String clientId = entry.getValue().getClientId();
             if (StringUtils.isEmpty(originClientId) || originClientId.equals(clientId)) {
                 try {
@@ -167,7 +167,7 @@ public class BrokerClient {
                 } catch (Exception e) {
                     log.error(
                             "[get-consumer-status] get consumer status exception. topic={}, group={}, offset={}",
-                            new Object[] {topic, group}, e);
+                            new Object[]{topic, group}, e);
                 }
 
                 if (!StringUtils.isEmpty(originClientId) && originClientId.equals(clientId)) {

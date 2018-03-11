@@ -62,7 +62,7 @@ public class RouteInfoManager {
             final TopicConfigSerializeWrapper topicConfigWrapper,
             final List<String> filterServerList,
             final Channel channel) {
-        log.info("[RouteInfoManager] registerBroker, clusterName: {}, brokerAddr:{} , brokerName:{} , brokerId:{} ,HAServer:{} , topicConfigWrapper:{} , filterServerList:{} , channel:{}",clusterName,brokerAddr,brokerName,brokerId,haServerAddr,topicConfigWrapper,filterServerList,channel);
+        log.info("[RouteInfoManager] registerBroker, clusterName: {}, brokerAddr:{} , brokerName:{} , brokerId:{} ,HAServer:{} , topicConfigWrapper:{} , filterServerList:{} , channel:{}", clusterName, brokerAddr, brokerName, brokerId, haServerAddr, topicConfigWrapper, filterServerList, channel);
         RegisterBrokerResult result = new RegisterBrokerResult();
         try {
             try {

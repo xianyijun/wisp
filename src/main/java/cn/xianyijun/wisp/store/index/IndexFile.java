@@ -214,6 +214,7 @@ public class IndexFile {
             }
         }
     }
+
     public boolean isWriteFull() {
         return this.indexHeader.getIndexCount() >= this.indexNum;
     }

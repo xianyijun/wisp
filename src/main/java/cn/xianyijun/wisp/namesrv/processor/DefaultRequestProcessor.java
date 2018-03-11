@@ -44,7 +44,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     @Override
     public RemotingCommand processRequest(ChannelHandlerContext ctx, RemotingCommand request) throws Exception {
-        log.info("[DefaultRequestProcessor] processRequest , request code :{} , remark :{} , header:{}",request.getCode(), request.getBody() == null ? "" : new String(request.getBody()), request.getCustomHeader());
+        log.info("[DefaultRequestProcessor] processRequest , request code :{} , remark :{} , header:{}", request.getCode(), request.getBody() == null ? "" : new String(request.getBody()), request.getCustomHeader());
         switch (request.getCode()) {
             case RequestCode.PUT_KV_CONFIG:
                 return this.putKVConfig(ctx, request);

@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.broker.processor;
 
 import cn.xianyijun.wisp.broker.BrokerController;
-import cn.xianyijun.wisp.broker.client.ClientChannelInfo;
+import cn.xianyijun.wisp.broker.client.ClientChannel;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.constant.PermName;
@@ -58,7 +58,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
     public RemotingCommand heartBeat(ChannelHandlerContext ctx, RemotingCommand request) {
         RemotingCommand response = RemotingCommand.createResponseCommand(null);
         HeartbeatData heartbeatData = HeartbeatData.decode(request.getBody(), HeartbeatData.class);
-        ClientChannelInfo clientChannelInfo = new ClientChannelInfo(
+        ClientChannel clientChannel = new ClientChannel(
                 ctx.channel(),
                 heartbeatData.getClientID(),
                 request.getLanguage(),
@@ -85,7 +85,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
 
             boolean changed = this.brokerController.getConsumerManager().registerConsumer(
                     data.getGroupName(),
-                    clientChannelInfo,
+                    clientChannel,
                     data.getConsumeType(),
                     data.getMessageModel(),
                     data.getConsumeWhere(),
@@ -103,7 +103,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
 
         for (ProducerData data : heartbeatData.getProducerDataSet()) {
             this.brokerController.getProducerManager().registerProducer(data.getGroupName(),
-                    clientChannelInfo);
+                    clientChannel);
         }
         response.setCode(ResponseCode.SUCCESS);
         response.setRemark(null);
@@ -118,7 +118,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
                 (UnregisterClientRequestHeader) request
                         .decodeCommandCustomHeader(UnregisterClientRequestHeader.class);
 
-        ClientChannelInfo clientChannelInfo = new ClientChannelInfo(
+        ClientChannel clientChannel = new ClientChannel(
                 ctx.channel(),
                 requestHeader.getClientID(),
                 request.getLanguage(),
@@ -126,7 +126,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
         {
             final String group = requestHeader.getProducerGroup();
             if (group != null) {
-                this.brokerController.getProducerManager().unregisterProducer(group, clientChannelInfo);
+                this.brokerController.getProducerManager().unregisterProducer(group, clientChannel);
             }
         }
 
@@ -139,7 +139,7 @@ public class ClientManageProcessor implements NettyRequestProcessor {
                 if (null != subscriptionGroupConfig) {
                     isNotifyConsumerIdsChangedEnable = subscriptionGroupConfig.isNotifyConsumerIdsChangedEnable();
                 }
-                this.brokerController.getConsumerManager().unregisterConsumer(group, clientChannelInfo, isNotifyConsumerIdsChangedEnable);
+                this.brokerController.getConsumerManager().unregisterConsumer(group, clientChannel, isNotifyConsumerIdsChangedEnable);
             }
         }
 

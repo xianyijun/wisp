@@ -72,23 +72,15 @@ public class DefaultMessageStore implements MessageStore {
     private final HAService haService;
     private final CleanCommitLogService cleanCommitLogService;
     private final CleanConsumeQueueService cleanConsumeQueueService;
-
-    private StoreCheckpoint storeCheckpoint;
-
-    private RandomAccessFile lockFile;
-    private FileLock lock;
-
-    private volatile boolean shutdown = true;
-
-    boolean shutDownNormal = false;
-
-    private AtomicLong printTimes = new AtomicLong(0);
-
-
     private final ScheduledExecutorService scheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor(new WispThreadFactory("StoreScheduledThread"));
-
     private final SystemClock systemClock = new SystemClock();
+    boolean shutDownNormal = false;
+    private StoreCheckpoint storeCheckpoint;
+    private RandomAccessFile lockFile;
+    private FileLock lock;
+    private volatile boolean shutdown = true;
+    private AtomicLong printTimes = new AtomicLong(0);
 
     public DefaultMessageStore(final MessageStoreConfig messageStoreConfig, final BrokerStatsManager brokerStatsManager,
                                final MessageArrivingListener messageArrivingListener, final BrokerConfig brokerConfig) throws IOException {
@@ -949,7 +941,7 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public int cleanUnusedTopic(Set<String> topics) {
-        Iterator<Map.Entry<String,ConcurrentMap<Integer,ConsumeQueue>>> iterator = this.consumeQueueTable.entrySet().iterator();
+        Iterator<Map.Entry<String, ConcurrentMap<Integer, ConsumeQueue>>> iterator = this.consumeQueueTable.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<String, ConcurrentMap<Integer, ConsumeQueue>> next = iterator.next();
             String topic = next.getKey();
@@ -1172,7 +1164,7 @@ public class DefaultMessageStore implements MessageStore {
                 }
             }
         }
-        log.info("[loadConsumeQueue] consumeQueueTable :{}",this.consumeQueueTable);
+        log.info("[loadConsumeQueue] consumeQueueTable :{}", this.consumeQueueTable);
         return true;
     }
 

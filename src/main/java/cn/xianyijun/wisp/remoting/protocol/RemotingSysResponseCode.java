@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.remoting.protocol;
 
 /**
  * The type Remoting sys response code.
+ *
  * @author xianyijun
  */
 public class RemotingSysResponseCode {

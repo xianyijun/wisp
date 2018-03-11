@@ -26,10 +26,8 @@ import java.util.Set;
 @Slf4j
 public class DefaultPullConsumer extends ClientConfig implements PullConsumer {
 
-    private String consumerGroup;
-
     protected final transient ConsumerPullDelegate consumerPullDelegate;
-
+    private String consumerGroup;
     private long brokerSuspendMaxTimeMillis = 1000 * 20;
     /**
      * Long polling mode, the Consumer connection timeout(must greater than

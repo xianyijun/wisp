@@ -49,7 +49,7 @@ public class Filter {
 
     public static SubscriptionData build(final String topic, final String subString,
                                          final String type) throws Exception {
-        log.info("[SubscriptionData.build] topic:{} , subString:{} , type:{} ", topic, subString , type);
+        log.info("[SubscriptionData.build] topic:{} , subString:{} , type:{} ", topic, subString, type);
         if (ExpressionType.TAG.equals(type) || type == null) {
             return buildSubscriptionData(null, topic, subString);
         }

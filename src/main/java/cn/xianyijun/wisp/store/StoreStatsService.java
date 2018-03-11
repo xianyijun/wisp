@@ -26,38 +26,27 @@ public class StoreStatsService extends ServiceThread {
 
 
     private static int printTPSInterval = 60;
-
-    private volatile long dispatchMaxBuffer = 0;
-
     private final AtomicLong putMessageFailedTimes = new AtomicLong(0);
-
     private final Map<String, AtomicLong> putMessageTopicTimesTotal =
             new ConcurrentHashMap<>(128);
     private final Map<String, AtomicLong> putMessageTopicSizeTotal =
             new ConcurrentHashMap<>(128);
-
     private final AtomicLong getMessageTimesTotalFound = new AtomicLong(0);
     private final AtomicLong getMessageTransferMsgCount = new AtomicLong(0);
     private final AtomicLong getMessageTimesTotalMiss = new AtomicLong(0);
-    private volatile AtomicLong[] putMessageDistributeTime;
-
-    private ReentrantLock lockPut = new ReentrantLock();
-    private ReentrantLock lockGet = new ReentrantLock();
-    private ReentrantLock lockSampling = new ReentrantLock();
-
-    private volatile long putMessageEntireTimeMax = 0;
-
-    private volatile long getMessageEntireTimeMax = 0;
-
-    private long messageStoreBootTimestamp = System.currentTimeMillis();
-
-    private long lastPrintTimestamp = System.currentTimeMillis();
-
     private final LinkedList<CallSnapshot> putTimesList = new LinkedList<>();
-
     private final LinkedList<CallSnapshot> getTimesFoundList = new LinkedList<>();
     private final LinkedList<CallSnapshot> getTimesMissList = new LinkedList<>();
     private final LinkedList<CallSnapshot> transferMsgCountList = new LinkedList<>();
+    private volatile long dispatchMaxBuffer = 0;
+    private volatile AtomicLong[] putMessageDistributeTime;
+    private ReentrantLock lockPut = new ReentrantLock();
+    private ReentrantLock lockGet = new ReentrantLock();
+    private ReentrantLock lockSampling = new ReentrantLock();
+    private volatile long putMessageEntireTimeMax = 0;
+    private volatile long getMessageEntireTimeMax = 0;
+    private long messageStoreBootTimestamp = System.currentTimeMillis();
+    private long lastPrintTimestamp = System.currentTimeMillis();
 
 
     public StoreStatsService() {
@@ -253,22 +242,6 @@ public class StoreStatsService extends ServiceThread {
         }
     }
 
-
-    @RequiredArgsConstructor
-    static class CallSnapshot {
-        public final long timestamp;
-        public final long callTimesTotal;
-
-        static double getTPS(final CallSnapshot begin, final CallSnapshot end) {
-            long total = end.callTimesTotal - begin.callTimesTotal;
-            Long time = end.timestamp - begin.timestamp;
-
-            double tps = total / time.doubleValue();
-
-            return tps * 1000;
-        }
-    }
-
     private String getGetMissTps() {
 
         return this.getGetMissTps(10) +
@@ -322,7 +295,6 @@ public class StoreStatsService extends ServiceThread {
         return result;
     }
 
-
     private String getPutTps() {
 
         return this.getPutTps(10) +
@@ -331,7 +303,6 @@ public class StoreStatsService extends ServiceThread {
                 " " +
                 this.getPutTps(600);
     }
-
 
     private String getGetFoundTps(int time) {
         String result = "";
@@ -461,9 +432,8 @@ public class StoreStatsService extends ServiceThread {
         long hours = (time % day) / hour;
         long minutes = (time % hour) / minute;
         long seconds = (time % minute) / second;
-        return messageFormat.format(new Long[] {days, hours, minutes, seconds});
+        return messageFormat.format(new Long[]{days, hours, minutes, seconds});
     }
-
 
     private long getPutMessageSizeTotal() {
         long rs = 0;
@@ -472,7 +442,6 @@ public class StoreStatsService extends ServiceThread {
         }
         return rs;
     }
-
 
     private String getPutMessageDistributeTimeStringInfo(Long total) {
         return this.putMessageDistributeTimeToString();
@@ -492,6 +461,21 @@ public class StoreStatsService extends ServiceThread {
         }
 
         return sb.toString();
+    }
+
+    @RequiredArgsConstructor
+    static class CallSnapshot {
+        public final long timestamp;
+        public final long callTimesTotal;
+
+        static double getTPS(final CallSnapshot begin, final CallSnapshot end) {
+            long total = end.callTimesTotal - begin.callTimesTotal;
+            Long time = end.timestamp - begin.timestamp;
+
+            double tps = total / time.doubleValue();
+
+            return tps * 1000;
+        }
     }
 
 }
