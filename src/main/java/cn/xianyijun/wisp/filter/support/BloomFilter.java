@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.filter.utils;
+package cn.xianyijun.wisp.filter.support;
 
 import com.google.common.hash.Hashing;
 import lombok.Getter;

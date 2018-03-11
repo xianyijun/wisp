@@ -4,8 +4,8 @@ import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.remoting.netty.TlsSystemConfig;
 import cn.xianyijun.wisp.utils.RemotingUtils;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author xianyijun

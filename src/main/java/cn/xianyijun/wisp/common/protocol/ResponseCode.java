@@ -17,8 +17,6 @@ public class ResponseCode extends RemotingSysResponseCode {
 
     public static final int SERVICE_NOT_AVAILABLE = 14;
 
-    public static final int VERSION_NOT_SUPPORTED = 15;
-
     public static final int NO_PERMISSION = 16;
 
     public static final int TOPIC_NOT_EXIST = 17;

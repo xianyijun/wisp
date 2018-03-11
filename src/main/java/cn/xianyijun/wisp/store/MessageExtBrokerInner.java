@@ -2,8 +2,8 @@ package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.TopicFilterType;
 import cn.xianyijun.wisp.common.message.ExtMessage;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author xianyijun

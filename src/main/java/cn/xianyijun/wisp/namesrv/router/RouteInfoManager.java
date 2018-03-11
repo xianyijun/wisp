@@ -13,12 +13,12 @@ import cn.xianyijun.wisp.common.protocol.route.QueueData;
 import cn.xianyijun.wisp.common.protocol.route.TopicRouteData;
 import cn.xianyijun.wisp.common.sysflag.TopicSysFlag;
 import cn.xianyijun.wisp.utils.RemotingUtils;
-import cn.xianyijun.wisp.utils.StringUtils;
 import io.netty.channel.Channel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;

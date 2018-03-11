@@ -13,7 +13,8 @@ import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
 import cn.xianyijun.wisp.client.producer.factory.ClientFactory;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.TopicConfig;
-import cn.xianyijun.wisp.common.WispVersion;
+import cn.xianyijun.wisp.common.admin.ConsumeStats;
+import cn.xianyijun.wisp.common.admin.TopicStatsTable;
 import cn.xianyijun.wisp.common.message.BatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.Message;
@@ -22,16 +23,27 @@ import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.namesrv.TopAddressing;
+import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
 import cn.xianyijun.wisp.common.protocol.RequestCode;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
 import cn.xianyijun.wisp.common.protocol.body.CheckClientRequestBody;
+import cn.xianyijun.wisp.common.protocol.body.ClusterInfo;
+import cn.xianyijun.wisp.common.protocol.body.ConsumerConnection;
 import cn.xianyijun.wisp.common.protocol.body.GetConsumerListByGroupResponseBody;
+import cn.xianyijun.wisp.common.protocol.body.KVTable;
 import cn.xianyijun.wisp.common.protocol.body.LockBatchRequestBody;
 import cn.xianyijun.wisp.common.protocol.body.LockBatchResponseBody;
+import cn.xianyijun.wisp.common.protocol.body.ProducerConnection;
+import cn.xianyijun.wisp.common.protocol.body.ResetOffsetBody;
+import cn.xianyijun.wisp.common.protocol.body.TopicList;
 import cn.xianyijun.wisp.common.protocol.body.UnlockBatchRequestBody;
 import cn.xianyijun.wisp.common.protocol.header.ConsumerSendMsgBackRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.CreateTopicRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.DeleteSubscriptionGroupRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.DeleteTopicRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.EndTransactionRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.GetConsumeStatsRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.GetConsumerConnectionListRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetConsumerListByGroupRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetEarliestMsgStoreTimeRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetEarliestMsgStoreTimeResponseHeader;
@@ -39,6 +51,8 @@ import cn.xianyijun.wisp.common.protocol.header.GetMaxOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetMaxOffsetResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetMinOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetMinOffsetResponseHeader;
+import cn.xianyijun.wisp.common.protocol.header.GetProducerConnectionListRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.GetTopicStatsInfoRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ProduceMessageResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.PullMessageRequestHeader;
@@ -46,16 +60,26 @@ import cn.xianyijun.wisp.common.protocol.header.PullMessageResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.QueryConsumerOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.QueryConsumerOffsetResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.QueryMessageRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.ResetOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.SearchOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.SearchOffsetResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.UnregisterClientRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.UpdateConsumerOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.ViewMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.filtersrv.RegisterMessageFilterClassRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.DeleteKVConfigRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.GetKVConfigRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.GetKVConfigResponseHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.GetKVListByNamespaceRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.namesrv.GetRouteInfoRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.GetTopicsByClusterRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.PutKVConfigRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.WipeWritePermOfBrokerRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.namesrv.WipeWritePermOfBrokerResponseHeader;
 import cn.xianyijun.wisp.common.protocol.heartbeat.HeartbeatData;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.common.protocol.route.TopicRouteData;
+import cn.xianyijun.wisp.common.subscription.SubscriptionGroupConfig;
 import cn.xianyijun.wisp.exception.BrokerException;
 import cn.xianyijun.wisp.exception.ClientException;
 import cn.xianyijun.wisp.exception.RemotingConnectException;
@@ -68,15 +92,19 @@ import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.RemotingClient;
 import cn.xianyijun.wisp.remoting.netty.NettyClientConfig;
 import cn.xianyijun.wisp.remoting.netty.NettyRemotingClient;
+import cn.xianyijun.wisp.remoting.protocol.LanguageCode;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,10 +114,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Getter
 public class MQClient {
-
-    static {
-        System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
-    }
 
     private final RemotingClient remotingClient;
     private final TopAddressing topAddressing;
@@ -954,6 +978,452 @@ public class MQClient {
 
         request.setRemark(remark);
         this.remotingClient.invokeOneWay(addr, request, timeoutMillis);
+    }
+
+    public Properties getBrokerConfig(final String addr, final long timeoutMillis)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException,
+            BrokerException, UnsupportedEncodingException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_BROKER_CONFIG, null);
+
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return MixAll.string2Properties(new String(response.getBody(), MixAll.DEFAULT_CHARSET));
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public void updateBrokerConfig(final String addr, final Properties properties, final long timeoutMillis)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException,
+            BrokerException, UnsupportedEncodingException {
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.UPDATE_BROKER_CONFIG, null);
+
+        String str = MixAll.properties2String(properties);
+        if (str.length() > 0) {
+            request.setBody(str.getBytes(MixAll.DEFAULT_CHARSET));
+            RemotingCommand response = this.remotingClient
+                    .invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr), request, timeoutMillis);
+            switch (response.getCode()) {
+                case ResponseCode.SUCCESS: {
+                    return;
+                }
+                default:
+                    break;
+            }
+
+            throw new BrokerException(response.getCode(), response.getRemark());
+        }
+    }
+
+    public void createSubscriptionGroup(final String addr, final SubscriptionGroupConfig config,
+                                        final long timeoutMillis)
+            throws RemotingException, BrokerException, InterruptedException, ClientException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.UPDATE_AND_CREATE_SUBSCRIPTIONGROUP, null);
+
+        byte[] body = RemotingSerializable.encode(config);
+        request.setBody(body);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public TopicStatsTable getTopicStatsInfo(final String addr, final String topic,
+                                             final long timeoutMillis) throws InterruptedException,
+            RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException, BrokerException {
+        GetTopicStatsInfoRequestHeader requestHeader = new GetTopicStatsInfoRequestHeader();
+        requestHeader.setTopic(topic);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_TOPIC_STATS_INFO, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return TopicStatsTable.decode(response.getBody(), TopicStatsTable.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public TopicList getTopicListFromNameServer(final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_ALL_TOPIC_LIST_FROM_NAMESERVER, null);
+
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return TopicList.decode(body, TopicList.class);
+                }
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public TopicList getTopicsByCluster(final String cluster, final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        GetTopicsByClusterRequestHeader requestHeader = new GetTopicsByClusterRequestHeader();
+        requestHeader.setCluster(cluster);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_TOPICS_BY_CLUSTER, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                byte[] body = response.getBody();
+                if (body != null) {
+                    return TopicList.decode(body, TopicList.class);
+                }
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public KVTable getBrokerRuntimeInfo(final String addr, final long timeoutMillis) throws RemotingConnectException,
+            RemotingSendRequestException, RemotingTimeoutException, InterruptedException, BrokerException {
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_BROKER_RUNTIME_INFO, null);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return KVTable.decode(response.getBody(), KVTable.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public ConsumeStats getConsumeStats(final String addr, final String consumerGroup, final long timeoutMillis)
+            throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException,
+            BrokerException {
+        return getConsumeStats(addr, consumerGroup, null, timeoutMillis);
+    }
+
+    public ConsumeStats getConsumeStats(final String addr, final String consumerGroup, final String topic,
+                                        final long timeoutMillis)
+            throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException,
+            BrokerException {
+        GetConsumeStatsRequestHeader requestHeader = new GetConsumeStatsRequestHeader();
+        requestHeader.setConsumerGroup(consumerGroup);
+        requestHeader.setTopic(topic);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_CONSUME_STATS, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return ConsumeStats.decode(response.getBody(), ConsumeStats.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public ClusterInfo getBrokerClusterInfo(
+            final long timeoutMillis) throws InterruptedException, RemotingTimeoutException,
+            RemotingSendRequestException, RemotingConnectException, BrokerException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_BROKER_CLUSTER_INFO, null);
+
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return ClusterInfo.decode(response.getBody(), ClusterInfo.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public ProducerConnection getProducerConnectionList(final String addr, final String producerGroup,
+                                                        final long timeoutMillis)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException,
+            BrokerException {
+        GetProducerConnectionListRequestHeader requestHeader = new GetProducerConnectionListRequestHeader();
+        requestHeader.setProducerGroup(producerGroup);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_PRODUCER_CONNECTION_LIST, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return ProducerConnection.decode(response.getBody(), ProducerConnection.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public ConsumerConnection getConsumerConnectionList(final String addr, final String consumerGroup,
+                                                        final long timeoutMillis)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException,
+            BrokerException {
+        GetConsumerConnectionListRequestHeader requestHeader = new GetConsumerConnectionListRequestHeader();
+        requestHeader.setConsumerGroup(consumerGroup);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_CONSUMER_CONNECTION_LIST, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return ConsumerConnection.decode(response.getBody(), ConsumerConnection.class);
+            }
+            default:
+                break;
+        }
+
+        throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+    public int wipeWritePermOfBroker(final String namesrvAddr, String brokerName,
+                                     final long timeoutMillis) throws
+            RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException, ClientException {
+        WipeWritePermOfBrokerRequestHeader requestHeader = new WipeWritePermOfBrokerRequestHeader();
+        requestHeader.setBrokerName(brokerName);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.WIPE_WRITE_PERM_OF_BROKER, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                WipeWritePermOfBrokerResponseHeader responseHeader =
+                        (WipeWritePermOfBrokerResponseHeader) response.decodeCommandCustomHeader(WipeWritePermOfBrokerResponseHeader.class);
+                return responseHeader.getWipeTopicCount();
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public String getKVConfigValue(final String namespace, final String key, final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        GetKVConfigRequestHeader requestHeader = new GetKVConfigRequestHeader();
+        requestHeader.setNamespace(namespace);
+        requestHeader.setKey(key);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_KV_CONFIG, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                GetKVConfigResponseHeader responseHeader =
+                        (GetKVConfigResponseHeader) response.decodeCommandCustomHeader(GetKVConfigResponseHeader.class);
+                return responseHeader.getValue();
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public KVTable getKVListByNamespace(final String namespace, final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        GetKVListByNamespaceRequestHeader requestHeader = new GetKVListByNamespaceRequestHeader();
+        requestHeader.setNamespace(namespace);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.GET_KVLIST_BY_NAMESPACE, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(null, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return KVTable.decode(response.getBody(), KVTable.class);
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public void deleteTopicInBroker(final String addr, final String topic, final long timeoutMillis)
+            throws RemotingException, BrokerException, InterruptedException, ClientException {
+        DeleteTopicRequestHeader requestHeader = new DeleteTopicRequestHeader();
+        requestHeader.setTopic(topic);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.DELETE_TOPIC_IN_BROKER, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public void deleteTopicInNameServer(final String addr, final String topic, final long timeoutMillis)
+            throws RemotingException, InterruptedException, ClientException {
+        DeleteTopicRequestHeader requestHeader = new DeleteTopicRequestHeader();
+        requestHeader.setTopic(topic);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.DELETE_TOPIC_IN_NAMESRV, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public void deleteSubscriptionGroup(final String addr, final String groupName, final long timeoutMillis)
+            throws RemotingException, InterruptedException, ClientException {
+        DeleteSubscriptionGroupRequestHeader requestHeader = new DeleteSubscriptionGroupRequestHeader();
+        requestHeader.setGroupName(groupName);
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.DELETE_SUBSCRIPTIONGROUP, requestHeader);
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                return;
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
+    }
+
+    public void putKVConfigValue(final String namespace, final String key, final String value, final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        PutKVConfigRequestHeader requestHeader = new PutKVConfigRequestHeader();
+        requestHeader.setNamespace(namespace);
+        requestHeader.setKey(key);
+        requestHeader.setValue(value);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.PUT_KV_CONFIG, requestHeader);
+
+        List<String> nameServerAddressList = this.remotingClient.getNameServerAddressList();
+        if (nameServerAddressList != null) {
+            RemotingCommand errResponse = null;
+            for (String namesrvAddr : nameServerAddressList) {
+                RemotingCommand response = this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
+                switch (response.getCode()) {
+                    case ResponseCode.SUCCESS: {
+                        break;
+                    }
+                    default:
+                        errResponse = response;
+                }
+            }
+
+            if (errResponse != null) {
+                throw new ClientException(errResponse.getCode(), errResponse.getRemark());
+            }
+        }
+    }
+
+    public void deleteKVConfigValue(final String namespace, final String key, final long timeoutMillis)
+            throws RemotingException, ClientException, InterruptedException {
+        DeleteKVConfigRequestHeader requestHeader = new DeleteKVConfigRequestHeader();
+        requestHeader.setNamespace(namespace);
+        requestHeader.setKey(key);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.DELETE_KV_CONFIG, requestHeader);
+
+        List<String> nameServerAddressList = this.remotingClient.getNameServerAddressList();
+        if (nameServerAddressList != null) {
+            RemotingCommand errResponse = null;
+            for (String namesrvAddr : nameServerAddressList) {
+                RemotingCommand response = this.remotingClient.invokeSync(namesrvAddr, request, timeoutMillis);
+                assert response != null;
+                switch (response.getCode()) {
+                    case ResponseCode.SUCCESS: {
+                        break;
+                    }
+                    default:
+                        errResponse = response;
+                }
+            }
+            if (errResponse != null) {
+                throw new ClientException(errResponse.getCode(), errResponse.getRemark());
+            }
+        }
+    }
+
+    public Map<MessageQueue, Long> invokeBrokerToResetOffset(final String addr, final String topic, final String group,
+                                                             final long timestamp, final boolean isForce, final long timeoutMillis, boolean isC)
+            throws RemotingException, ClientException, InterruptedException {
+        ResetOffsetRequestHeader requestHeader = new ResetOffsetRequestHeader();
+        requestHeader.setTopic(topic);
+        requestHeader.setGroup(group);
+        requestHeader.setTimestamp(timestamp);
+        requestHeader.setForce(isForce);
+
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.INVOKE_BROKER_TO_RESET_OFFSET, requestHeader);
+        if (isC) {
+            request.setLanguage(LanguageCode.CPP);
+        }
+
+        RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
+                request, timeoutMillis);
+        assert response != null;
+        switch (response.getCode()) {
+            case ResponseCode.SUCCESS: {
+                if (response.getBody() != null) {
+                    ResetOffsetBody body = ResetOffsetBody.decode(response.getBody(), ResetOffsetBody.class);
+                    return body.getOffsetTable();
+                }
+            }
+            default:
+                break;
+        }
+
+        throw new ClientException(response.getCode(), response.getRemark());
     }
 
 }

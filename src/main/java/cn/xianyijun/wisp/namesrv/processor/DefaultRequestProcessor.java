@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Slf4j
 public class DefaultRequestProcessor implements NettyRequestProcessor {
-    private final NameServerController nameServerController;
+    protected final NameServerController nameServerController;
 
     public DefaultRequestProcessor(NameServerController nameServerController) {
         this.nameServerController = nameServerController;
@@ -205,7 +205,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
         return response;
     }
 
-    private RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx,
+    protected RemotingCommand getRouteInfoByTopic(ChannelHandlerContext ctx,
                                                 RemotingCommand request) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
         final GetRouteInfoRequestHeader requestHeader =

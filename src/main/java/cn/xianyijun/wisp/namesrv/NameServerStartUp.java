@@ -1,10 +1,8 @@
 package cn.xianyijun.wisp.namesrv;
 
 import cn.xianyijun.wisp.common.MixAll;
-import cn.xianyijun.wisp.common.WispVersion;
 import cn.xianyijun.wisp.common.namesrv.NameServerConfig;
 import cn.xianyijun.wisp.remoting.netty.NettyServerConfig;
-import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.utils.ServerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.CommandLine;
@@ -30,7 +28,6 @@ public class NameServerStartUp {
 
     private static void doMain(String[] args) {
         System.setProperty(MixAll.WISP_HOME_PROPERTY, "/Users/xianyijun/code/git/wisp/");
-        System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
         try {
             Options options = ServerUtils.buildCommandlineOptions(new Options());
             CommandLine commandLine = ServerUtils.parseCmdLine("nameServer", args, buildCommandlineOptions(options), new PosixParser());

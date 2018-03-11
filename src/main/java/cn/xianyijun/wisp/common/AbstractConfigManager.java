@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.common;
 
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 

@@ -15,7 +15,7 @@ import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.TopicConfig;
 import cn.xianyijun.wisp.common.TopicFilterType;
 import cn.xianyijun.wisp.common.constant.PermName;
-import cn.xianyijun.wisp.common.filter.Filter;
+import cn.xianyijun.wisp.common.filter.Filters;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.ResponseCode;
@@ -132,7 +132,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
         ConsumerFilterData consumerFilterData = null;
         if (hasSubscriptionFlag) {
             try {
-                subscriptionData = Filter.build(
+                subscriptionData = Filters.build(
                         requestHeader.getTopic(), requestHeader.getSubscription(), requestHeader.getExpressionType()
                 );
                 if (!ExpressionType.isTagType(subscriptionData.getExpressionType())) {

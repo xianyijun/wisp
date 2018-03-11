@@ -7,8 +7,8 @@ import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.filter.FilterFactory;
-import cn.xianyijun.wisp.filter.utils.BloomFilter;
-import cn.xianyijun.wisp.filter.utils.BloomFilterData;
+import cn.xianyijun.wisp.filter.support.BloomFilter;
+import cn.xianyijun.wisp.filter.support.BloomFilterData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -87,7 +87,54 @@ public class ConsumerFilterManager extends AbstractConfigManager {
 
     @Override
     public void decode(String jsonString) {
+        ConsumerFilterManager load = RemotingSerializable.fromJson(jsonString, ConsumerFilterManager.class);
+        if (load == null || load.filterDataByTopic == null){
+            return;
+        }
+        boolean bloomChanged = false;
 
+        for (String topic : load.filterDataByTopic.keySet()) {
+            FilterDataMapByTopic dataMapByTopic = load.filterDataByTopic.get(topic);
+            if (dataMapByTopic == null) {
+                continue;
+            }
+
+            for (String group : dataMapByTopic.getGroupFilterData().keySet()) {
+
+                ConsumerFilterData filterData = dataMapByTopic.getGroupFilterData().get(group);
+
+                if (filterData == null) {
+                    continue;
+                }
+
+                try {
+                    filterData.setCompiledExpression(
+                            FilterFactory.INSTANCE.get(filterData.getExpressionType()).compile(filterData.getExpression())
+                    );
+                } catch (Exception e) {
+                    log.error("load filter data error, " + filterData, e);
+                }
+
+                if (!this.bloomFilter.isValid(filterData.getBloomFilterData())) {
+                    bloomChanged = true;
+                    log.info("Bloom filter is changed!So ignore all filter data persisted! {}, {}", this.bloomFilter, filterData.getBloomFilterData());
+                    break;
+                }
+
+                log.info("load exist consumer filter data: {}", filterData);
+
+                if (filterData.getDeadTime() == 0) {
+                    long deadTime = System.currentTimeMillis() - 30 * 1000;
+                    filterData.setDeadTime(
+                            deadTime <= filterData.getBornTime() ? filterData.getBornTime() : deadTime
+                    );
+                }
+            }
+        }
+
+        if (!bloomChanged) {
+            this.filterDataByTopic = load.filterDataByTopic;
+        }
     }
 
     @Override

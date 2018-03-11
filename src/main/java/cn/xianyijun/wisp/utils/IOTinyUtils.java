@@ -28,7 +28,7 @@ public class IOTinyUtils {
         return sw.toString();
     }
 
-    public static long copy(Reader input, Writer output) throws IOException {
+    private static long copy(Reader input, Writer output) throws IOException {
         char[] buffer = new char[1 << 12];
         long count = 0;
         for (int n = 0; (n = input.read(buffer)) >= 0; ) {

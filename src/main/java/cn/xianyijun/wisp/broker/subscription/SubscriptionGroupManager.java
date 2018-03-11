@@ -7,9 +7,9 @@ import cn.xianyijun.wisp.common.DataVersion;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
 import cn.xianyijun.wisp.common.subscription.SubscriptionGroupConfig;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

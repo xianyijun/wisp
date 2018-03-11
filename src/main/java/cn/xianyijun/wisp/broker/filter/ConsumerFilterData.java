@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.broker.filter;
 
 import cn.xianyijun.wisp.filter.Expression;
-import cn.xianyijun.wisp.filter.utils.BloomFilterData;
+import cn.xianyijun.wisp.filter.support.BloomFilterData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

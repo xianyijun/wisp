@@ -15,10 +15,10 @@ import cn.xianyijun.wisp.common.protocol.header.ResetOffsetRequestHeader;
 import cn.xianyijun.wisp.exception.RemotingSendRequestException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.utils.StringUtils;
 import io.netty.channel.Channel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;

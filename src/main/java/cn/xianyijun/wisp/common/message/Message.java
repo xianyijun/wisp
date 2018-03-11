@@ -25,6 +25,9 @@ public class Message implements Serializable {
         this(topic, tags, "", 0, body, true);
     }
 
+    public Message(String topic, String tags, String keys, byte[] body) {
+        this(topic, tags, keys, 0, body, true);
+    }
     public Message(String topic, String tags, String keys, int flag, byte[] body, boolean waitStoreMsgOK) {
         this.topic = topic;
         this.flag = flag;

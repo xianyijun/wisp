@@ -14,6 +14,7 @@ import cn.xianyijun.wisp.exception.ClientException;
 import cn.xianyijun.wisp.exception.RemotingException;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collection;
@@ -40,6 +41,7 @@ public class DefaultProducer extends ClientConfig implements Producer {
 
     private boolean retryAnotherBrokerWhenNotStoreOK = false;
 
+    @Setter
     private int retryTimesWhenSendAsyncFailed = 2;
 
     private int compressMsgBodyOverHowMuch = 1024 * 4;

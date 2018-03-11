@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.filter;
 import cn.xianyijun.wisp.exception.FilterException;
 
 /**
- * The interface Filter.
+ * The interface Filters.
  *
  * @author xianyijun
  */

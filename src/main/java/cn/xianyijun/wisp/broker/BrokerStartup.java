@@ -3,12 +3,10 @@ package cn.xianyijun.wisp.broker;
 import cn.xianyijun.wisp.common.BrokerConfig;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.TlsMode;
-import cn.xianyijun.wisp.common.WispVersion;
 import cn.xianyijun.wisp.remoting.netty.NettyClientConfig;
 import cn.xianyijun.wisp.remoting.netty.NettyServerConfig;
 import cn.xianyijun.wisp.remoting.netty.NettySystemConfig;
 import cn.xianyijun.wisp.remoting.netty.TlsSystemConfig;
-import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.store.config.MessageStoreConfig;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import cn.xianyijun.wisp.utils.ServerUtils;
@@ -41,7 +39,6 @@ public class BrokerStartup {
 
     private static BrokerController createBrokerController(String[] args) {
         System.setProperty(MixAll.WISP_HOME_PROPERTY, "/Users/xianyijun/code/git/wisp/");
-        System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(WispVersion.CURRENT_VERSION));
 
         if (null == System.getProperty(NettySystemConfig.WISP_REMOTING_SOCKET_SNDBUF_SIZE)) {
             NettySystemConfig.socketSndBufSize = 131072;

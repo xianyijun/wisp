@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author xianyijun
  */
 @Slf4j
-public class Filter {
+public class Filters {
     public static String simpleClassName(final String className) {
         String simple = className;
         int index = className.lastIndexOf(".");

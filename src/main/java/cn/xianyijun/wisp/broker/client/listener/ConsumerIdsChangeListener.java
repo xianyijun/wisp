@@ -1,4 +1,6 @@
-package cn.xianyijun.wisp.broker.client;
+package cn.xianyijun.wisp.broker.client.listener;
+
+import cn.xianyijun.wisp.broker.client.ConsumerGroupEvent;
 
 /**
  * The interface Consumer ids change listener.

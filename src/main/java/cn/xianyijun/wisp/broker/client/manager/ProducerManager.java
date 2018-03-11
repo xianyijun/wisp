@@ -1,5 +1,6 @@
-package cn.xianyijun.wisp.broker.client;
+package cn.xianyijun.wisp.broker.client.manager;
 
+import cn.xianyijun.wisp.broker.client.ClientChannel;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import io.netty.channel.Channel;

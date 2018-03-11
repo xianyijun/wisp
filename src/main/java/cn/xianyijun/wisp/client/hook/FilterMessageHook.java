@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.client.hook;
 
 /**
- * The interface Filter message hook.
+ * The interface Filters message hook.
  */
 public interface FilterMessageHook {
     /**
@@ -12,7 +12,7 @@ public interface FilterMessageHook {
     String hookName();
 
     /**
-     * Filter message.
+     * Filters message.
      *
      * @param context the context
      */

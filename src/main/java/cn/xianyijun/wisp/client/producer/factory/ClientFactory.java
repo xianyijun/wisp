@@ -21,7 +21,6 @@ import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.ServiceState;
 import cn.xianyijun.wisp.common.UtilAll;
-import cn.xianyijun.wisp.common.WispVersion;
 import cn.xianyijun.wisp.common.constant.PermName;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.MessageQueue;
@@ -42,9 +41,9 @@ import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.netty.NettyClientConfig;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.net.DatagramSocket;
 import java.util.Collections;
@@ -130,11 +129,10 @@ public class ClientFactory {
 
         this.consumerStatsManager = new ConsumerStatsManager(this.scheduledExecutorService);
 
-        log.info("created a new client Instance, FactoryIndex: {} ClinetID: {} {} {}, serializeType={}",
+        log.info("created a new client Instance, FactoryIndex: {} ClinetID: {} {}, serializeType={}",
                 this.instanceIndex,
                 this.clientId,
-                this.clientConfig,
-                WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION), RemotingCommand.getSerializeTypeConfigInThisServer());
+                this.clientConfig, RemotingCommand.getSerializeTypeConfigInThisServer());
     }
 
     public static TopicPublishInfo topicRouteData2TopicPublishInfo(final String topic, final TopicRouteData route) {
@@ -709,6 +707,11 @@ public class ClientFactory {
         this.unregisterClientWithLock(group, null);
     }
 
+    public void unregisterConsumer(final String group) {
+        this.consumerTable.remove(group);
+        this.unregisterClientWithLock(null, group);
+    }
+
     private void unregisterClientWithLock(final String producerGroup, final String consumerGroup) {
         try {
             if (this.lockHeartbeat.tryLock(LOCK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
@@ -746,6 +749,10 @@ public class ClientFactory {
                 }
             }
         }
+    }
+
+    public void unregisterExtAdmin(final String group) {
+        this.adminExtTable.remove(group);
     }
 
     public void shutdown() {
@@ -855,6 +862,19 @@ public class ClientFactory {
         }
     }
 
+    public boolean registerExtAdmin(final String group, final MQAdminExtInner admin) {
+        if (null == group || null == admin) {
+            return false;
+        }
+
+        MQAdminExtInner prev = this.adminExtTable.putIfAbsent(group, admin);
+        if (prev != null) {
+            log.warn("the admin group[{}] exist already.", group);
+            return false;
+        }
+
+        return true;
+    }
 
     public boolean registerConsumer(final String group, final ConsumerInner consumer) {
         if (null == group || null == consumer) {
@@ -947,8 +967,6 @@ public class ClientFactory {
         String nsAddr = strBuilder.toString();
         consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_NAME_SERVER_ADDR, nsAddr);
         consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_CONSUME_TYPE, mqConsumerInner.consumeType().name());
-        consumerRunningInfo.getProperties().put(ConsumerRunningInfo.PROP_CLIENT_VERSION,
-                WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION));
 
         return consumerRunningInfo;
     }

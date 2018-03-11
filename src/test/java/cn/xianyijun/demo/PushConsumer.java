@@ -18,7 +18,7 @@ public class PushConsumer {
             consumer.subscribe("TopicTest", "*");
 
             consumer.registerMessageListener((MessageListenerConcurrently) (msgs, context) -> {
-                System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
+                System.out.printf("%s Receive New Messages: %s %n ", Thread.currentThread().getName(), msgs);
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             });
 

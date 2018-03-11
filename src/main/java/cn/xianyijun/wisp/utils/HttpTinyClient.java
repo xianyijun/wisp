@@ -1,7 +1,6 @@
 package cn.xianyijun.wisp.utils;
 
 import cn.xianyijun.wisp.common.MixAll;
-import cn.xianyijun.wisp.common.WispVersion;
 import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
@@ -70,7 +69,6 @@ public class HttpTinyClient {
                 conn.addRequestProperty(iter.next(), iter.next());
             }
         }
-        conn.addRequestProperty("Client-Version", WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION));
         conn.addRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=" + encoding);
 
         String ts = String.valueOf(System.currentTimeMillis());

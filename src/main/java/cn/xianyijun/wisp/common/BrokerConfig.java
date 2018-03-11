@@ -1,6 +1,5 @@
 package cn.xianyijun.wisp.common;
 
-import cn.xianyijun.wisp.common.annotation.ImportantField;
 import cn.xianyijun.wisp.common.constant.PermName;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import lombok.Getter;
@@ -19,26 +18,19 @@ import java.net.UnknownHostException;
 public class BrokerConfig {
 
     private String wispHome = System.getProperty(MixAll.WISP_HOME_PROPERTY, System.getenv(MixAll.WISP_HOME_ENV));
-    @ImportantField
     private String nameServerAddr = System.getProperty(MixAll.NAME_SERVER_ADDR_PROPERTY, System.getenv(MixAll.NAME_SERVER_ADDR_ENV));
-    @ImportantField
     private String brokerIP1 = RemotingUtils.getLocalAddress();
     private String brokerIP2 = RemotingUtils.getLocalAddress();
-    @ImportantField
     private String brokerName = localHostName();
-    @ImportantField
     private String brokerClusterName = "DefaultCluster";
-    @ImportantField
     private long brokerId = MixAll.MASTER_ID;
     private int brokerPermission = PermName.PERM_READ | PermName.PERM_WRITE;
     private int defaultTopicQueueNums = 8;
-    @ImportantField
     private boolean autoCreateTopicEnable = true;
 
     private boolean clusterTopicEnable = true;
 
     private boolean brokerTopicEnable = true;
-    @ImportantField
     private boolean autoCreateSubscriptionGroup = true;
     private String messageStorePlugIn = "";
 
@@ -55,9 +47,7 @@ public class BrokerConfig {
 
     private int flushConsumerOffsetHistoryInterval = 1000 * 60;
 
-    @ImportantField
     private boolean rejectTransactionMessage = false;
-    @ImportantField
     private boolean fetchNameServerAddrByAddressServer = false;
     private int sendThreadPoolQueueCapacity = 10000;
     private int pullThreadPoolQueueCapacity = 100000;

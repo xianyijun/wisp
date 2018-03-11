@@ -1,6 +1,5 @@
 package cn.xianyijun.wisp.common;
 
-import cn.xianyijun.wisp.common.annotation.ImportantField;
 import cn.xianyijun.wisp.utils.ArrayUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -10,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -116,14 +114,6 @@ public class MixAll {
                     } catch (IllegalAccessException e) {
                         log.error("Failed to obtain object properties", e);
                     }
-
-                    if (onlyImportantField) {
-                        Annotation annotation = field.getAnnotation(ImportantField.class);
-                        if (null == annotation) {
-                            continue;
-                        }
-                    }
-
                     log.info(name + "=" + value);
                 }
             }

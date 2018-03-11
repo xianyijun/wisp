@@ -21,7 +21,7 @@ import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.ServiceState;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.consumer.ConsumeWhereEnum;
-import cn.xianyijun.wisp.common.filter.Filter;
+import cn.xianyijun.wisp.common.filter.Filters;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.Message;
 import cn.xianyijun.wisp.common.message.MessageAccessor;
@@ -633,7 +633,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
                 for (final Map.Entry<String, String> entry : sub.entrySet()) {
                     final String topic = entry.getKey();
                     final String subString = entry.getValue();
-                    SubscriptionData subscriptionData = Filter.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
+                    SubscriptionData subscriptionData = Filters.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
                             topic, subString);
                     this.reBalance.getSubscriptionInner().put(topic, subscriptionData);
                 }
@@ -648,7 +648,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
                     break;
                 case CLUSTERING:
                     final String retryTopic = MixAll.getRetryTopic(this.defaultPushConsumer.getConsumerGroup());
-                    SubscriptionData subscriptionData = Filter.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
+                    SubscriptionData subscriptionData = Filters.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
                             retryTopic, SubscriptionData.SUB_ALL);
                     this.reBalance.getSubscriptionInner().put(retryTopic, subscriptionData);
                     break;
@@ -811,7 +811,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
 
     public void subscribe(String topic, String subExpression) throws ClientException {
         try {
-            SubscriptionData subscriptionData = Filter.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
+            SubscriptionData subscriptionData = Filters.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
                     topic, subExpression);
             log.info("[subscribe] topic :{} ,subscriptionData:{} ", topic, subscriptionData);
             this.reBalance.getSubscriptionInner().put(topic, subscriptionData);

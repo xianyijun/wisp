@@ -1,6 +1,7 @@
-package cn.xianyijun.wisp.broker.client;
+package cn.xianyijun.wisp.broker.client.listener;
 
 import cn.xianyijun.wisp.broker.BrokerController;
+import cn.xianyijun.wisp.broker.client.ConsumerGroupEvent;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import io.netty.channel.Channel;
 import lombok.RequiredArgsConstructor;

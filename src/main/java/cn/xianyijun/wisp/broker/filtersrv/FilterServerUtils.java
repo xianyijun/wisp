@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.broker.filterserver;
+package cn.xianyijun.wisp.broker.filtersrv;
 
 import lombok.extern.slf4j.Slf4j;
 

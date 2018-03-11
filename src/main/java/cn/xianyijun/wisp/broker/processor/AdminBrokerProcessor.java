@@ -8,7 +8,6 @@ import cn.xianyijun.wisp.broker.filter.ExpressionMessageFilter;
 import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.TopicConfig;
-import cn.xianyijun.wisp.common.WispVersion;
 import cn.xianyijun.wisp.common.admin.ConsumeStats;
 import cn.xianyijun.wisp.common.admin.OffsetWrapper;
 import cn.xianyijun.wisp.common.admin.TopicOffset;
@@ -72,7 +71,7 @@ import cn.xianyijun.wisp.common.stats.StatsSnapshot;
 import cn.xianyijun.wisp.common.subscription.SubscriptionGroupConfig;
 import cn.xianyijun.wisp.exception.RemotingCommandException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
-import cn.xianyijun.wisp.filter.utils.BitsArray;
+import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.store.ConsumeQueue;
@@ -80,12 +79,12 @@ import cn.xianyijun.wisp.store.ConsumeQueueExt;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
 import cn.xianyijun.wisp.store.MessageFilter;
 import cn.xianyijun.wisp.store.SelectMappedBufferResult;
-import cn.xianyijun.wisp.utils.StringUtils;
 import com.alibaba.fastjson.JSON;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
@@ -1155,8 +1154,6 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
 
     private HashMap<String, String> prepareRuntimeInfo() {
         HashMap<String, String> runtimeInfo = this.brokerController.getMessageStore().getRuntimeInfo();
-        runtimeInfo.put("brokerVersionDesc", WispVersion.getVersionDesc(WispVersion.CURRENT_VERSION));
-        runtimeInfo.put("brokerVersion", String.valueOf(WispVersion.CURRENT_VERSION));
 
         runtimeInfo.put("msgPutTotalYesterdayMorning",
                 String.valueOf(this.brokerController.getBrokerStats().getMsgPutTotalYesterdayMorning()));

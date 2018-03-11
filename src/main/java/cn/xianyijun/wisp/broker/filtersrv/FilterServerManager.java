@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.broker.filterserver;
+package cn.xianyijun.wisp.broker.filtersrv;
 
 import cn.xianyijun.wisp.broker.BrokerController;
 import cn.xianyijun.wisp.broker.BrokerStartup;
@@ -37,7 +37,7 @@ public class FilterServerManager {
     public void doChannelCloseEvent(final String remoteAddr, final Channel channel) {
         FilterServerInfo old = this.filterServerTable.remove(channel);
         if (old != null) {
-            log.warn("The Filter Server<{}> connection<{}> closed, remove it", old.getFilterServerAddr(),
+            log.warn("The Filters Server<{}> connection<{}> closed, remove it", old.getFilterServerAddr(),
                     remoteAddr);
         }
     }
@@ -71,7 +71,7 @@ public class FilterServerManager {
             long timestamp = next.getValue().getLastUpdateTimestamp();
             Channel channel = next.getKey();
             if ((System.currentTimeMillis() - timestamp) > FILTER_SERVER_MAX_IDLE_TIME_MILLS) {
-                log.info("The Filter Server<{}> expired, remove it", next.getKey());
+                log.info("The Filters Server<{}> expired, remove it", next.getKey());
                 it.remove();
                 RemotingUtils.closeChannel(channel);
             }
@@ -111,7 +111,7 @@ public class FilterServerManager {
             filterServerInfo.setFilterServerAddr(filterServerAddr);
             filterServerInfo.setLastUpdateTimestamp(System.currentTimeMillis());
             this.filterServerTable.put(channel, filterServerInfo);
-            log.info("Receive a New Filter Server<{}>", filterServerAddr);
+            log.info("Receive a New Filters Server<{}>", filterServerAddr);
         }
     }
 

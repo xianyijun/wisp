@@ -4,8 +4,8 @@ import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.filter.MessageEvaluationContext;
-import cn.xianyijun.wisp.filter.utils.BitsArray;
-import cn.xianyijun.wisp.filter.utils.BloomFilter;
+import cn.xianyijun.wisp.filter.support.BitsArray;
+import cn.xianyijun.wisp.filter.support.BloomFilter;
 import cn.xianyijun.wisp.store.ConsumeQueueExt;
 import cn.xianyijun.wisp.store.MessageFilter;
 import lombok.Getter;
@@ -119,7 +119,7 @@ public class ExpressionMessageFilter implements MessageFilter {
 
             ret = realFilterData.getCompiledExpression().evaluate(context);
         } catch (Throwable e) {
-            log.error("Message Filter error, " + realFilterData + ", " + tempProperties, e);
+            log.error("Message Filters error, " + realFilterData + ", " + tempProperties, e);
         }
 
         log.debug("Pull eval result: {}, {}, {}", ret, realFilterData, tempProperties);

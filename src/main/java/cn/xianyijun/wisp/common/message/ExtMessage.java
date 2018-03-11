@@ -3,6 +3,7 @@ package cn.xianyijun.wisp.common.message;
 import cn.xianyijun.wisp.common.TopicFilterType;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import lombok.Data;
+import lombok.ToString;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer;
  * @author xianyijun
  */
 @Data
+@ToString
 public class ExtMessage extends Message {
 
     private int queueId;

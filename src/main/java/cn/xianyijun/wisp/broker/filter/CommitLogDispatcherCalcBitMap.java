@@ -2,7 +2,7 @@ package cn.xianyijun.wisp.broker.filter;
 
 import cn.xianyijun.wisp.common.BrokerConfig;
 import cn.xianyijun.wisp.filter.MessageEvaluationContext;
-import cn.xianyijun.wisp.filter.utils.BitsArray;
+import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.store.CommitLogDispatcher;
 import cn.xianyijun.wisp.store.DispatchRequest;
 import cn.xianyijun.wisp.utils.CollectionUtils;

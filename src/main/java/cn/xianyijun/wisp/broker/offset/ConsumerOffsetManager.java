@@ -4,10 +4,10 @@ import cn.xianyijun.wisp.broker.BrokerController;
 import cn.xianyijun.wisp.broker.BrokerPathConfigHelper;
 import cn.xianyijun.wisp.common.AbstractConfigManager;
 import cn.xianyijun.wisp.common.protocol.RemotingSerializable;
-import cn.xianyijun.wisp.utils.StringUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;

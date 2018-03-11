@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.broker.mqtrace;
 
 /**
  * The interface Consume message hook.
+ * @author xianyijun
  */
 public interface ConsumeMessageHook {
     /**

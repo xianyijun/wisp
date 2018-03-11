@@ -66,7 +66,7 @@ public class ExpressionForRetryMessageFilter extends ExpressionMessageFilter {
 
             ret = realFilterData.getCompiledExpression().evaluate(context);
         } catch (Throwable e) {
-            log.error("Message Filter error, " + realFilterData + ", " + tempProperties, e);
+            log.error("Message Filters error, " + realFilterData + ", " + tempProperties, e);
         }
 
         log.debug("Pull eval result: {}, {}, {}", ret, realFilterData, tempProperties);

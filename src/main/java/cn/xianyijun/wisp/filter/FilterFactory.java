@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The type Filter factory.
+ * The type Filters factory.
  */
 public class FilterFactory {
     /**

@@ -226,7 +226,7 @@ public class PullConsumerWrapper {
             }
         }
 
-        throw new ClientException("Find Filter Server Failed, Broker Addr: " + brokerAddr + " topic: "
+        throw new ClientException("Find Filters Server Failed, Broker Addr: " + brokerAddr + " topic: "
                 + topic, null);
     }
 

@@ -1,5 +1,9 @@
-package cn.xianyijun.wisp.broker.client;
+package cn.xianyijun.wisp.broker.client.manager;
 
+import cn.xianyijun.wisp.broker.client.ClientChannel;
+import cn.xianyijun.wisp.broker.client.ConsumerGroup;
+import cn.xianyijun.wisp.broker.client.ConsumerGroupEvent;
+import cn.xianyijun.wisp.broker.client.listener.ConsumerIdsChangeListener;
 import cn.xianyijun.wisp.common.RemotingHelper;
 import cn.xianyijun.wisp.common.consumer.ConsumeWhereEnum;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;

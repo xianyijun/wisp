@@ -14,6 +14,7 @@ import cn.xianyijun.wisp.exception.ClientException;
 import cn.xianyijun.wisp.exception.RemotingException;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashSet;
@@ -49,6 +50,7 @@ public class DefaultPullConsumer extends ClientConfig implements PullConsumer {
     /**
      * Offset Storage
      */
+    @Setter
     private OffsetStore offsetStore;
     /**
      * Topic set you want to register
@@ -128,5 +130,30 @@ public class DefaultPullConsumer extends ClientConfig implements PullConsumer {
     @Override
     public void sendMessageBack(ExtMessage msg, int delayLevel, String brokerName) throws RemotingException, BrokerException, InterruptedException, ClientException {
         this.consumerPullDelegate.sendMessageBack(msg, delayLevel, brokerName, consumerGroup);
+    }
+
+    @Override
+    public void start() throws ClientException {
+        this.consumerPullDelegate.start();
+    }
+
+    @Override
+    public void shutdown() {
+        this.consumerPullDelegate.shutdown();
+    }
+
+    @Override
+    public void registerMessageQueueListener(String topic, MessageQueueListener listener) {
+        synchronized (this.registerTopics) {
+            this.registerTopics.add(topic);
+            if (listener != null) {
+                this.messageQueueListener = listener;
+            }
+        }
+    }
+
+    @Override
+    public PullResult pull(MessageQueue mq, String subExpression, long offset, int maxNums) throws ClientException, RemotingException, BrokerException, InterruptedException {
+        return this.consumerPullDelegate.pull(mq, subExpression, offset, maxNums);
     }
 }
