@@ -111,7 +111,7 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
                 if (mqs.contains(mq)) {
                     try {
                         this.updateConsumeOffsetToBroker(mq, offset.get());
-                        log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}",
+                        log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {}  offset: {}",
                                 this.groupName,
                                 this.clientFactory.getClientId(),
                                 mq,

@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * @author xianyijun
+ */
 @NoArgsConstructor
 @Data
 public class SubscriptionData implements Comparable<SubscriptionData> {

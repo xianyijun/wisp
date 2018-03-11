@@ -1,7 +1,9 @@
 package cn.xianyijun.wisp.broker.filter;
 
+import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
+import cn.xianyijun.wisp.filter.MessageEvaluationContext;
 import cn.xianyijun.wisp.filter.utils.BitsArray;
 import cn.xianyijun.wisp.filter.utils.BloomFilter;
 import cn.xianyijun.wisp.store.ConsumeQueueExt;
@@ -87,6 +89,45 @@ public class ExpressionMessageFilter implements MessageFilter {
 
     @Override
     public boolean isMatchedByCommitLog(ByteBuffer msgBuffer, Map<String, String> properties) {
-        return false;
+        if (subscriptionData == null) {
+            return true;
+        }
+
+        if (subscriptionData.isClassFilterMode()) {
+            return true;
+        }
+
+        if (ExpressionType.isTagType(subscriptionData.getExpressionType())) {
+            return true;
+        }
+
+        ConsumerFilterData realFilterData = this.consumerFilterData;
+        Map<String, String> tempProperties = properties;
+
+        if (realFilterData == null || realFilterData.getExpression() == null
+                || realFilterData.getCompiledExpression() == null) {
+            return true;
+        }
+
+        if (tempProperties == null && msgBuffer != null) {
+            tempProperties = MessageDecoder.decodeProperties(msgBuffer);
+        }
+
+        Object ret = null;
+        try {
+            MessageEvaluationContext context = new MessageEvaluationContext(tempProperties);
+
+            ret = realFilterData.getCompiledExpression().evaluate(context);
+        } catch (Throwable e) {
+            log.error("Message Filter error, " + realFilterData + ", " + tempProperties, e);
+        }
+
+        log.debug("Pull eval result: {}, {}, {}", ret, realFilterData, tempProperties);
+
+        if (ret == null || !(ret instanceof Boolean)) {
+            return false;
+        }
+
+        return (Boolean) ret;
     }
 }

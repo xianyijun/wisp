@@ -131,7 +131,6 @@ public class ConsumerPushDelegate implements ConsumerInner {
     }
 
     private int getMaxReConsumeTimes() {
-        // default reconsume times: 16
         if (this.defaultPushConsumer.getMaxReConsumeTimes() == -1) {
             return 16;
         } else {
@@ -826,6 +825,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
         try {
             SubscriptionData subscriptionData = Filter.buildSubscriptionData(this.defaultPushConsumer.getConsumerGroup(),
                     topic, subExpression);
+            log.info("[subscribe] topic :{} ,subscriptionData:{} ", topic , subscriptionData);
             this.reBalance.getSubscriptionInner().put(topic, subscriptionData);
             if (this.clientFactory != null) {
                 this.clientFactory.sendHeartbeatToAllBrokerWithLock();

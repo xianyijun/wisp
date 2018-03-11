@@ -2,10 +2,12 @@ package cn.xianyijun.wisp.common.filter;
 
 import cn.xianyijun.wisp.common.protocol.heartbeat.SubscriptionData;
 import cn.xianyijun.wisp.filter.ExpressionType;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author xianyijun
  */
+@Slf4j
 public class Filter {
     public static String simpleClassName(final String className) {
         String simple = className;
@@ -47,6 +49,7 @@ public class Filter {
 
     public static SubscriptionData build(final String topic, final String subString,
                                          final String type) throws Exception {
+        log.info("[SubscriptionData.build] topic:{} , subString:{} , type:{} ", topic, subString , type);
         if (ExpressionType.TAG.equals(type) || type == null) {
             return buildSubscriptionData(null, topic, subString);
         }

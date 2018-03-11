@@ -112,6 +112,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
     @Override
     public void submitConsumeRequest(List<ExtMessage> msgs, ProcessQueue processQueue, MessageQueue messageQueue, boolean disPathToConsume) {
         final int consumeBatchSize = this.defaultPushConsumer.getConsumeMessageBatchMaxSize();
+        log.info("[submitConsumeRequest] consumeBatchSize:{} , msgSize:{} ", consumeBatchSize, msgs.size());
         if (msgs.size() <= consumeBatchSize) {
             ConsumeRequest consumeRequest = new ConsumeRequest(msgs, processQueue, messageQueue);
             try {

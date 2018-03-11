@@ -128,7 +128,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
             return response;
         }
 
-        SubscriptionData subscriptionData = null;
+        SubscriptionData subscriptionData;
         ConsumerFilterData consumerFilterData = null;
         if (hasSubscriptionFlag) {
             try {
@@ -140,7 +140,6 @@ public class PullMessageProcessor implements NettyRequestProcessor {
                             requestHeader.getTopic(), requestHeader.getConsumerGroup(), requestHeader.getSubscription(),
                             requestHeader.getExpressionType(), requestHeader.getSubVersion()
                     );
-                    assert consumerFilterData != null;
                 }
             } catch (Exception e) {
                 log.warn("Parse the consumer's subscription[{}] failed, group: {}", requestHeader.getSubscription(),
@@ -168,7 +167,6 @@ public class PullMessageProcessor implements NettyRequestProcessor {
 
             subscriptionData = consumerGroupInfo.findSubscriptionData(requestHeader.getTopic());
             if (null == subscriptionData) {
-                log.warn("the consumer's subscription not exist, group: {}, topic:{}", requestHeader.getConsumerGroup(), requestHeader.getTopic());
                 response.setCode(ResponseCode.SUBSCRIPTION_NOT_EXIST);
                 response.setRemark("the consumer's subscription not exist");
                 return response;
@@ -211,13 +209,15 @@ public class PullMessageProcessor implements NettyRequestProcessor {
             messageFilter = new ExpressionForRetryMessageFilter(subscriptionData, consumerFilterData,
                     this.brokerController.getConsumerFilterManager());
         } else {
+            log.info("[processRequest] build message filter , subscriptionData:{} , consumerFilterData:{} ", subscriptionData, consumerFilterData);
             messageFilter = new ExpressionMessageFilter(subscriptionData, consumerFilterData,
                     this.brokerController.getConsumerFilterManager());
         }
-
+        log.info("[processRequest] requestHeader :{} ", requestHeader);
         final GetMessageResult getMessageResult =
                 this.brokerController.getMessageStore().getMessage(requestHeader.getConsumerGroup(), requestHeader.getTopic(),
                         requestHeader.getQueueId(), requestHeader.getQueueOffset(), requestHeader.getMaxMsgNums(), messageFilter);
+        log.info("[processRequest] getMessageResult: {} ",getMessageResult);
         if (getMessageResult != null) {
             response.setRemark(getMessageResult.getStatus().name());
             responseHeader.setNextBeginOffset(getMessageResult.getNextBeginOffset());

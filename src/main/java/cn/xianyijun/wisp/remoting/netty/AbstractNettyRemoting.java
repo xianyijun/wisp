@@ -284,7 +284,6 @@ public abstract class AbstractNettyRemoting {
         if (msg == null) {
             return;
         }
-        log.info("[AbstractNettyRemoting] processMessageReceived, type: {} , msg :{} ", msg.getType(), msg);
         switch (msg.getType()) {
             case REQUEST_COMMAND:
                 processRequestCommand(ctx, msg);

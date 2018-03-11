@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -109,6 +110,38 @@ public class MappedFileQueue {
         }
         return 0;
     }
+
+    public boolean resetOffset(long offset) {
+        MappedFile mappedFileLast = getLastMappedFile();
+
+        if (mappedFileLast != null) {
+            long lastOffset = mappedFileLast.getFileFromOffset() +
+                    mappedFileLast.getWrotePosition();
+            long diff = lastOffset - offset;
+
+            final int maxDiff = this.mappedFileSize * 2;
+            if (diff > maxDiff) {
+                return false;
+            }
+        }
+
+        ListIterator<MappedFile> iterator = this.mappedFiles.listIterator();
+
+        while (iterator.hasPrevious()) {
+            mappedFileLast = iterator.previous();
+            if (offset >= mappedFileLast.getFileFromOffset()) {
+                int where = (int) (offset % mappedFileLast.getFileSize());
+                mappedFileLast.setFlushedPosition(where);
+                mappedFileLast.setWrotePosition(where);
+                mappedFileLast.setCommittedPosition(where);
+                break;
+            } else {
+                iterator.remove();
+            }
+        }
+        return true;
+    }
+
 
     public boolean load() {
         File dir = new File(this.storePath);
@@ -467,7 +500,9 @@ public class MappedFileQueue {
         MappedFileQueue mappedFileQueue = new MappedFileQueue(storePathCommitLog, 1024*1024*1024,new AllocateMappedFileService(null));
 
         mappedFileQueue.load();
-
         System.out.println(mappedFileQueue.getMaxOffset());
+
+        for (MappedFile file : mappedFileQueue.getMappedFiles()){
+        }
     }
 }

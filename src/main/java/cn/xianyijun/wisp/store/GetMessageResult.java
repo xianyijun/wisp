@@ -4,13 +4,18 @@ import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author xianyijun
+ */
 @NoArgsConstructor
 @Getter
+@ToString
 public class GetMessageResult {
 
 

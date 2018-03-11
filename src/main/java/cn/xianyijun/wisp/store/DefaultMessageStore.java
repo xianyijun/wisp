@@ -454,7 +454,7 @@ public class DefaultMessageStore implements MessageStore {
         if (consumeQueue != null) {
             minOffset = consumeQueue.getMinOffsetInQueue();
             maxOffset = consumeQueue.getMaxOffsetInQueue();
-
+            log.info("[messageStore.getMessage] minOffset:{} , maxOffset:{} ,offset:{}", minOffset, maxOffset, offset);
             if (maxOffset == 0) {
                 status = GetMessageStatus.NO_MESSAGE_IN_QUEUE;
                 nextBeginOffset = nextOffsetCorrection(offset, 0);
@@ -510,8 +510,6 @@ public class DefaultMessageStore implements MessageStore {
                                 if (extRet) {
                                     tagsCode = cqExtUnit.getTagsCode();
                                 } else {
-                                    log.error("[BUG] can't find consume queue extend file content!addr={}, offsetPy={}, sizePy={}, topic={}, group={}",
-                                            tagsCode, offsetPy, sizePy, topic, group);
                                     isTagsCodeLegal = false;
                                 }
                             }
@@ -842,7 +840,6 @@ public class DefaultMessageStore implements MessageStore {
         if (logicQueue != null) {
             return logicQueue.getMessageTotalInQueue();
         }
-
         return -1;
     }
 
@@ -1056,32 +1053,36 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public boolean resetWriteOffset(long phyOffset) {
-        return false;
+        return this.commitLog.resetOffset(phyOffset);
     }
 
     @Override
     public long getConfirmOffset() {
-        return 0;
+        return this.commitLog.getConfirmOffset();
     }
 
     @Override
     public void setConfirmOffset(long phyOffset) {
-
+        this.commitLog.setConfirmOffset(phyOffset);
     }
 
     @Override
     public boolean isOSPageCacheBusy() {
-        return false;
+        long begin = this.getCommitLog().getBeginTimeInLock();
+        long diff = this.systemClock.now() - begin;
+
+        return diff < 10000000
+                && diff > this.messageStoreConfig.getOsPageCacheBusyTimeOutMills();
     }
 
     @Override
     public long lockTimeMills() {
-        return 0;
+        return this.commitLog.lockTimeMills();
     }
 
     @Override
     public boolean isTransientStorePoolDeficient() {
-        return false;
+        return remainTransientStoreBufferNumbs() == 0;
     }
 
     @Override
@@ -1091,7 +1092,11 @@ public class DefaultMessageStore implements MessageStore {
 
     @Override
     public ConsumeQueue getConsumeQueue(String topic, int queueId) {
-        return null;
+        ConcurrentMap<Integer, ConsumeQueue> map = consumeQueueTable.get(topic);
+        if (map == null) {
+            return null;
+        }
+        return map.get(queueId);
     }
 
     private void putMessagePositionInfo(DispatchRequest dispatchRequest) {
@@ -1137,6 +1142,7 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     private boolean loadConsumeQueue() {
+        log.info("[loadConsumeQueue] ,rootDir : {}", this.messageStoreConfig.getStorePathRootDir());
         File dirLogic = new File(StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()));
         File[] fileTopicList = dirLogic.listFiles();
         if (fileTopicList != null) {
@@ -1166,9 +1172,7 @@ public class DefaultMessageStore implements MessageStore {
                 }
             }
         }
-
-        log.info("load logics queue all over, OK");
-
+        log.info("[loadConsumeQueue] consumeQueueTable :{}",this.consumeQueueTable);
         return true;
     }
 

@@ -1,5 +1,9 @@
 package cn.xianyijun.wisp.client.consumer.listener;
 
+/**
+ * @author xianyijun
+ */
+
 public enum ConsumeConcurrentlyStatus {
     /**
      * Success consumption
