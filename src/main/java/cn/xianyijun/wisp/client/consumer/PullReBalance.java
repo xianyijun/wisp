@@ -4,14 +4,15 @@ import cn.xianyijun.wisp.client.producer.factory.ClientInstance;
 import cn.xianyijun.wisp.common.message.MessageQueue;
 import cn.xianyijun.wisp.common.protocol.heartbeat.ConsumeType;
 import cn.xianyijun.wisp.common.protocol.heartbeat.MessageModel;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Set;
 
 /**
- * todo
  * @author xianyijun
  */
+@Slf4j
 public class PullReBalance extends AbstractReBalance {
 
     private final ConsumerPullDelegate consumerPullDelegate;
@@ -29,17 +30,19 @@ public class PullReBalance extends AbstractReBalance {
 
     @Override
     public boolean removeUnnecessaryMessageQueue(MessageQueue mq, ProcessQueue pq) {
-        return false;
+        this.consumerPullDelegate.getOffsetStore().persist(mq);
+        this.consumerPullDelegate.getOffsetStore().removeOffset(mq);
+        return true;
     }
 
     @Override
     public ConsumeType consumeType() {
-        return null;
+        return ConsumeType.CONSUME_ACTIVELY;
     }
 
     @Override
     public void removeDirtyOffset(MessageQueue mq) {
-
+        this.consumerPullDelegate.getOffsetStore().removeOffset(mq);
     }
 
     @Override
@@ -49,7 +52,14 @@ public class PullReBalance extends AbstractReBalance {
 
     @Override
     public void messageQueueChanged(String topic, Set<MessageQueue> mqAll, Set<MessageQueue> mqDivided) {
-
+        MessageQueueListener messageQueueListener = this.consumerPullDelegate.getDefaultPullConsumer().getMessageQueueListener();
+        if (messageQueueListener != null) {
+            try {
+                messageQueueListener.messageQueueChanged(topic, mqAll, mqDivided);
+            } catch (Throwable e) {
+                log.error("messageQueueChanged exception", e);
+            }
+        }
     }
 
     @Override

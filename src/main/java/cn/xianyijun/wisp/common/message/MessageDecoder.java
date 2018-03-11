@@ -84,9 +84,8 @@ public class MessageDecoder {
         int portInt = bb.getInt(0);
         address = new InetSocketAddress(InetAddress.getByAddress(ip), portInt);
 
-        // offset
         byte[] data = UtilAll.string2bytes(msgId.substring(16, 32));
-        bb = ByteBuffer.wrap(data);
+        bb = ByteBuffer.wrap(Objects.requireNonNull(data));
         offset = bb.getLong(0);
 
         return new MessageId(address, offset);
@@ -365,5 +364,54 @@ public class MessageDecoder {
         }
         return extMessages;
     }
+
+    public static byte[] encodeMessages(List<Message> messages) {
+        List<byte[]> encodedMessages = new ArrayList<>(messages.size());
+        int allSize = 0;
+        for (Message message : messages) {
+            byte[] tmp = encodeMessage(message);
+            encodedMessages.add(tmp);
+            allSize += tmp.length;
+        }
+        byte[] allBytes = new byte[allSize];
+        int pos = 0;
+        for (byte[] bytes : encodedMessages) {
+            System.arraycopy(bytes, 0, allBytes, pos, bytes.length);
+            pos += bytes.length;
+        }
+        return allBytes;
+    }
+
+    public static byte[] encodeMessage(Message message) {
+        byte[] body = message.getBody();
+        int bodyLen = body.length;
+        String properties = messageProperties2String(message.getProperties());
+        byte[] propertiesBytes = properties.getBytes(CHARSET_UTF8);
+        short propertiesLength = (short) propertiesBytes.length;
+        int storeSize = 4 // 1 TOTALSIZE
+                + 4 // 2 MAGICCOD
+                + 4 // 3 BODYCRC
+                + 4 // 4 FLAG
+                + 4 + bodyLen // 4 BODY
+                + 2 + propertiesLength;
+        ByteBuffer byteBuffer = ByteBuffer.allocate(storeSize);
+        byteBuffer.putInt(storeSize);
+
+        byteBuffer.putInt(0);
+
+        byteBuffer.putInt(0);
+
+        int flag = message.getFlag();
+        byteBuffer.putInt(flag);
+
+        byteBuffer.putInt(bodyLen);
+        byteBuffer.put(body);
+
+        byteBuffer.putShort(propertiesLength);
+        byteBuffer.put(propertiesBytes);
+
+        return byteBuffer.array();
+    }
+
 
 }

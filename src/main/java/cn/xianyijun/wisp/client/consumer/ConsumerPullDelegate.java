@@ -36,7 +36,6 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * todo
  * @author xianyijun
  */
 @Slf4j
@@ -44,7 +43,7 @@ import java.util.Set;
 @Getter
 public class ConsumerPullDelegate implements ConsumerInner {
 
-    private final DefaultPullConsumer defaultMQPullConsumer;
+    private final DefaultPullConsumer defaultPullConsumer;
     private final long consumerStartTimestamp = System.currentTimeMillis();
     private final RPCHook rpcHook;
     private final ArrayList<ConsumeMessageHook> consumeMessageHookList = new ArrayList<ConsumeMessageHook>();
@@ -75,12 +74,12 @@ public class ConsumerPullDelegate implements ConsumerInner {
 
     @Override
     public String groupName() {
-        return this.defaultMQPullConsumer.getConsumerGroup();
+        return this.defaultPullConsumer.getConsumerGroup();
     }
 
     @Override
     public MessageModel messageModel() {
-        return this.defaultMQPullConsumer.getMessageModel();
+        return this.defaultPullConsumer.getMessageModel();
     }
 
     @Override
@@ -97,7 +96,7 @@ public class ConsumerPullDelegate implements ConsumerInner {
     public Set<SubscriptionData> subscription() {
         Set<SubscriptionData> result = new HashSet<SubscriptionData>();
 
-        Set<String> topics = this.defaultMQPullConsumer.getRegisterTopics();
+        Set<String> topics = this.defaultPullConsumer.getRegisterTopics();
         if (topics != null) {
             synchronized (topics) {
                 for (String t : topics) {
@@ -131,7 +130,7 @@ public class ConsumerPullDelegate implements ConsumerInner {
             Set<MessageQueue> mqs = new HashSet<>(allocateMq);
             this.offsetStore.persistAll(mqs);
         } catch (Exception e) {
-            log.error("group: " + this.defaultMQPullConsumer.getConsumerGroup() + " persistConsumerOffset exception", e);
+            log.error("group: " + this.defaultPullConsumer.getConsumerGroup() + " persistConsumerOffset exception", e);
         }
     }
 
@@ -160,14 +159,14 @@ public class ConsumerPullDelegate implements ConsumerInner {
 
     @Override
     public boolean isUnitMode() {
-        return this.defaultMQPullConsumer.isUnitMode();
+        return this.defaultPullConsumer.isUnitMode();
     }
 
     @Override
     public ConsumerRunningInfo consumerRunningInfo() {
         ConsumerRunningInfo info = new ConsumerRunningInfo();
 
-        Properties prop = MixAll.object2Properties(this.defaultMQPullConsumer);
+        Properties prop = MixAll.object2Properties(this.defaultPullConsumer);
         prop.put(ConsumerRunningInfo.PROP_CONSUMER_START_TIMESTAMP, String.valueOf(this.consumerStartTimestamp));
         info.setProperties(prop);
 
@@ -218,7 +217,7 @@ public class ConsumerPullDelegate implements ConsumerInner {
 
     public void sendMessageBack(ExtMessage msg, int delayLevel, final String brokerName)
             throws RemotingException, BrokerException, InterruptedException, ClientException {
-        sendMessageBack(msg, delayLevel, brokerName, this.defaultMQPullConsumer.getConsumerGroup());
+        sendMessageBack(msg, delayLevel, brokerName, this.defaultPullConsumer.getConsumerGroup());
     }
 
     public void sendMessageBack(ExtMessage msg, int delayLevel, final String brokerName, String consumerGroup)
@@ -228,22 +227,22 @@ public class ConsumerPullDelegate implements ConsumerInner {
                     : RemotingHelper.parseSocketAddressAddr(msg.getStoreHost());
 
             if (StringUtils.isBlank(consumerGroup)) {
-                consumerGroup = this.defaultMQPullConsumer.getConsumerGroup();
+                consumerGroup = this.defaultPullConsumer.getConsumerGroup();
             }
 
             this.clientFactory.getClient().consumerSendMessageBack(brokerAddr, msg, consumerGroup, delayLevel, 3000,
-                    this.defaultMQPullConsumer.getMaxReConsumeTimes());
+                    this.defaultPullConsumer.getMaxReConsumeTimes());
         } catch (Exception e) {
-            log.error("sendMessageBack Exception, " + this.defaultMQPullConsumer.getConsumerGroup(), e);
+            log.error("sendMessageBack Exception, " + this.defaultPullConsumer.getConsumerGroup(), e);
 
-            Message newMsg = new Message(MixAll.getRetryTopic(this.defaultMQPullConsumer.getConsumerGroup()), msg.getBody());
+            Message newMsg = new Message(MixAll.getRetryTopic(this.defaultPullConsumer.getConsumerGroup()), msg.getBody());
             String originMsgId = MessageAccessor.getOriginMessageId(msg);
             MessageAccessor.setOriginMessageId(newMsg, StringUtils.isBlank(originMsgId) ? msg.getMsgId() : originMsgId);
             newMsg.setFlag(msg.getFlag());
             MessageAccessor.setProperties(newMsg, msg.getProperties());
             MessageAccessor.putProperty(newMsg, MessageConst.PROPERTY_RETRY_TOPIC, msg.getTopic());
             MessageAccessor.setReConsumeTime(newMsg, String.valueOf(msg.getReConsumeTimes() + 1));
-            MessageAccessor.setMaxReConsumeTimes(newMsg, String.valueOf(this.defaultMQPullConsumer.getMaxReConsumeTimes()));
+            MessageAccessor.setMaxReConsumeTimes(newMsg, String.valueOf(this.defaultPullConsumer.getMaxReConsumeTimes()));
             newMsg.setDelayTimeLevel(3 + msg.getReConsumeTimes());
             this.clientFactory.getDefaultProducer().send(newMsg);
         }

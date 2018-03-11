@@ -59,7 +59,7 @@ public class DefaultAdmin {
             throw new ClientException("Can not find Message Queue for this topic, " + topic, e);
         }
 
-        throw new ClientException("Unknow why, Can not find Message Queue for this topic, " + topic, null);
+        throw new ClientException("Unknown why, Can not find Message Queue for this topic, " + topic, null);
     }
 
     public void createTopic(String key, String newTopic, int queueNum) throws ClientException {

@@ -254,7 +254,7 @@ public interface Producer extends MQAdmin{
      * @throws ClientException the client exception
      */
     TransactionSendResult sendMessageInTransaction(final Message msg,
-                                                   final LocalTransactionExecuter tranExecuter, final Object arg) throws ClientException;
+                                                   final LocalTransactionExecutor tranExecuter, final Object arg) throws ClientException;
 
     /**
      * Send send result.
@@ -311,4 +311,5 @@ public interface Producer extends MQAdmin{
      */
     SendResult send(final Collection<Message> msgs, final MessageQueue mq, final long timeout)
             throws ClientException, RemotingException, BrokerException, InterruptedException;
+
 }

@@ -31,6 +31,7 @@ import cn.xianyijun.wisp.common.protocol.body.LockBatchResponseBody;
 import cn.xianyijun.wisp.common.protocol.body.UnlockBatchRequestBody;
 import cn.xianyijun.wisp.common.protocol.header.ConsumerSendMsgBackRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.CreateTopicRequestHeader;
+import cn.xianyijun.wisp.common.protocol.header.EndTransactionRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetConsumerListByGroupRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetEarliestMsgStoreTimeRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.GetEarliestMsgStoreTimeResponseHeader;
@@ -936,11 +937,23 @@ public class MQClient {
             final long timeoutMillis,
             final InvokeCallback invokeCallback,
             final Boolean isUniqueKey
-    ) throws RemotingException, BrokerException, InterruptedException {
+    ) throws RemotingException, InterruptedException {
         RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.QUERY_MESSAGE, requestHeader);
         request.addExtField(MixAll.UNIQUE_MSG_QUERY_FLAG, isUniqueKey.toString());
         this.remotingClient.invokeAsync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr), request, timeoutMillis,
                 invokeCallback);
+    }
+
+    public void endTransactionOneWay(
+            final String addr,
+            final EndTransactionRequestHeader requestHeader,
+            final String remark,
+            final long timeoutMillis
+    ) throws RemotingException, InterruptedException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.END_TRANSACTION, requestHeader);
+
+        request.setRemark(remark);
+        this.remotingClient.invokeOneWay(addr, request, timeoutMillis);
     }
 
 }

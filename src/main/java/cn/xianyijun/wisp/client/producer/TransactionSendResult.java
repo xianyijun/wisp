@@ -1,10 +1,12 @@
 package cn.xianyijun.wisp.client.producer;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.Data;
 
 /**
  * @author xianyijun
  */
-@Slf4j
+@Data
 public class TransactionSendResult extends SendResult{
+
+    private LocalTransactionState localTransactionState;
 }

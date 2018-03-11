@@ -1,6 +1,7 @@
 package cn.xianyijun.wisp.client.producer.inner;
 
 import cn.xianyijun.wisp.client.producer.TopicPublishInfo;
+import cn.xianyijun.wisp.client.producer.TransactionCheckListener;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.protocol.header.CheckTransactionStateRequestHeader;
 
@@ -53,5 +54,13 @@ public interface MQProducerInner {
             final String addr,
             final ExtMessage msg,
             final CheckTransactionStateRequestHeader checkRequestHeader);
+
+
+    /**
+     * Check listener transaction check listener.
+     *
+     * @return the transaction check listener
+     */
+    TransactionCheckListener checkListener();
 
 }

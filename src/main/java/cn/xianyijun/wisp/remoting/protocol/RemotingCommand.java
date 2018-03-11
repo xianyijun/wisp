@@ -61,6 +61,8 @@ public class RemotingCommand {
         return cmd;
     }
 
+
+
     private static byte[] markProtocolType(int source, SerializeType type) {
         byte[] result = new byte[4];
 
