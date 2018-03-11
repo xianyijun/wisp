@@ -71,6 +71,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
 
     @Override
     public void start() {
+        log.info("[ConsumeMessageConcurrentlyService.start] ");
         cleanExpireMsgExecutors.scheduleAtFixedRate(this::cleanExpireMsg, this.defaultPushConsumer.getConsumeTimeout(), this.defaultPushConsumer.getConsumeTimeout(), TimeUnit.MINUTES);
     }
 
@@ -175,7 +176,6 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
                 return;
             }
 
-            MessageListenerConcurrently listener = ConsumeMessageConcurrentlyService.this.messageListener;
             ConsumeConcurrentlyContext context = new ConsumeConcurrentlyContext(messageQueue);
             ConsumeConcurrentlyStatus status = null;
 
@@ -195,12 +195,12 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             ConsumeReturnType returnType = ConsumeReturnType.SUCCESS;
             try {
                 ConsumeMessageConcurrentlyService.this.resetRetryTopic(msgs);
-                if (msgs != null && !msgs.isEmpty()) {
+                if (!msgs.isEmpty()) {
                     for (ExtMessage msg : msgs) {
                         MessageAccessor.setConsumeStartTimeStamp(msg, String.valueOf(System.currentTimeMillis()));
                     }
                 }
-                status = listener.consumeMessage(Collections.unmodifiableList(msgs), context);
+                status = ConsumeMessageConcurrentlyService.this.messageListener.consumeMessage(Collections.unmodifiableList(msgs), context);
             } catch (Throwable e) {
                 log.warn("consumeMessage exception: {} Group: {} Msgs: {} MQ: {}",
                         RemotingHelper.exceptionSimpleDesc(e),

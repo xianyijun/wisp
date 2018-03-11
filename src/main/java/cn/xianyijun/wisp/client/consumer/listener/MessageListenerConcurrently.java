@@ -4,13 +4,17 @@ import cn.xianyijun.wisp.common.message.ExtMessage;
 
 import java.util.List;
 
+/**
+ * The interface Message listener concurrently.
+ * @author xianyijun
+ */
 public interface MessageListenerConcurrently extends MessageListener {
     /**
-     * It is not recommend to throw exception,rather than returning ConsumeConcurrentlyStatus.RECONSUME_LATER if
-     * consumption failure
+     * Consume message consume concurrently status.
      *
-     * @param msgs msgs.size() >= 1<br> DefaultMQPushConsumer.consumeMessageBatchMaxSize=1,you can modify here
-     * @return The consume status
+     * @param msgs    the msgs
+     * @param context the context
+     * @return the consume concurrently status
      */
     ConsumeConcurrentlyStatus consumeMessage(final List<ExtMessage> msgs,
                                              final ConsumeConcurrentlyContext context);

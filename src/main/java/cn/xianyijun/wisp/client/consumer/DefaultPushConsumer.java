@@ -40,8 +40,10 @@ public class DefaultPushConsumer extends ClientConfig implements PushConsumer {
 
     private long adjustThreadPoolNumsThreshold = 100000;
 
+    @Setter
     private int pullThresholdForQueue = 1000;
 
+    @Setter
     private int pullThresholdSizeForQueue = 100;
 
     private long suspendCurrentQueueTimeMillis = 1000;

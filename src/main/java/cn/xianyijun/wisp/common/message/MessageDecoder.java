@@ -353,7 +353,7 @@ public class MessageDecoder {
         return decodes(byteBuffer, true);
     }
 
-    private static List<ExtMessage> decodes(java.nio.ByteBuffer byteBuffer, final boolean readBody) {
+    public static List<ExtMessage> decodes(java.nio.ByteBuffer byteBuffer, final boolean readBody) {
         List<ExtMessage> extMessages = new ArrayList<>();
         while (byteBuffer.hasRemaining()) {
             ExtMessage msgExt = clientDecode(byteBuffer, readBody);

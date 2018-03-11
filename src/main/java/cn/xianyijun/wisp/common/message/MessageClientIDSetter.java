@@ -4,6 +4,7 @@ import cn.xianyijun.wisp.common.UtilAll;
 
 import java.nio.ByteBuffer;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,6 +46,32 @@ public class MessageClientIDSetter {
         startTime = cal.getTimeInMillis();
         cal.add(Calendar.MONTH, 1);
         nextStartTime = cal.getTimeInMillis();
+    }
+
+    public static Date getNearlyTimeFromID(String msgID) {
+        ByteBuffer buf = ByteBuffer.allocate(8);
+        byte[] bytes = UtilAll.string2bytes(msgID);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.put((byte) 0);
+        buf.put(bytes, 10, 4);
+        buf.position(0);
+        long spanMS = buf.getLong();
+        Calendar cal = Calendar.getInstance();
+        long now = cal.getTimeInMillis();
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long monStartTime = cal.getTimeInMillis();
+        if (monStartTime + spanMS >= now) {
+            cal.add(Calendar.MONTH, -1);
+            monStartTime = cal.getTimeInMillis();
+        }
+        cal.setTimeInMillis(monStartTime + spanMS);
+        return cal.getTime();
     }
 
 

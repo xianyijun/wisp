@@ -44,6 +44,7 @@ import cn.xianyijun.wisp.common.protocol.header.PullMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.PullMessageResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.QueryConsumerOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.QueryConsumerOffsetResponseHeader;
+import cn.xianyijun.wisp.common.protocol.header.QueryMessageRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.SearchOffsetRequestHeader;
 import cn.xianyijun.wisp.common.protocol.header.SearchOffsetResponseHeader;
 import cn.xianyijun.wisp.common.protocol.header.UnregisterClientRequestHeader;
@@ -61,6 +62,7 @@ import cn.xianyijun.wisp.exception.RemotingException;
 import cn.xianyijun.wisp.exception.RemotingSendRequestException;
 import cn.xianyijun.wisp.exception.RemotingTimeoutException;
 import cn.xianyijun.wisp.exception.RemotingTooMuchRequestException;
+import cn.xianyijun.wisp.remoting.InvokeCallback;
 import cn.xianyijun.wisp.remoting.RPCHook;
 import cn.xianyijun.wisp.remoting.RemotingClient;
 import cn.xianyijun.wisp.remoting.netty.NettyClientConfig;
@@ -684,7 +686,6 @@ public class MQClient {
 
         RemotingCommand response = this.remotingClient.invokeSync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr),
                 request, timeoutMillis);
-        assert response != null;
         switch (response.getCode()) {
             case ResponseCode.SUCCESS: {
                 if (response.getBody() != null) {
@@ -926,6 +927,20 @@ public class MQClient {
                 break;
         }
         throw new BrokerException(response.getCode(), response.getRemark());
+    }
+
+
+    public void queryMessage(
+            final String addr,
+            final QueryMessageRequestHeader requestHeader,
+            final long timeoutMillis,
+            final InvokeCallback invokeCallback,
+            final Boolean isUniqueKey
+    ) throws RemotingException, BrokerException, InterruptedException {
+        RemotingCommand request = RemotingCommand.createRequestCommand(RequestCode.QUERY_MESSAGE, requestHeader);
+        request.addExtField(MixAll.UNIQUE_MSG_QUERY_FLAG, isUniqueKey.toString());
+        this.remotingClient.invokeAsync(MixAll.brokerVIPChannel(this.clientConfig.isVipChannelEnabled(), addr), request, timeoutMillis,
+                invokeCallback);
     }
 
 }

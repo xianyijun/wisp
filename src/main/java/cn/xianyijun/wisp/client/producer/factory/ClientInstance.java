@@ -990,6 +990,19 @@ public class ClientInstance {
         return null;
     }
 
+    public void doReBalance() {
+        for (Map.Entry<String, ConsumerInner> entry : this.consumerTable.entrySet()) {
+            ConsumerInner impl = entry.getValue();
+            if (impl != null) {
+                try {
+                    impl.doReBalance();
+                } catch (Throwable e) {
+                    log.error("doReBalance exception", e);
+                }
+            }
+        }
+    }
+
 
     public List<String> findConsumerIdList(final String topic, final String group) {
         String brokerAddr = this.findBrokerAddrByTopic(topic);
@@ -1060,11 +1073,7 @@ public class ClientInstance {
                 brokerAddr = entry.getValue();
                 if (brokerAddr != null) {
                     found = true;
-                    if (MixAll.MASTER_ID == id) {
-                        slave = false;
-                    } else {
-                        slave = true;
-                    }
+                    slave = MixAll.MASTER_ID != id;
                     break;
 
                 }
@@ -1077,6 +1086,9 @@ public class ClientInstance {
         return null;
     }
 
+    public TopicRouteData getAnExistTopicRouteData(final String topic) {
+        return this.topicRouteTable.get(topic);
+    }
 
     public ConsumerInner selectConsumer(final String group) {
         return this.consumerTable.get(group);

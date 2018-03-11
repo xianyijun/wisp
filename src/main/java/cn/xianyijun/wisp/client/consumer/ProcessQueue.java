@@ -253,7 +253,6 @@ public class ProcessQueue {
                     if (!msgTreeMap.isEmpty() && System.currentTimeMillis() - Long.parseLong(MessageAccessor.getConsumeStartTimeStamp(msgTreeMap.firstEntry().getValue())) > pushConsumer.getConsumeTimeout() * 60 * 1000) {
                         msg = msgTreeMap.firstEntry().getValue();
                     } else {
-
                         break;
                     }
                 } finally {
@@ -321,5 +320,22 @@ public class ProcessQueue {
         return result;
     }
 
+    public void incTryUnlockTimes() {
+        this.tryUnlockTimes.incrementAndGet();
+    }
+
+    public boolean hasTempMessage() {
+        try {
+            this.lockTreeMap.readLock().lockInterruptibly();
+            try {
+                return !this.msgTreeMap.isEmpty();
+            } finally {
+                this.lockTreeMap.readLock().unlock();
+            }
+        } catch (InterruptedException ignored) {
+        }
+
+        return true;
+    }
 
 }

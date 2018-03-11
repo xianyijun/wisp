@@ -13,6 +13,7 @@ public class PushConsumer {
 
         consumer.setConsumeFromWhere(ConsumeWhereEnum.CONSUME_FROM_FIRST_OFFSET);
 
+        consumer.setNameServerAddr("localhost:9876");
         try {
             consumer.subscribe("TopicTest", "*");
 

@@ -77,7 +77,7 @@ public abstract class ServiceThread implements Runnable {
 
     public void wakeup() {
         if (hasNotified.compareAndSet(false, true)) {
-            waitPoint.countDown(); // notify
+            waitPoint.countDown();
         }
     }
 

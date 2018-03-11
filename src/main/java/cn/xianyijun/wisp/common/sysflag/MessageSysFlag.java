@@ -1,5 +1,8 @@
 package cn.xianyijun.wisp.common.sysflag;
 
+/**
+ * @author xianyijun
+ */
 public class MessageSysFlag {
     public final static int COMPRESSED_FLAG = 0x1;
     public final static int MULTI_TAGS_FLAG = 0x1 << 1;

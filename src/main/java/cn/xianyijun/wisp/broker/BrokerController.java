@@ -212,6 +212,14 @@ public class BrokerController {
                     this.sendThreadPoolQueue,
                     new WispThreadFactory("ProduceMessageThread_"));
 
+            this.pullMessageExecutor = new BrokerFixedThreadPoolExecutor(
+                    this.brokerConfig.getPullMessageThreadPoolNums(),
+                    this.brokerConfig.getPullMessageThreadPoolNums(),
+                    1000 * 60,
+                    TimeUnit.MILLISECONDS,
+                    this.pullThreadPoolQueue,
+                    new WispThreadFactory("PullMessageThread_"));
+
             this.queryMessageExecutor = new BrokerFixedThreadPoolExecutor(
                     this.brokerConfig.getQueryMessageThreadPoolNums(),
                     this.brokerConfig.getQueryMessageThreadPoolNums(),

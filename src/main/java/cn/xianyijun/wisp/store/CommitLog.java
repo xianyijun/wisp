@@ -966,6 +966,7 @@ public class CommitLog {
         }
     }
 
+    @Getter
     class DefaultAppendMessageCallback implements AppendMessageCallback {
         private static final int END_FILE_MIN_BLANK_LENGTH = 4 + 4;
         private final ByteBuffer msgIdMemory;
@@ -981,10 +982,6 @@ public class CommitLog {
             this.msgIdMemory = ByteBuffer.allocate(MessageDecoder.MSG_ID_LENGTH);
             this.msgStoreItemMemory = ByteBuffer.allocate(size + END_FILE_MIN_BLANK_LENGTH);
             this.maxMessageSize = size;
-        }
-
-        public ByteBuffer getMsgStoreItemMemory() {
-            return msgStoreItemMemory;
         }
 
         @Override

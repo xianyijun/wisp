@@ -179,7 +179,7 @@ public abstract class AbstractReBalance {
                         return;
                     }
 
-                    Set<MessageQueue> allocateResultSet = new HashSet<MessageQueue>();
+                    Set<MessageQueue> allocateResultSet = new HashSet<>();
                     if (allocateResult != null) {
                         allocateResultSet.addAll(allocateResult);
                     }
@@ -413,6 +413,26 @@ public abstract class AbstractReBalance {
                 } catch (Exception e) {
                     log.error("unlockBatchMQ exception, " + mqs, e);
                 }
+            }
+        }
+    }
+
+    public void unLock(final MessageQueue mq, final boolean oneWay) {
+        FindBrokerResult findBrokerResult = this.clientFactory.findBrokerAddressInSubscribe(mq.getBrokerName(), MixAll.MASTER_ID, true);
+        if (findBrokerResult != null) {
+            UnlockBatchRequestBody requestBody = new UnlockBatchRequestBody();
+            requestBody.setConsumerGroup(this.consumerGroup);
+            requestBody.setClientId(this.clientFactory.getClientId());
+            requestBody.getMqSet().add(mq);
+
+            try {
+                this.clientFactory.getClient().unlockBatchMQ(findBrokerResult.getBrokerAddr(), requestBody, 1000, oneWay);
+                log.warn("unlock messageQueue. group:{}, clientId:{}, mq:{}",
+                        this.consumerGroup,
+                        this.clientFactory.getClientId(),
+                        mq);
+            } catch (Exception e) {
+                log.error("unlockBatchMQ exception, " + mq, e);
             }
         }
     }

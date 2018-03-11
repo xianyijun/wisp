@@ -27,7 +27,7 @@ public class MappedFileQueue {
 
     private final int mappedFileSize;
 
-    private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<MappedFile>();
+    private final CopyOnWriteArrayList<MappedFile> mappedFiles = new CopyOnWriteArrayList<>();
 
     private final AllocateMappedFileService allocateMappedFileService;
 
@@ -459,5 +459,15 @@ public class MappedFileQueue {
 
     public long remainHowManyDataToCommit() {
         return getMaxWrotePosition() - committedWhere;
+    }
+
+    public static void main(String[] args) {
+        String storePathCommitLog = System.getProperty("user.home") + File.separator + "store"
+                + File.separator + "commitlog";
+        MappedFileQueue mappedFileQueue = new MappedFileQueue(storePathCommitLog, 1024*1024*1024,new AllocateMappedFileService(null));
+
+        mappedFileQueue.load();
+
+        System.out.println(mappedFileQueue.getMaxOffset());
     }
 }

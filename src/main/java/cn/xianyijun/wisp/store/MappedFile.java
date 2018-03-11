@@ -9,6 +9,7 @@ import com.sun.jna.Pointer;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import sun.nio.ch.DirectBuffer;
 
@@ -31,7 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @NoArgsConstructor
 @Slf4j
 @Getter
+@ToString
 public class MappedFile extends ReferenceResource {
+
     public static final int OS_PAGE_SIZE = 1024 * 4;
     private static final AtomicLong TOTAL_MAPPED_VIRTUAL_MEMORY = new AtomicLong(0);
     private static final AtomicInteger TOTAL_MAPPED_FILES = new AtomicInteger(0);

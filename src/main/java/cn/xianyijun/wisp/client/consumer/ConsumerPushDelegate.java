@@ -348,10 +348,10 @@ public class ConsumerPushDelegate implements ConsumerInner {
         }
 
         int sysFlag = PullSysFlag.buildSysFlag(
-                commitOffsetEnable, // commitOffset
-                true, // suspend
-                subExpression != null, // subscription
-                classFilter // class filter
+                commitOffsetEnable,
+                true,
+                subExpression != null,
+                classFilter
         );
         try {
             this.pullConsumerWrapper.doPullKernel(
