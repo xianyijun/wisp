@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.store.config.MessageStoreConfig;
-import cn.xianyijun.wisp.store.utils.LibC;
+import cn.xianyijun.wisp.store.support.LibC;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import lombok.Getter;

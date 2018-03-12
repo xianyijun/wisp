@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.utils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;

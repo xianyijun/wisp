@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.store;
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.store.config.FlushDiskType;
-import cn.xianyijun.wisp.store.utils.LibC;
+import cn.xianyijun.wisp.store.support.LibC;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import lombok.Getter;

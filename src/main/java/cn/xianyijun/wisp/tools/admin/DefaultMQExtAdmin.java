@@ -85,52 +85,52 @@ public class DefaultMQExtAdmin extends ClientConfig implements MQExtAdmin {
 
     @Override
     public void createAndUpdateSubscriptionGroupConfig(String addr, SubscriptionGroupConfig config) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.createAndUpdateSubscriptionGroupConfig(addr, config);
     }
 
     @Override
     public SubscriptionGroupConfig examineSubscriptionGroupConfig(String addr, String group) {
-        return null;
+        return this.extAdminDelegate.examineSubscriptionGroupConfig(addr, group);
     }
 
     @Override
     public TopicConfig examineTopicConfig(String addr, String topic) {
-        return null;
+        return this.extAdminDelegate.examineTopicConfig(addr, topic);
     }
 
     @Override
     public TopicStatsTable examineTopicStats(String topic) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.examineTopicStats(topic);
     }
 
     @Override
     public TopicList fetchAllTopicList() throws RemotingException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.fetchAllTopicList();
     }
 
     @Override
     public TopicList fetchTopicsByCLuster(String clusterName) throws RemotingException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.fetchTopicsByCLuster(clusterName);
     }
 
     @Override
     public KVTable fetchBrokerRuntimeStats(String brokerAddr) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.fetchBrokerRuntimeStats(brokerAddr);
     }
 
     @Override
     public ConsumeStats examineConsumeStats(String consumerGroup) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.examineConsumeStats(consumerGroup);
     }
 
     @Override
     public ConsumeStats examineConsumeStats(String consumerGroup, String topic) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.examineConsumeStats(consumerGroup, topic);
     }
 
     @Override
     public ClusterInfo examineBrokerClusterInfo() throws InterruptedException, BrokerException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException {
-        return null;
+        return this.extAdminDelegate.examineBrokerClusterInfo();
     }
 
     @Override
@@ -140,192 +140,192 @@ public class DefaultMQExtAdmin extends ClientConfig implements MQExtAdmin {
 
     @Override
     public ConsumerConnection examineConsumerConnectionInfo(String consumerGroup) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException, BrokerException, RemotingException, ClientException {
-        return null;
+        return this.extAdminDelegate.examineConsumerConnectionInfo(consumerGroup);
     }
 
     @Override
     public ProducerConnection examineProducerConnectionInfo(String producerGroup, String topic) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.examineProducerConnectionInfo(producerGroup, topic);
     }
 
     @Override
     public List<String> getNameServerAddressList() {
-        return null;
+        return this.extAdminDelegate.getNameServerAddressList();
     }
 
     @Override
     public int wipeWritePermOfBroker(String namesrvAddr, String brokerName) throws RemotingCommandException, RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException, ClientException {
-        return 0;
+        return this.extAdminDelegate.wipeWritePermOfBroker(namesrvAddr, brokerName);
     }
 
     @Override
     public void putKVConfig(String namespace, String key, String value) {
-
+        this.extAdminDelegate.putKVConfig(namespace, key, value);
     }
 
     @Override
     public String getKVConfig(String namespace, String key) throws RemotingException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.getKVConfig(namespace, key);
     }
 
     @Override
     public KVTable getKVListByNamespace(String namespace) throws RemotingException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.getKVListByNamespace(namespace);
     }
 
     @Override
     public void deleteTopicInBroker(Set<String> addrs, String topic) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.deleteTopicInBroker(addrs, topic);
     }
 
     @Override
     public void deleteTopicInNameServer(HashSet<String> addrs, String topic) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.deleteTopicInNameServer(addrs, topic);
     }
 
     @Override
     public void deleteSubscriptionGroup(String addr, String groupName) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.deleteSubscriptionGroup(addr, groupName);
     }
 
     @Override
     public void createAndUpdateKvConfig(String namespace, String key, String value) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.createAndUpdateKvConfig(namespace, key, value);
     }
 
     @Override
     public void deleteKvConfig(String namespace, String key) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.deleteKvConfig(namespace, key);
     }
 
     @Override
     public List<RollbackStats> resetOffsetByTimestampOld(String consumerGroup, String topic, long timestamp, boolean force) throws RemotingException, BrokerException, InterruptedException, ClientException {
-        return null;
+        return this.extAdminDelegate.resetOffsetByTimestampOld(consumerGroup, topic, timestamp ,force);
     }
 
     @Override
     public Map<MessageQueue, Long> resetOffsetByTimestamp(String topic, String group, long timestamp, boolean isForce) throws RemotingException, BrokerException, InterruptedException, ClientException {
-        return null;
+        return this.extAdminDelegate.resetOffsetByTimestamp(topic, group, timestamp ,isForce);
     }
 
     @Override
     public void resetOffsetNew(String consumerGroup, String topic, long timestamp) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.resetOffsetNew(consumerGroup, topic, timestamp);
     }
 
     @Override
     public Map<String, Map<MessageQueue, Long>> getConsumeStatus(String topic, String group, String clientAddr) throws RemotingException, BrokerException, InterruptedException, ClientException {
-        return null;
+        return this.extAdminDelegate.getConsumeStatus(topic, group, clientAddr);
     }
 
     @Override
     public void createOrUpdateOrderConf(String key, String value, boolean isCluster) throws RemotingException, BrokerException, InterruptedException, ClientException {
-
+        this.extAdminDelegate.createOrUpdateOrderConf(key, value, isCluster);
     }
 
     @Override
     public GroupList queryTopicConsumeByWho(String topic) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, InterruptedException, BrokerException, RemotingException, ClientException {
-        return null;
+        return this.extAdminDelegate.queryTopicConsumeByWho(topic);
     }
 
     @Override
     public List<QueueTimeSpan> queryConsumeTimeSpan(String topic, String group) throws InterruptedException, BrokerException, RemotingException, ClientException {
-        return null;
+        return this.extAdminDelegate.queryConsumeTimeSpan(topic, group);
     }
 
     @Override
     public boolean cleanExpiredConsumerQueue(String cluster) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return false;
+        return this.extAdminDelegate.cleanExpiredConsumerQueue(cluster);
     }
 
     @Override
     public boolean cleanExpiredConsumerQueueByAddr(String addr) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return false;
+        return this.extAdminDelegate.cleanExpiredConsumerQueueByAddr(addr);
     }
 
     @Override
     public boolean cleanUnusedTopic(String cluster) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return false;
+        return this.extAdminDelegate.cleanUnusedTopic(cluster);
     }
 
     @Override
     public boolean cleanUnusedTopicByAddr(String addr) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return false;
+        return this.extAdminDelegate.cleanUnusedTopicByAddr(addr);
     }
 
     @Override
     public ConsumerRunningInfo getConsumerRunningInfo(String consumerGroup, String clientId, boolean jstack) throws RemotingException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.getConsumerRunningInfo(consumerGroup, clientId, jstack);
     }
 
     @Override
     public ConsumeMessageDirectlyResult consumeMessageDirectly(String consumerGroup, String clientId, String msgId) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.consumeMessageDirectly(consumerGroup, clientId, msgId);
     }
 
     @Override
     public ConsumeMessageDirectlyResult consumeMessageDirectly(String consumerGroup, String clientId, String topic, String msgId) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.consumeMessageDirectly(consumerGroup, clientId, topic, msgId);
     }
 
     @Override
     public List<MessageTrack> messageTrackDetail(ExtMessage msg) throws RemotingException, ClientException, InterruptedException, BrokerException {
-        return null;
+        return this.extAdminDelegate.messageTrackDetail(msg);
     }
 
     @Override
     public void cloneGroupOffset(String srcGroup, String destGroup, String topic, boolean isOffline) throws RemotingException, ClientException, InterruptedException, BrokerException {
-
+        this.extAdminDelegate.cloneGroupOffset(srcGroup, destGroup, topic ,isOffline);
     }
 
     @Override
     public BrokerStatsData viewBrokerStatsData(String brokerAddr, String statsName, String statsKey) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.viewBrokerStatsData(brokerAddr, statsName, statsKey);
     }
 
     @Override
     public Set<String> getClusterList(String topic) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.getClusterList(topic);
     }
 
     @Override
     public ConsumeStatsList fetchConsumeStatsInBroker(String brokerAddr, boolean isOrder, long timeoutMillis) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, ClientException, InterruptedException {
-        return null;
+        return this.extAdminDelegate.fetchConsumeStatsInBroker(brokerAddr, isOrder, timeoutMillis);
     }
 
     @Override
     public Set<String> getTopicClusterList(String topic) throws InterruptedException, BrokerException, ClientException, RemotingException {
-        return null;
+        return this.extAdminDelegate.getTopicClusterList(topic);
     }
 
     @Override
     public SubscriptionGroupWrapper getAllSubscriptionGroup(String brokerAddr, long timeoutMillis) throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException, BrokerException {
-        return null;
+        return this.extAdminDelegate.getAllSubscriptionGroup(brokerAddr, timeoutMillis);
     }
 
     @Override
     public TopicConfigSerializeWrapper getAllTopicGroup(String brokerAddr, long timeoutMillis) throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException, BrokerException {
-        return null;
+        return this.extAdminDelegate.getAllTopicGroup(brokerAddr, timeoutMillis);
     }
 
     @Override
     public void updateConsumeOffset(String brokerAddr, String consumeGroup, MessageQueue mq, long offset) throws RemotingException, InterruptedException, BrokerException {
-
+        this.extAdminDelegate.updateConsumeOffset(brokerAddr, consumeGroup, mq, offset);
     }
 
     @Override
     public void updateNameServerConfig(Properties properties, List<String> nameServers) throws InterruptedException, RemotingConnectException, UnsupportedEncodingException, RemotingSendRequestException, RemotingTimeoutException, ClientException, BrokerException {
-
+        this.extAdminDelegate.updateNameServerConfig(properties, nameServers);
     }
 
     @Override
     public Map<String, Properties> getNameServerConfig(List<String> nameServers) throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException, ClientException, UnsupportedEncodingException {
-        return null;
+        return this.extAdminDelegate.getNameServerConfig(nameServers);
     }
 
     @Override
     public QueryConsumeQueueResponseBody queryConsumeQueue(String brokerAddr, String topic, int queueId, long index, int count, String consumerGroup) throws InterruptedException, RemotingTimeoutException, RemotingSendRequestException, RemotingConnectException, ClientException {
-        return null;
+        return this.extAdminDelegate.queryConsumeQueue(brokerAddr, topic, queueId, index, count, consumerGroup);
     }
 
     @Override

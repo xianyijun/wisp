@@ -541,7 +541,7 @@ public interface MQExtAdmin extends MQAdmin {
      * @throws InterruptedException         the interrupted exception
      */
     boolean cleanUnusedTopic(String cluster) throws RemotingConnectException, RemotingSendRequestException,
-            RemotingTimeoutException, ClientException, InterruptedException;
+            RemotingTimeoutException, ClientException, InterruptedException, BrokerException;
 
     /**
      * Clean unused topic by addr boolean.

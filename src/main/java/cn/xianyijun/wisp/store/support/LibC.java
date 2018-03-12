@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store.utils;
+package cn.xianyijun.wisp.store.support;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
