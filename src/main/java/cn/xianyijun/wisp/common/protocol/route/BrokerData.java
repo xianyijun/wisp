@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
+ * The type Broker data.
+ *
  * @author xianyijun
  */
 @Data
@@ -27,6 +29,11 @@ public class BrokerData implements Comparable<BrokerData> {
         return this.brokerName.compareTo(o.getBrokerName());
     }
 
+    /**
+     * Select broker addr string.
+     *
+     * @return the string
+     */
     public String selectBrokerAddr() {
         String addr = this.brokerAddrs.get(MixAll.MASTER_ID);
 

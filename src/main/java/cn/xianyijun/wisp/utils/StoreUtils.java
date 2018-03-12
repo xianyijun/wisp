@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.utils;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
+/**
+ * @author xianyijun
+ */
 public class StoreUtils {
 
     public static final long TOTAL_PHYSICAL_MEMORY_SIZE = getTotalPhysicalMemorySize();

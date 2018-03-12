@@ -4,7 +4,6 @@ import cn.xianyijun.wisp.client.ClientConfig;
 import cn.xianyijun.wisp.client.QueryResult;
 import cn.xianyijun.wisp.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import cn.xianyijun.wisp.client.consumer.store.OffsetStore;
-import cn.xianyijun.wisp.common.MixAll;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.message.MessageQueue;
@@ -67,10 +66,6 @@ public class DefaultPullConsumer extends ClientConfig implements PullConsumer {
 
     private int maxReConsumeTimes = 16;
 
-    public DefaultPullConsumer() {
-        this(MixAll.DEFAULT_CONSUMER_GROUP, null);
-    }
-
     public DefaultPullConsumer(final String consumerGroup, RPCHook rpcHook) {
         this.consumerGroup = consumerGroup;
         consumerPullDelegate = new ConsumerPullDelegate(this, rpcHook);
@@ -117,7 +112,7 @@ public class DefaultPullConsumer extends ClientConfig implements PullConsumer {
     }
 
     @Override
-    public ExtMessage viewMessage(String topic, String uniqueKey) throws RemotingException, BrokerException, InterruptedException, ClientException {
+    public ExtMessage viewMessage(String topic, String uniqueKey) throws InterruptedException, ClientException {
         try {
             MessageDecoder.decodeMessageId(uniqueKey);
             return this.viewMessage(uniqueKey);
