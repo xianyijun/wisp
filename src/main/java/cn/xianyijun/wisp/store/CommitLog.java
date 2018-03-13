@@ -11,7 +11,16 @@ import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.store.config.BrokerRole;
 import cn.xianyijun.wisp.store.config.FlushDiskType;
 import cn.xianyijun.wisp.store.ha.HAService;
+import cn.xianyijun.wisp.store.lock.PutMessageLock;
+import cn.xianyijun.wisp.store.lock.PutMessageReentrantLock;
+import cn.xianyijun.wisp.store.lock.PutMessageSpinLock;
+import cn.xianyijun.wisp.store.request.DispatchRequest;
+import cn.xianyijun.wisp.store.result.AppendMessageResult;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import cn.xianyijun.wisp.store.schedule.ScheduleMessageService;
+import cn.xianyijun.wisp.store.status.AppendMessageStatus;
+import cn.xianyijun.wisp.store.status.PutMessageStatus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +85,7 @@ public class CommitLog {
     }
 
     private static int calMsgLength(int bodyLength, int topicLength, int propertiesLength) {
-        final int msgLen = 4 //TOTALSIZE
+        return 4 //TOTALSIZE
                 + 4 //MAGICCODE
                 + 4 //BODYCRC
                 + 4 //QUEUEID
@@ -93,7 +102,6 @@ public class CommitLog {
                 + 4 + (bodyLength > 0 ? bodyLength : 0) //BODY
                 + 1 + topicLength //TOPIC
                 + 2 + (propertiesLength > 0 ? propertiesLength : 0);
-        return msgLen;
     }
 
     public void start() {
@@ -129,46 +137,45 @@ public class CommitLog {
     public void recoverNormally() {
         boolean checkCRCOnRecover = this.defaultMessageStore.getMessageStoreConfig().isCheckCRCOnRecover();
         final List<MappedFile> mappedFiles = this.mappedFileQueue.getMappedFiles();
-        if (!mappedFiles.isEmpty()) {
-            int index = mappedFiles.size() - 3;
-            if (index < 0) {
-                index = 0;
-            }
-
-            MappedFile mappedFile = mappedFiles.get(index);
-            ByteBuffer byteBuffer = mappedFile.sliceByteBuffer();
-            long processOffset = mappedFile.getFileFromOffset();
-            long mappedFileOffset = 0;
-            while (true) {
-                DispatchRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer, checkCRCOnRecover);
-                int size = dispatchRequest.getMsgSize();
-                if (dispatchRequest.isSuccess() && size > 0) {
-                    mappedFileOffset += size;
-                } else if (dispatchRequest.isSuccess() && size == 0) {
-                    index++;
-                    if (index >= mappedFiles.size()) {
-                        log.info("recover last 3 physics file over, last mapped file " + mappedFile.getFileName());
-                        break;
-                    } else {
-                        mappedFile = mappedFiles.get(index);
-                        byteBuffer = mappedFile.sliceByteBuffer();
-                        processOffset = mappedFile.getFileFromOffset();
-                        mappedFileOffset = 0;
-                        log.info("recover next physics file, " + mappedFile.getFileName());
-                    }
-                }
-                // Intermediate file read error
-                else if (!dispatchRequest.isSuccess()) {
-                    log.info("recover physics file end, " + mappedFile.getFileName());
-                    break;
-                }
-            }
-
-            processOffset += mappedFileOffset;
-            this.mappedFileQueue.setFlushedWhere(processOffset);
-            this.mappedFileQueue.setCommittedWhere(processOffset);
-            this.mappedFileQueue.truncateDirtyFiles(processOffset);
+        if (mappedFiles.isEmpty()) {
+            return;
         }
+        int index = mappedFiles.size() - 3;
+        if (index < 0) {
+            index = 0;
+        }
+
+        MappedFile mappedFile = mappedFiles.get(index);
+        ByteBuffer byteBuffer = mappedFile.sliceByteBuffer();
+        long processOffset = mappedFile.getFileFromOffset();
+        long mappedFileOffset = 0;
+        while (true) {
+            DispatchRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer, checkCRCOnRecover);
+            int size = dispatchRequest.getMsgSize();
+            if (dispatchRequest.isSuccess() && size > 0) {
+                mappedFileOffset += size;
+            } else if (dispatchRequest.isSuccess() && size == 0) {
+                index++;
+                if (index >= mappedFiles.size()) {
+                    log.info("recover last 3 physics file over, last mapped file " + mappedFile.getFileName());
+                    break;
+                } else {
+                    mappedFile = mappedFiles.get(index);
+                    byteBuffer = mappedFile.sliceByteBuffer();
+                    processOffset = mappedFile.getFileFromOffset();
+                    mappedFileOffset = 0;
+                    log.info("recover next physics file, " + mappedFile.getFileName());
+                }
+            } else if (!dispatchRequest.isSuccess()) {
+                log.info("recover physics file end, " + mappedFile.getFileName());
+                break;
+            }
+        }
+
+        processOffset += mappedFileOffset;
+        this.mappedFileQueue.setFlushedWhere(processOffset);
+        this.mappedFileQueue.setCommittedWhere(processOffset);
+        this.mappedFileQueue.truncateDirtyFiles(processOffset);
     }
 
     public void recoverAbnormally() {
@@ -199,7 +206,6 @@ public class CommitLog {
                 DispatchRequest dispatchRequest = this.checkMessageAndReturnSize(byteBuffer, checkCRCOnRecover);
                 int size = dispatchRequest.getMsgSize();
 
-                // Normal data
                 if (size > 0) {
                     mappedFileOffset += size;
 
@@ -372,7 +378,7 @@ public class CommitLog {
 
                 String tags = propertiesMap.get(MessageConst.PROPERTY_TAGS);
                 if (tags != null && tags.length() > 0) {
-                    tagsCode = MessageExtBrokerInner.tagsString2tagsCode(ExtMessage.parseTopicFilterType(sysFlag), tags);
+                    tagsCode = ExtBrokerInnerMessage.tagsString2tagsCode(ExtMessage.parseTopicFilterType(sysFlag), tags);
                 }
 
                 // Timing message processing
@@ -531,7 +537,7 @@ public class CommitLog {
         return mappedFileLast;
     }
 
-    public PutMessageResult putMessage(MessageExtBrokerInner msg) {
+    public PutMessageResult putMessage(ExtBrokerInnerMessage msg) {
         log.info("[CommitLog] putMessage , msg: {} ", msg);
         msg.setStoreTimestamp(System.currentTimeMillis());
 
@@ -1105,7 +1111,7 @@ public class CommitLog {
 
         @Override
         public AppendMessageResult doAppend(final long fileFromOffset, final ByteBuffer byteBuffer, final int maxBlank,
-                                            final MessageExtBrokerInner msgInner) {
+                                            final ExtBrokerInnerMessage msgInner) {
             long wroteOffset = fileFromOffset + byteBuffer.position();
 
             this.resetByteBuffer(hostHolder, 8);

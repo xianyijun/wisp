@@ -30,10 +30,10 @@ import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.netty.RequestTask;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.store.GetMessageResult;
-import cn.xianyijun.wisp.store.MessageExtBrokerInner;
+import cn.xianyijun.wisp.store.result.GetMessageResult;
+import cn.xianyijun.wisp.store.ExtBrokerInnerMessage;
 import cn.xianyijun.wisp.store.MessageFilter;
-import cn.xianyijun.wisp.store.PutMessageResult;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
 import cn.xianyijun.wisp.store.config.BrokerRole;
 import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
 import cn.xianyijun.wisp.utils.RemotingUtils;
@@ -501,7 +501,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
 
     private void generateOffsetMovedEvent(final OffsetMovedEvent event) {
         try {
-            MessageExtBrokerInner msgInner = new MessageExtBrokerInner();
+            ExtBrokerInnerMessage msgInner = new ExtBrokerInnerMessage();
             msgInner.setTopic(MixAll.OFFSET_MOVED_EVENT);
             msgInner.setTags(event.getConsumerGroup());
             msgInner.setDelayTimeLevel(0);
@@ -509,7 +509,7 @@ public class PullMessageProcessor implements NettyRequestProcessor {
             msgInner.setBody(event.encode());
             msgInner.setFlag(0);
             msgInner.setPropertiesString(MessageDecoder.messageProperties2String(msgInner.getProperties()));
-            msgInner.setTagsCode(MessageExtBrokerInner.tagsString2tagsCode(TopicFilterType.SINGLE_TAG, msgInner.getTags()));
+            msgInner.setTagsCode(ExtBrokerInnerMessage.tagsString2tagsCode(TopicFilterType.SINGLE_TAG, msgInner.getTags()));
 
             msgInner.setQueueId(0);
             msgInner.setSysFlag(0);

@@ -1,6 +1,7 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
+import cn.xianyijun.wisp.store.result.AppendMessageResult;
 
 import java.nio.ByteBuffer;
 
@@ -18,7 +19,7 @@ public interface AppendMessageCallback {
      * @return the append message result
      */
     AppendMessageResult doAppend(final long fileFromOffset, final ByteBuffer byteBuffer,
-                                 final int maxBlank, final MessageExtBrokerInner msg);
+                                 final int maxBlank, final ExtBrokerInnerMessage msg);
 
     /**
      * Do append append message result.

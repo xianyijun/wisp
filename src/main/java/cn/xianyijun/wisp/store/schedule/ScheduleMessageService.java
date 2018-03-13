@@ -10,10 +10,10 @@ import cn.xianyijun.wisp.common.running.RunningStats;
 import cn.xianyijun.wisp.store.ConsumeQueue;
 import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
-import cn.xianyijun.wisp.store.MessageExtBrokerInner;
-import cn.xianyijun.wisp.store.PutMessageResult;
-import cn.xianyijun.wisp.store.PutMessageStatus;
-import cn.xianyijun.wisp.store.SelectMappedBufferResult;
+import cn.xianyijun.wisp.store.ExtBrokerInnerMessage;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
+import cn.xianyijun.wisp.store.status.PutMessageStatus;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -256,7 +256,7 @@ public class ScheduleMessageService extends AbstractConfigManager {
 
                                 if (msgExt != null) {
                                     try {
-                                        MessageExtBrokerInner msgInner = this.messageTimeUp(msgExt);
+                                        ExtBrokerInnerMessage msgInner = this.messageTimeUp(msgExt);
                                         PutMessageResult putMessageResult =
                                                 ScheduleMessageService.this.defaultMessageStore
                                                         .putMessage(msgInner);
@@ -312,15 +312,15 @@ public class ScheduleMessageService extends AbstractConfigManager {
                     failScheduleOffset), DELAY_FOR_A_WHILE);
         }
 
-        private MessageExtBrokerInner messageTimeUp(ExtMessage msgExt) {
-            MessageExtBrokerInner msgInner = new MessageExtBrokerInner();
+        private ExtBrokerInnerMessage messageTimeUp(ExtMessage msgExt) {
+            ExtBrokerInnerMessage msgInner = new ExtBrokerInnerMessage();
             msgInner.setBody(msgExt.getBody());
             msgInner.setFlag(msgExt.getFlag());
             MessageAccessor.setProperties(msgInner, msgExt.getProperties());
 
             TopicFilterType topicFilterType = ExtMessage.parseTopicFilterType(msgInner.getSysFlag());
             long tagsCodeValue =
-                    MessageExtBrokerInner.tagsString2tagsCode(topicFilterType, msgInner.getTags());
+                    ExtBrokerInnerMessage.tagsString2tagsCode(topicFilterType, msgInner.getTags());
             msgInner.setTagsCode(tagsCodeValue);
             msgInner.setPropertiesString(MessageDecoder.messageProperties2String(msgExt.getProperties()));
 

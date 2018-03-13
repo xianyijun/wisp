@@ -78,7 +78,7 @@ import cn.xianyijun.wisp.store.ConsumeQueue;
 import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
 import cn.xianyijun.wisp.store.MessageFilter;
-import cn.xianyijun.wisp.store.SelectMappedBufferResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import com.alibaba.fastjson.JSON;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;

@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.broker.pagecache;
 
-import cn.xianyijun.wisp.store.SelectMappedBufferResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 

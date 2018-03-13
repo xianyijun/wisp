@@ -1,6 +1,8 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
+import cn.xianyijun.wisp.store.request.DispatchRequest;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,11 +11,16 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
+ * The type Consume queue.
+ *
  * @author xianyijun
  */
 @Slf4j
 @Getter
 public class ConsumeQueue {
+    /**
+     * The constant CQ_STORE_UNIT_SIZE.
+     */
     public static final int CQ_STORE_UNIT_SIZE = 20;
 
     private final DefaultMessageStore defaultMessageStore;
@@ -29,6 +36,15 @@ public class ConsumeQueue {
     private volatile long minLogicOffset = 0;
     private ExtConsumeQueue consumeQueueExt = null;
 
+    /**
+     * Instantiates a new Consume queue.
+     *
+     * @param topic               the topic
+     * @param queueId             the queue id
+     * @param storePath           the store path
+     * @param mappedFileSize      the mapped file size
+     * @param defaultMessageStore the default message store
+     */
     public ConsumeQueue(
             final String topic,
             final int queueId,
@@ -62,6 +78,11 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Load boolean.
+     *
+     * @return the boolean
+     */
     public boolean load() {
         boolean result = this.mappedFileQueue.load();
         log.info("load consume queue " + this.topic + "-" + this.queueId + " " + (result ? "OK" : "Failed"));
@@ -71,6 +92,11 @@ public class ConsumeQueue {
         return result;
     }
 
+    /**
+     * Put message position info wrapper.
+     *
+     * @param request the request
+     */
     public void putMessagePositionInfoWrapper(DispatchRequest request) {
         final int maxRetries = 30;
         boolean canWrite = this.defaultMessageStore.getRunningFlags().isCQWriteable();
@@ -93,9 +119,6 @@ public class ConsumeQueue {
                 this.defaultMessageStore.getStoreCheckpoint().setLogicMsgTimestamp(request.getStoreTimestamp());
                 return;
             } else {
-                log.warn("[BUG]put commit log position info to " + topic + ":" + queueId + " " + request.getCommitLogOffset()
-                        + " failed, retry " + i + " times");
-
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -104,11 +127,13 @@ public class ConsumeQueue {
             }
         }
 
-        log.error("[BUG]consume queue can not write, {} {}", this.topic, this.queueId);
         this.defaultMessageStore.getRunningFlags().makeLogicQueueError();
     }
 
 
+    /**
+     * Check self.
+     */
     public void checkSelf() {
         mappedFileQueue.checkSelf();
         if (isExtReadEnable()) {
@@ -117,6 +142,12 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Delete expired file int.
+     *
+     * @param offset the offset
+     * @return the int
+     */
     public int deleteExpiredFile(long offset) {
         int cnt = this.mappedFileQueue.deleteExpiredFileByOffset(offset, CQ_STORE_UNIT_SIZE);
         this.correctMinOffset(offset);
@@ -124,6 +155,12 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Gets ext.
+     *
+     * @param offset the offset
+     * @return the ext
+     */
     public ExtConsumeQueue.CqExtUnit getExt(final long offset) {
         if (isExtReadEnable()) {
             return this.consumeQueueExt.get(offset);
@@ -131,6 +168,13 @@ public class ConsumeQueue {
         return null;
     }
 
+    /**
+     * Gets ext.
+     *
+     * @param offset    the offset
+     * @param cqExtUnit the cq ext unit
+     * @return the ext
+     */
     public boolean getExt(final long offset, ExtConsumeQueue.CqExtUnit cqExtUnit) {
         return isExtReadEnable() && this.consumeQueueExt.get(offset, cqExtUnit);
     }
@@ -140,12 +184,18 @@ public class ConsumeQueue {
                 && this.defaultMessageStore.getMessageStoreConfig().isEnableConsumeQueueExt();
     }
 
+    /**
+     * Is ext addr boolean.
+     *
+     * @param tagsCode the tags code
+     * @return the boolean
+     */
     public boolean isExtAddr(long tagsCode) {
         return ExtConsumeQueue.isExtAddr(tagsCode);
     }
 
     private boolean putMessagePositionInfo(final long offset, final int size, final long tagsCode,
-                                           final long cqOffset) {
+                                           final long consumeQueueOffset) {
 
         if (offset <= this.maxPhysicOffset) {
             return true;
@@ -157,12 +207,12 @@ public class ConsumeQueue {
         this.byteBufferIndex.putInt(size);
         this.byteBufferIndex.putLong(tagsCode);
 
-        final long expectLogicOffset = cqOffset * CQ_STORE_UNIT_SIZE;
+        final long expectLogicOffset = consumeQueueOffset * CQ_STORE_UNIT_SIZE;
 
         MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile(expectLogicOffset);
         if (mappedFile != null) {
 
-            if (mappedFile.isFirstCreateInQueue() && cqOffset != 0 && mappedFile.getWrotePosition() == 0) {
+            if (mappedFile.isFirstCreateInQueue() && consumeQueueOffset != 0 && mappedFile.getWrotePosition() == 0) {
                 this.minLogicOffset = expectLogicOffset;
                 this.mappedFileQueue.setFlushedWhere(expectLogicOffset);
                 this.mappedFileQueue.setCommittedWhere(expectLogicOffset);
@@ -171,7 +221,7 @@ public class ConsumeQueue {
                         + mappedFile.getWrotePosition());
             }
 
-            if (cqOffset != 0) {
+            if (consumeQueueOffset != 0) {
                 long currentLogicOffset = mappedFile.getWrotePosition() + mappedFile.getFileFromOffset();
 
                 if (expectLogicOffset < currentLogicOffset) {
@@ -210,6 +260,9 @@ public class ConsumeQueue {
         }
     }
 
+    /**
+     * Recover.
+     */
     public void recover() {
         final List<MappedFile> mappedFiles = this.mappedFileQueue.getMappedFiles();
         if (!mappedFiles.isEmpty()) {
@@ -278,6 +331,11 @@ public class ConsumeQueue {
         }
     }
 
+    /**
+     * Correct min offset.
+     *
+     * @param phyMinOffset the phy min offset
+     */
     public void correctMinOffset(long phyMinOffset) {
         MappedFile mappedFile = this.mappedFileQueue.getFirstMappedFile();
         long minExtAddr = 1;
@@ -315,6 +373,12 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Gets index buffer.
+     *
+     * @param startIndex the start index
+     * @return the index buffer
+     */
     public SelectMappedBufferResult getIndexBuffer(final long startIndex) {
         int mappedFileSize = this.mappedFileSize;
         long offset = startIndex * CQ_STORE_UNIT_SIZE;
@@ -327,6 +391,11 @@ public class ConsumeQueue {
         return null;
     }
 
+    /**
+     * Gets last offset.
+     *
+     * @return the last offset
+     */
     public long getLastOffset() {
         long lastOffset = -1;
 
@@ -356,6 +425,12 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Truncate dirty logic files.
+     * 删除指定偏移量之后的逻辑文件
+     *
+     * @param phyOffset the phy offset
+     */
     public void truncateDirtyLogicFiles(long phyOffset) {
 
         int logicFileSize = this.mappedFileSize;
@@ -427,6 +502,9 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Destroy.
+     */
     public void destroy() {
         this.maxPhysicOffset = -1;
         this.minLogicOffset = 0;
@@ -437,6 +515,12 @@ public class ConsumeQueue {
     }
 
 
+    /**
+     * Flush boolean.
+     *
+     * @param flushLeastPages the flush least pages
+     * @return the boolean
+     */
     public boolean flush(final int flushLeastPages) {
         boolean result = this.mappedFileQueue.flush(flushLeastPages);
         if (isExtReadEnable()) {
@@ -446,12 +530,24 @@ public class ConsumeQueue {
         return result;
     }
 
+    /**
+     * Roll next file long.
+     *
+     * @param index the index
+     * @return the long
+     */
     public long rollNextFile(final long index) {
         int mappedFileSize = this.mappedFileSize;
         int totalUnitsInFile = mappedFileSize / CQ_STORE_UNIT_SIZE;
         return index + totalUnitsInFile - index % totalUnitsInFile;
     }
 
+    /**
+     * Gets offset in queue by time.
+     *
+     * @param timestamp the timestamp
+     * @return the offset in queue by time
+     */
     public long getOffsetInQueueByTime(final long timestamp) {
         MappedFile mappedFile = this.mappedFileQueue.getMappedFileByTime(timestamp);
         if (mappedFile != null) {
@@ -525,14 +621,29 @@ public class ConsumeQueue {
         return this.consumeQueueExt != null;
     }
 
+    /**
+     * Gets message total in queue.
+     *
+     * @return the message total in queue
+     */
     public long getMessageTotalInQueue() {
         return this.getMaxOffsetInQueue() - this.getMinOffsetInQueue();
     }
 
+    /**
+     * Gets min offset in queue.
+     *
+     * @return the min offset in queue
+     */
     public long getMinOffsetInQueue() {
         return this.minLogicOffset / CQ_STORE_UNIT_SIZE;
     }
 
+    /**
+     * Gets max offset in queue.
+     *
+     * @return the max offset in queue
+     */
     public long getMaxOffsetInQueue() {
         return this.mappedFileQueue.getMaxOffset() / CQ_STORE_UNIT_SIZE;
     }

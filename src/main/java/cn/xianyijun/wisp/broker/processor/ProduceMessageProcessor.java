@@ -22,8 +22,8 @@ import cn.xianyijun.wisp.common.subscription.SubscriptionGroupConfig;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.store.MessageExtBrokerInner;
-import cn.xianyijun.wisp.store.PutMessageResult;
+import cn.xianyijun.wisp.store.ExtBrokerInnerMessage;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
 import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
 import io.netty.channel.ChannelHandlerContext;
@@ -119,7 +119,7 @@ public class ProduceMessageProcessor extends AbstractProduceMessageProcessor imp
             queueIdInt = Math.abs(this.random.nextInt() % 99999999) % topicConfig.getWriteQueueNums();
         }
 
-        MessageExtBrokerInner msgInner = new MessageExtBrokerInner();
+        ExtBrokerInnerMessage msgInner = new ExtBrokerInnerMessage();
         msgInner.setTopic(requestHeader.getTopic());
         msgInner.setQueueId(queueIdInt);
 

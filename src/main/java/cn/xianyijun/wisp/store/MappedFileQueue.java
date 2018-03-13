@@ -1,6 +1,7 @@
 package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.UtilAll;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

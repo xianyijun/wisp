@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.broker.pagecache;
 
-import cn.xianyijun.wisp.store.GetMessageResult;
+import cn.xianyijun.wisp.store.result.GetMessageResult;
 import io.netty.channel.FileRegion;
 import io.netty.util.AbstractReferenceCounted;
 import lombok.RequiredArgsConstructor;

@@ -2,6 +2,10 @@ package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.store.result.GetMessageResult;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
+import cn.xianyijun.wisp.store.result.QueryMessageResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,7 +48,7 @@ public interface MessageStore {
      * @param msg the msg
      * @return the put message result
      */
-    PutMessageResult putMessage(final MessageExtBrokerInner msg);
+    PutMessageResult putMessage(final ExtBrokerInnerMessage msg);
 
     /**
      * Put messages put message result.

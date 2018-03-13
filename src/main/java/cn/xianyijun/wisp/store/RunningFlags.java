@@ -2,6 +2,9 @@ package cn.xianyijun.wisp.store;
 
 import lombok.Getter;
 
+/**
+ * @author xianyijun
+ */
 @Getter
 public class RunningFlags {
 

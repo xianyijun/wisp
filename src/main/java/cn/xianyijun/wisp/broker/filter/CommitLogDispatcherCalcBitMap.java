@@ -4,7 +4,7 @@ import cn.xianyijun.wisp.common.BrokerConfig;
 import cn.xianyijun.wisp.filter.MessageEvaluationContext;
 import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.store.CommitLogDispatcher;
-import cn.xianyijun.wisp.store.DispatchRequest;
+import cn.xianyijun.wisp.store.request.DispatchRequest;
 import cn.xianyijun.wisp.utils.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

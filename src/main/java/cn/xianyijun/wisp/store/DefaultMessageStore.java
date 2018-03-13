@@ -16,8 +16,15 @@ import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
 import cn.xianyijun.wisp.store.ha.HAService;
 import cn.xianyijun.wisp.store.index.IndexService;
 import cn.xianyijun.wisp.store.index.QueryOffsetResult;
+import cn.xianyijun.wisp.store.request.DispatchRequest;
+import cn.xianyijun.wisp.store.result.GetMessageResult;
+import cn.xianyijun.wisp.store.result.PutMessageResult;
+import cn.xianyijun.wisp.store.result.QueryMessageResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import cn.xianyijun.wisp.store.schedule.ScheduleMessageService;
 import cn.xianyijun.wisp.store.stats.BrokerStatsManager;
+import cn.xianyijun.wisp.store.status.GetMessageStatus;
+import cn.xianyijun.wisp.store.status.PutMessageStatus;
 import cn.xianyijun.wisp.utils.StoreUtils;
 import lombok.Getter;
 import lombok.Setter;
@@ -306,7 +313,7 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     @Override
-    public PutMessageResult putMessage(MessageExtBrokerInner msg) {
+    public PutMessageResult putMessage(ExtBrokerInnerMessage msg) {
         log.info("[DefaultMessageStore] putMessage message: {}", msg);
         if (this.shutdown) {
             log.warn("message store has shutdown, so putMessage is forbidden");

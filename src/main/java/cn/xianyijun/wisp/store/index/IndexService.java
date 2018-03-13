@@ -4,7 +4,7 @@ import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
-import cn.xianyijun.wisp.store.DispatchRequest;
+import cn.xianyijun.wisp.store.request.DispatchRequest;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

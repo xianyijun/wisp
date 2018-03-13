@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.store.ha;
 
 import cn.xianyijun.wisp.common.ServiceThread;
-import cn.xianyijun.wisp.store.SelectMappedBufferResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import lombok.extern.slf4j.Slf4j;
 

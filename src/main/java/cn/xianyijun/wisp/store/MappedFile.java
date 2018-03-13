@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.store;
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.store.config.FlushDiskType;
+import cn.xianyijun.wisp.store.result.AppendMessageResult;
+import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
+import cn.xianyijun.wisp.store.status.AppendMessageStatus;
 import cn.xianyijun.wisp.store.support.LibC;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -265,7 +268,7 @@ public class MappedFile extends ReferenceResource {
         return false;
     }
 
-    public AppendMessageResult appendMessage(final MessageExtBrokerInner msg, final AppendMessageCallback cb) {
+    public AppendMessageResult appendMessage(final ExtBrokerInnerMessage msg, final AppendMessageCallback cb) {
         return appendMessagesInner(msg, cb);
     }
 
@@ -277,8 +280,8 @@ public class MappedFile extends ReferenceResource {
             ByteBuffer byteBuffer = writeBuffer != null ? writeBuffer.slice() : this.mappedByteBuffer.slice();
             byteBuffer.position(currentPos);
             AppendMessageResult result;
-            if (extMessage instanceof MessageExtBrokerInner) {
-                result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (MessageExtBrokerInner) extMessage);
+            if (extMessage instanceof ExtBrokerInnerMessage) {
+                result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (ExtBrokerInnerMessage) extMessage);
             } else if (extMessage instanceof ExtBatchMessage) {
                 result = cb.doAppend(this.getFileFromOffset(), byteBuffer, this.fileSize - currentPos, (ExtBatchMessage) extMessage);
             } else {
