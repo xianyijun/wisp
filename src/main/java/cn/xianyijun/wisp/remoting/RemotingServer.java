@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * The interface Remoting server.
+ * @author xianyijun
  */
 public interface RemotingServer extends RemotingService {
     /**

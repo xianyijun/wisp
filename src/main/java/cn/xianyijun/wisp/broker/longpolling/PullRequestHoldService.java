@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.broker.longpolling;
 import cn.xianyijun.wisp.broker.BrokerController;
 import cn.xianyijun.wisp.common.ServiceThread;
 import cn.xianyijun.wisp.common.SystemClock;
-import cn.xianyijun.wisp.store.ConsumeQueueExt;
+import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,7 +51,7 @@ public class PullRequestHoldService extends ServiceThread {
 
                     if (newestOffset > request.getPullFromThisOffset()) {
                         boolean match = request.getMessageFilter().isMatchedByConsumeQueue(tagsCode,
-                                new ConsumeQueueExt.CqExtUnit(tagsCode, msgStoreTime, filterBitMap));
+                                new ExtConsumeQueue.CqExtUnit(tagsCode, msgStoreTime, filterBitMap));
                         if (match && properties != null) {
                             match = request.getMessageFilter().isMatchedByCommitLog(null, properties);
                         }

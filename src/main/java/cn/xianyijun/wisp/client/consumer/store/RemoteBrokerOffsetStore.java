@@ -41,59 +41,57 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
     }
 
     @Override
-    public void updateOffset(MessageQueue mq, long offset, boolean increaseOnly) {
-        if (mq != null) {
-            AtomicLong offsetOld = this.offsetTable.get(mq);
-            if (null == offsetOld) {
-                offsetOld = this.offsetTable.putIfAbsent(mq, new AtomicLong(offset));
-            }
-
-            if (null != offsetOld) {
-                if (increaseOnly) {
-                    MixAll.compareAndIncreaseOnly(offsetOld, offset);
-                } else {
-                    offsetOld.set(offset);
-                }
-            }
+    public void updateOffset(MessageQueue messageQueue, long offset, boolean increaseOnly) {
+        if (messageQueue == null){
+            return;
+        }
+        AtomicLong offsetOld = this.offsetTable.get(messageQueue);
+        if (null == offsetOld) {
+            offsetOld = this.offsetTable.putIfAbsent(messageQueue, new AtomicLong(offset));
         }
 
+        if (null != offsetOld) {
+            if (increaseOnly) {
+                MixAll.compareAndIncreaseOnly(offsetOld, offset);
+            } else {
+                offsetOld.set(offset);
+            }
+        }
     }
 
     @Override
     public long readOffset(MessageQueue mq, ReadOffsetType type) {
         if (mq != null) {
-            switch (type) {
-                case MEMORY_FIRST_THEN_STORE:
-                case READ_FROM_MEMORY: {
-                    AtomicLong offset = this.offsetTable.get(mq);
-                    if (offset != null) {
-                        return offset.get();
-                    } else if (ReadOffsetType.READ_FROM_MEMORY == type) {
-                        return -1;
-                    }
-                }
-                case READ_FROM_STORE: {
-                    try {
-                        long brokerOffset = this.fetchConsumeOffsetFromBroker(mq);
-                        AtomicLong offset = new AtomicLong(brokerOffset);
-                        this.updateOffset(mq, offset.get(), false);
-                        return brokerOffset;
-                    }
-                    // No offset in broker
-                    catch (BrokerException e) {
-                        return -1;
-                    }
-                    //Other exceptions
-                    catch (Exception e) {
-                        log.warn("fetchConsumeOffsetFromBroker exception, " + mq, e);
-                        return -2;
-                    }
-                }
-                default:
-                    break;
-            }
+            return -1;
         }
-
+        switch (type) {
+            case MEMORY_FIRST_THEN_STORE:
+            case READ_FROM_MEMORY: {
+                AtomicLong offset = this.offsetTable.get(mq);
+                if (offset != null) {
+                    return offset.get();
+                } else if (ReadOffsetType.READ_FROM_MEMORY == type) {
+                    return -1;
+                }
+            }
+            case READ_FROM_STORE: {
+                try {
+                    long brokerOffset = this.fetchConsumeOffsetFromBroker(mq);
+                    AtomicLong offset = new AtomicLong(brokerOffset);
+                    this.updateOffset(mq, offset.get(), false);
+                    return brokerOffset;
+                }
+                catch (BrokerException e) {
+                    return -1;
+                }
+                catch (Exception e) {
+                    log.warn("fetchConsumeOffsetFromBroker exception, " + mq, e);
+                    return -2;
+                }
+            }
+            default:
+                break;
+        }
         return -1;
     }
 
@@ -111,11 +109,6 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
                 if (mqs.contains(mq)) {
                     try {
                         this.updateConsumeOffsetToBroker(mq, offset.get());
-                        log.info("[persistAll] Group: {} ClientId: {} updateConsumeOffsetToBroker {}  offset: {}",
-                                this.groupName,
-                                this.clientFactory.getClientId(),
-                                mq,
-                                offset.get());
                     } catch (Exception e) {
                         log.error("updateConsumeOffsetToBroker exception, " + mq.toString(), e);
                     }
@@ -139,11 +132,6 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
         if (offset != null) {
             try {
                 this.updateConsumeOffsetToBroker(mq, offset.get());
-                log.info("[persist] Group: {} ClientId: {} updateConsumeOffsetToBroker {} {}",
-                        this.groupName,
-                        this.clientFactory.getClientId(),
-                        mq,
-                        offset.get());
             } catch (Exception e) {
                 log.error("updateConsumeOffsetToBroker exception, " + mq.toString(), e);
             }
@@ -152,12 +140,12 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
 
     @Override
     public void removeOffset(MessageQueue mq) {
-        if (mq != null) {
-            this.offsetTable.remove(mq);
-            log.info("remove unnecessary messageQueue offset. group={}, mq={}, offsetTableSize={}", this.groupName, mq,
-                    offsetTable.size());
+        if (mq == null) {
+            return;
         }
-
+        this.offsetTable.remove(mq);
+        log.info("remove unnecessary messageQueue offset. group={}, mq={}, offsetTableSize={}", this.groupName, mq,
+                    offsetTable.size());
     }
 
     @Override

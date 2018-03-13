@@ -8,7 +8,7 @@ import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.running.RunningStats;
 import cn.xianyijun.wisp.store.ConsumeQueue;
-import cn.xianyijun.wisp.store.ConsumeQueueExt;
+import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
 import cn.xianyijun.wisp.store.MessageExtBrokerInner;
 import cn.xianyijun.wisp.store.PutMessageResult;
@@ -225,7 +225,7 @@ public class ScheduleMessageService extends AbstractConfigManager {
                     try {
                         long nextOffset = offset;
                         int i = 0;
-                        ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
+                        ExtConsumeQueue.CqExtUnit cqExtUnit = new ExtConsumeQueue.CqExtUnit();
                         for (; i < bufferCQ.getSize(); i += ConsumeQueue.CQ_STORE_UNIT_SIZE) {
                             long offsetPy = bufferCQ.getByteBuffer().getLong();
                             int sizePy = bufferCQ.getByteBuffer().getInt();

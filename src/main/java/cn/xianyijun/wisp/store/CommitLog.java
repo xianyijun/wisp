@@ -831,9 +831,7 @@ public class CommitLog {
     }
 
     public static class MessageExtBatchEncoder {
-        // Store the message content
         private final ByteBuffer msgBatchMemory;
-        // The maximum length of the message
         private final int maxMessageSize;
 
         private final ByteBuffer hostHolder = ByteBuffer.allocate(8);

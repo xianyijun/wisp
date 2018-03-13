@@ -3,6 +3,9 @@ package cn.xianyijun.wisp.common;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 
+/**
+ * @author xianyijun
+ */
 public class WispCountDownLatch {
     private final Sync sync;
 
@@ -56,7 +59,6 @@ public class WispCountDownLatch {
 
         @Override
         protected boolean tryReleaseShared(int releases) {
-            // Decrement count; signal when transition to zero
             for (; ; ) {
                 int c = getState();
                 if (c == 0) {

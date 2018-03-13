@@ -6,7 +6,7 @@ import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.filter.MessageEvaluationContext;
 import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.filter.support.BloomFilter;
-import cn.xianyijun.wisp.store.ConsumeQueueExt;
+import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.MessageFilter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,7 @@ public class ExpressionMessageFilter implements MessageFilter {
     }
 
     @Override
-    public boolean isMatchedByConsumeQueue(Long tagsCode, ConsumeQueueExt.CqExtUnit cqExtUnit) {
+    public boolean isMatchedByConsumeQueue(Long tagsCode, ExtConsumeQueue.CqExtUnit cqExtUnit) {
         if (null == subscriptionData) {
             return true;
         }

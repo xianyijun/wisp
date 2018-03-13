@@ -4,12 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 
+/**
+ * @author xianyijun
+ */
 @Slf4j
 public class WaitNotifyObject {
-    protected final HashMap<Long/* thread id */, Boolean/* notified */> waitingThreadTable =
+
+    private final HashMap<Long, Boolean> waitingThreadTable =
             new HashMap<>(16);
 
-    protected volatile boolean hasNotified = false;
+    private volatile boolean hasNotified = false;
 
     public void wakeup() {
         synchronized (this) {

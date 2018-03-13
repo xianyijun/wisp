@@ -384,11 +384,9 @@ public abstract class AbstractNettyRemoting {
      * @param response response command instance.
      */
     private void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand response) {
-        log.info("[AbstractResponseCommand] processResponseCommand , response : {}, responseTable: {}", response, responseTable);
         final int opaque = response.getOpaque();
         final ResponseFuture responseFuture = responseTable.get(opaque);
         if (responseFuture != null) {
-            log.info("[AbstractNettyRemoting] class:{} putResponse response:{} ", this.getClass().getSimpleName(), response);
             responseFuture.setResponseCommand(response);
 
             responseTable.remove(opaque);

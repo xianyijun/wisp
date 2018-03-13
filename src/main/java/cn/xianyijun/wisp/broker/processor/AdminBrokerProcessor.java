@@ -75,7 +75,7 @@ import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
 import cn.xianyijun.wisp.store.ConsumeQueue;
-import cn.xianyijun.wisp.store.ConsumeQueueExt;
+import cn.xianyijun.wisp.store.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
 import cn.xianyijun.wisp.store.MessageFilter;
 import cn.xianyijun.wisp.store.SelectMappedBufferResult;
@@ -1295,7 +1295,7 @@ public class AdminBrokerProcessor implements NettyRequestProcessor {
                     continue;
                 }
 
-                ConsumeQueueExt.CqExtUnit cqExtUnit = consumeQueue.getExt(one.getTagsCode());
+                ExtConsumeQueue.CqExtUnit cqExtUnit = consumeQueue.getExt(one.getTagsCode());
                 if (cqExtUnit != null) {
                     one.setExtendDataJson(JSON.toJSONString(cqExtUnit));
                     if (cqExtUnit.getFilterBitMap() != null) {

@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Slf4j
 @Getter
-public class ConsumeQueueExt {
+public class ExtConsumeQueue {
 
     public static final int END_BLANK_DATA_LENGTH = 4;
     /**
@@ -39,7 +39,7 @@ public class ConsumeQueueExt {
      * @param mappedFileSize file size
      * @param bitMapLength   bit map length.
      */
-    ConsumeQueueExt(final String topic,
+    ExtConsumeQueue(final String topic,
                     final int queueId,
                     final String storePath,
                     final int mappedFileSize,

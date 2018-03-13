@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 @Slf4j
 @Getter
+@NoArgsConstructor
 public class ConsumerFilterManager extends AbstractConfigManager {
     private static final long MS_24_HOUR = 24 * 3600 * 1000;
 

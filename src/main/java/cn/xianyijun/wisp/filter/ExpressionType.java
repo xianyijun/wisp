@@ -6,10 +6,6 @@ package cn.xianyijun.wisp.filter;
  * @author xianyijun
  */
 public class ExpressionType {
-    /**
-     * The constant SQL92.
-     */
-    public static final String SQL92 = "SQL92";
 
     /**
      * The constant TAG.

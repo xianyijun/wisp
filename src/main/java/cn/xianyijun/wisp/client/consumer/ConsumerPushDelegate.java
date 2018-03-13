@@ -376,7 +376,7 @@ public class ConsumerPushDelegate implements ConsumerInner {
         }
     }
 
-    public void executeTaskLater(final Runnable r, final long timeDelay) {
+    private void executeTaskLater(final Runnable r, final long timeDelay) {
         this.clientFactory.getPullMessageService().executeTaskLater(r, timeDelay);
     }
 

@@ -17,7 +17,7 @@ public interface MessageFilter {
      * @return the boolean
      */
     boolean isMatchedByConsumeQueue(final Long tagsCode,
-                                    final ConsumeQueueExt.CqExtUnit cqExtUnit);
+                                    final ExtConsumeQueue.CqExtUnit cqExtUnit);
 
     /**
      * Is matched by commit log boolean.

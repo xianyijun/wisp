@@ -27,7 +27,7 @@ public class ConsumeQueue {
     private final int mappedFileSize;
     private long maxPhysicOffset = -1;
     private volatile long minLogicOffset = 0;
-    private ConsumeQueueExt consumeQueueExt = null;
+    private ExtConsumeQueue consumeQueueExt = null;
 
     public ConsumeQueue(
             final String topic,
@@ -51,7 +51,7 @@ public class ConsumeQueue {
         this.byteBufferIndex = ByteBuffer.allocate(CQ_STORE_UNIT_SIZE);
 
         if (defaultMessageStore.getMessageStoreConfig().isEnableConsumeQueueExt()) {
-            this.consumeQueueExt = new ConsumeQueueExt(
+            this.consumeQueueExt = new ExtConsumeQueue(
                     topic,
                     queueId,
                     StorePathConfigHelper.getStorePathConsumeQueueExt(defaultMessageStore.getMessageStoreConfig().getStorePathRootDir()),
@@ -77,7 +77,7 @@ public class ConsumeQueue {
         for (int i = 0; i < maxRetries && canWrite; i++) {
             long tagsCode = request.getTagsCode();
             if (isExtWriteEnable()) {
-                ConsumeQueueExt.CqExtUnit cqExtUnit = new ConsumeQueueExt.CqExtUnit();
+                ExtConsumeQueue.CqExtUnit cqExtUnit = new ExtConsumeQueue.CqExtUnit();
                 cqExtUnit.setFilterBitMap(request.getBitMap());
                 cqExtUnit.setMsgStoreTime(request.getStoreTimestamp());
                 cqExtUnit.setTagsCode(request.getTagsCode());
@@ -124,14 +124,14 @@ public class ConsumeQueue {
     }
 
 
-    public ConsumeQueueExt.CqExtUnit getExt(final long offset) {
+    public ExtConsumeQueue.CqExtUnit getExt(final long offset) {
         if (isExtReadEnable()) {
             return this.consumeQueueExt.get(offset);
         }
         return null;
     }
 
-    public boolean getExt(final long offset, ConsumeQueueExt.CqExtUnit cqExtUnit) {
+    public boolean getExt(final long offset, ExtConsumeQueue.CqExtUnit cqExtUnit) {
         return isExtReadEnable() && this.consumeQueueExt.get(offset, cqExtUnit);
     }
 
@@ -141,7 +141,7 @@ public class ConsumeQueue {
     }
 
     public boolean isExtAddr(long tagsCode) {
-        return ConsumeQueueExt.isExtAddr(tagsCode);
+        return ExtConsumeQueue.isExtAddr(tagsCode);
     }
 
     private boolean putMessagePositionInfo(final long offset, final int size, final long tagsCode,
