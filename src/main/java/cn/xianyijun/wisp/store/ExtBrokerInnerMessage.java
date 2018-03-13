@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class MessageExtBrokerInner extends ExtMessage {
+public class ExtBrokerInnerMessage extends ExtMessage {
     private String propertiesString;
     private long tagsCode;
 

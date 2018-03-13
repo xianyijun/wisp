@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.request;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

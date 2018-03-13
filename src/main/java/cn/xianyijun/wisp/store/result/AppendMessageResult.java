@@ -1,5 +1,6 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.result;
 
+import cn.xianyijun.wisp.store.status.AppendMessageStatus;
 import lombok.Data;
 
 /**

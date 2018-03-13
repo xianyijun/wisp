@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.lock;
 
 
 import java.util.concurrent.locks.ReentrantLock;
