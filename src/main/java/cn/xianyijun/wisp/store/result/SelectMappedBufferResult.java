@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.store.result;
 
-import cn.xianyijun.wisp.store.MappedFile;
+import cn.xianyijun.wisp.store.io.MappedFile;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

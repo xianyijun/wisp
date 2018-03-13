@@ -3,7 +3,7 @@ package cn.xianyijun.wisp.broker.longpolling;
 import cn.xianyijun.wisp.broker.BrokerController;
 import cn.xianyijun.wisp.common.ServiceThread;
 import cn.xianyijun.wisp.common.SystemClock;
-import cn.xianyijun.wisp.store.ExtConsumeQueue;
+import cn.xianyijun.wisp.store.io.ExtConsumeQueue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 

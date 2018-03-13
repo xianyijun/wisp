@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.store.index;
 
-import cn.xianyijun.wisp.store.MappedFile;
+import cn.xianyijun.wisp.store.io.MappedFile;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.List;
 
 /**
@@ -68,8 +67,6 @@ public class IndexFile {
             int slotPos = keyHash % this.hashSlotNum;
             int absSlotPos = IndexHeader.INDEX_HEADER_SIZE + slotPos * hashSlotSize;
 
-            FileLock fileLock = null;
-
             try {
 
                 int slotValue = this.mappedByteBuffer.getInt(absSlotPos);
@@ -113,14 +110,6 @@ public class IndexFile {
                 return true;
             } catch (Exception e) {
                 log.error("putKey exception, Key: " + key + " KeyHashCode: " + key.hashCode(), e);
-            } finally {
-                if (fileLock != null) {
-                    try {
-                        fileLock.release();
-                    } catch (IOException e) {
-                        log.error("Failed to release the lock", e);
-                    }
-                }
             }
         } else {
             log.warn("Over index file capacity: index count = " + this.indexHeader.getIndexCount()
@@ -166,10 +155,8 @@ public class IndexFile {
             try {
                 int slotValue = this.mappedByteBuffer.getInt(absSlotPos);
 
-                if (slotValue <= invalidIndex || slotValue > this.indexHeader.getIndexCount()
-                        || this.indexHeader.getIndexCount() <= 1) {
-                    //
-                } else {
+                if (slotValue > invalidIndex && slotValue <= this.indexHeader.getIndexCount()
+                        && this.indexHeader.getIndexCount() > 1) {
                     for (int nextIndexToRead = slotValue; ; ) {
                         if (phyOffsets.size() >= maxNum) {
                             break;

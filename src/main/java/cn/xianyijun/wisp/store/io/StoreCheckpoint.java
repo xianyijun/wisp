@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.io;
 
 import cn.xianyijun.wisp.common.UtilAll;
 import lombok.Data;

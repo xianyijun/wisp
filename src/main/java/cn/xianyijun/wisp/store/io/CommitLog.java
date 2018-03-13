@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.io;
 
 import cn.xianyijun.wisp.common.ServiceThread;
 import cn.xianyijun.wisp.common.UtilAll;
@@ -8,17 +8,21 @@ import cn.xianyijun.wisp.common.message.MessageAccessor;
 import cn.xianyijun.wisp.common.message.MessageConst;
 import cn.xianyijun.wisp.common.message.MessageDecoder;
 import cn.xianyijun.wisp.common.sysflag.MessageSysFlag;
+import cn.xianyijun.wisp.store.AppendMessageCallback;
+import cn.xianyijun.wisp.store.DefaultMessageStore;
+import cn.xianyijun.wisp.store.DispatchRequest;
+import cn.xianyijun.wisp.store.ExtBrokerInnerMessage;
 import cn.xianyijun.wisp.store.config.BrokerRole;
 import cn.xianyijun.wisp.store.config.FlushDiskType;
 import cn.xianyijun.wisp.store.ha.HAService;
 import cn.xianyijun.wisp.store.lock.PutMessageLock;
 import cn.xianyijun.wisp.store.lock.PutMessageReentrantLock;
 import cn.xianyijun.wisp.store.lock.PutMessageSpinLock;
-import cn.xianyijun.wisp.store.request.DispatchRequest;
 import cn.xianyijun.wisp.store.result.AppendMessageResult;
 import cn.xianyijun.wisp.store.result.PutMessageResult;
 import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import cn.xianyijun.wisp.store.schedule.ScheduleMessageService;
+import cn.xianyijun.wisp.store.stats.StoreStatsService;
 import cn.xianyijun.wisp.store.status.AppendMessageStatus;
 import cn.xianyijun.wisp.store.status.PutMessageStatus;
 import lombok.Getter;
@@ -299,7 +303,7 @@ public class CommitLog {
         return this.checkMessageAndReturnSize(byteBuffer, checkCRC, true);
     }
 
-    protected DispatchRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer, final boolean checkCRC, boolean readBody) {
+    public DispatchRequest checkMessageAndReturnSize(java.nio.ByteBuffer byteBuffer, final boolean checkCRC, boolean readBody) {
         try {
             int totalSize = byteBuffer.getInt();
 
@@ -460,7 +464,7 @@ public class CommitLog {
         return false;
     }
 
-    protected long rollNextFile(final long offset) {
+    public long rollNextFile(final long offset) {
         int mappedFileSize = this.defaultMessageStore.getMessageStoreConfig().getMappedFileSizeCommitLog();
         return offset + mappedFileSize - offset % mappedFileSize;
     }

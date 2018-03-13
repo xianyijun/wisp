@@ -15,7 +15,7 @@ import java.io.Writer;
  * @author xianyijun
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class IOTinyUtils {
+public class IOUtils {
 
     public static String toString(InputStream input, String encoding) throws IOException {
         return (null == encoding) ? toString(new InputStreamReader(input, MixAll.DEFAULT_CHARSET)) : toString(new InputStreamReader(

@@ -14,7 +14,6 @@ import cn.xianyijun.wisp.common.protocol.header.ProduceMessageResponseHeader;
 import cn.xianyijun.wisp.common.sysflag.TopicSysFlag;
 import cn.xianyijun.wisp.remoting.netty.NettyRequestProcessor;
 import cn.xianyijun.wisp.remoting.protocol.RemotingCommand;
-import cn.xianyijun.wisp.utils.CollectionUtils;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.Getter;
 import lombok.Setter;
@@ -133,7 +132,7 @@ public abstract class AbstractProduceMessageProcessor implements NettyRequestPro
     }
 
     boolean hasProduceMessageHook() {
-        return CollectionUtils.isEmpty(produceMessageHookList);
+        return produceMessageHookList == null || produceMessageHookList.isEmpty();
     }
 
     void executeSendMessageHookBefore(ChannelHandlerContext ctx, RemotingCommand request, ProduceMessageContext context) {

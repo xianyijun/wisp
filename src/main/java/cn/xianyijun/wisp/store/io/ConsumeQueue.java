@@ -1,7 +1,8 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.io;
 
+import cn.xianyijun.wisp.store.DefaultMessageStore;
+import cn.xianyijun.wisp.store.DispatchRequest;
 import cn.xianyijun.wisp.store.config.StorePathConfigHelper;
-import cn.xianyijun.wisp.store.request.DispatchRequest;
 import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

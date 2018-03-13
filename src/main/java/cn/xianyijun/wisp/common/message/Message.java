@@ -8,6 +8,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author xianyijun
+ */
 @Data
 @NoArgsConstructor
 public class Message implements Serializable {

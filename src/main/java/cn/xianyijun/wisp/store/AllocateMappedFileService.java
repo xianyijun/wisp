@@ -3,6 +3,7 @@ package cn.xianyijun.wisp.store;
 import cn.xianyijun.wisp.common.ServiceThread;
 import cn.xianyijun.wisp.common.UtilAll;
 import cn.xianyijun.wisp.store.config.BrokerRole;
+import cn.xianyijun.wisp.store.io.MappedFile;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;

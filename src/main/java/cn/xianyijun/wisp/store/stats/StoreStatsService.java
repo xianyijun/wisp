@@ -1,4 +1,4 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.stats;
 
 import cn.xianyijun.wisp.common.ServiceThread;
 import lombok.Getter;

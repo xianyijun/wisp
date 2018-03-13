@@ -6,7 +6,7 @@ import cn.xianyijun.wisp.filter.ExpressionType;
 import cn.xianyijun.wisp.filter.MessageEvaluationContext;
 import cn.xianyijun.wisp.filter.support.BitsArray;
 import cn.xianyijun.wisp.filter.support.BloomFilter;
-import cn.xianyijun.wisp.store.ExtConsumeQueue;
+import cn.xianyijun.wisp.store.io.ExtConsumeQueue;
 import cn.xianyijun.wisp.store.MessageFilter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

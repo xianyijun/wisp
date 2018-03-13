@@ -1,5 +1,7 @@
 package cn.xianyijun.wisp.store;
 
+import cn.xianyijun.wisp.store.io.ExtConsumeQueue;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 

@@ -1,6 +1,6 @@
 package cn.xianyijun.wisp.store.config;
 
-import cn.xianyijun.wisp.store.ConsumeQueue;
+import cn.xianyijun.wisp.store.io.ConsumeQueue;
 import lombok.Getter;
 import lombok.Setter;
 

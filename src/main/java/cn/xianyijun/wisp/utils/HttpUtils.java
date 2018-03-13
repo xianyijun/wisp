@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author xianyijun
  */
-public class HttpTinyClient {
+public class HttpUtils {
     public static int STATUS_OK = 200;
 
     public static HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
@@ -35,9 +35,9 @@ public class HttpTinyClient {
             String resp = null;
 
             if (HttpURLConnection.HTTP_OK == respCode) {
-                resp = IOTinyUtils.toString(conn.getInputStream(), encoding);
+                resp = IOUtils.toString(conn.getInputStream(), encoding);
             } else {
-                resp = IOTinyUtils.toString(conn.getErrorStream(), encoding);
+                resp = IOUtils.toString(conn.getErrorStream(), encoding);
             }
             return new HttpResult(respCode, resp);
         } finally {
@@ -98,9 +98,9 @@ public class HttpTinyClient {
             String resp;
 
             if (HttpURLConnection.HTTP_OK == respCode) {
-                resp = IOTinyUtils.toString(conn.getInputStream(), encoding);
+                resp = IOUtils.toString(conn.getInputStream(), encoding);
             } else {
-                resp = IOTinyUtils.toString(conn.getErrorStream(), encoding);
+                resp = IOUtils.toString(conn.getErrorStream(), encoding);
             }
             return new HttpResult(respCode, resp);
         } finally {

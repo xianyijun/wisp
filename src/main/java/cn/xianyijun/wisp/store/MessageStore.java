@@ -2,6 +2,7 @@ package cn.xianyijun.wisp.store;
 
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.store.io.ConsumeQueue;
 import cn.xianyijun.wisp.store.result.GetMessageResult;
 import cn.xianyijun.wisp.store.result.PutMessageResult;
 import cn.xianyijun.wisp.store.result.QueryMessageResult;

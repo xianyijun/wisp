@@ -2,7 +2,7 @@ package cn.xianyijun.wisp.broker.plugin;
 
 import cn.xianyijun.wisp.common.message.ExtMessage;
 import cn.xianyijun.wisp.store.CommitLogDispatcher;
-import cn.xianyijun.wisp.store.ConsumeQueue;
+import cn.xianyijun.wisp.store.io.ConsumeQueue;
 import cn.xianyijun.wisp.store.MessageStore;
 import cn.xianyijun.wisp.store.result.QueryMessageResult;
 import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;

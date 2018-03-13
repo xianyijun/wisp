@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.store.ha;
 
 import cn.xianyijun.wisp.common.ServiceThread;
-import cn.xianyijun.wisp.store.CommitLog;
+import cn.xianyijun.wisp.store.io.CommitLog;
 import cn.xianyijun.wisp.store.DefaultMessageStore;
 import cn.xianyijun.wisp.utils.RemotingUtils;
 import lombok.Getter;

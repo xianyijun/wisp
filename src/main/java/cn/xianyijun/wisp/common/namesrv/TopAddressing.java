@@ -1,7 +1,7 @@
 package cn.xianyijun.wisp.common.namesrv;
 
 import cn.xianyijun.wisp.common.MixAll;
-import cn.xianyijun.wisp.utils.HttpTinyClient;
+import cn.xianyijun.wisp.utils.HttpUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -53,8 +53,8 @@ public class TopAddressing {
             if (!StringUtils.isBlank(this.unitName)) {
                 url = url + "-" + this.unitName + "?nofix=1";
             }
-            HttpTinyClient.HttpResult result = HttpTinyClient.httpGet(url, null, null, "UTF-8", timeoutMills);
-            if (HttpTinyClient.STATUS_OK == result.code) {
+            HttpUtils.HttpResult result = HttpUtils.httpGet(url, null, null, "UTF-8", timeoutMills);
+            if (HttpUtils.STATUS_OK == result.code) {
                 String responseStr = result.content;
                 if (responseStr != null) {
                     return clearNewLine(responseStr);

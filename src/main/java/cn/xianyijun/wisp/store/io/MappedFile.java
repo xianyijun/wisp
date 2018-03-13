@@ -1,7 +1,10 @@
-package cn.xianyijun.wisp.store;
+package cn.xianyijun.wisp.store.io;
 
 import cn.xianyijun.wisp.common.message.ExtBatchMessage;
 import cn.xianyijun.wisp.common.message.ExtMessage;
+import cn.xianyijun.wisp.store.AppendMessageCallback;
+import cn.xianyijun.wisp.store.ExtBrokerInnerMessage;
+import cn.xianyijun.wisp.store.TransientStorePool;
 import cn.xianyijun.wisp.store.config.FlushDiskType;
 import cn.xianyijun.wisp.store.result.AppendMessageResult;
 import cn.xianyijun.wisp.store.result.SelectMappedBufferResult;
@@ -123,7 +126,7 @@ public class MappedFile extends ReferenceResource {
         }
     }
 
-    protected void init(final String fileName, final int fileSize,
+    public void init(final String fileName, final int fileSize,
                         final TransientStorePool transientStorePool) throws IOException {
         init(fileName, fileSize);
         this.writeBuffer = transientStorePool.borrowBuffer();
