@@ -41,23 +41,24 @@ public class GroupTransferService extends ServiceThread {
 
     private void doWaitTransfer() {
         synchronized (this.requestsRead) {
-            if (!this.requestsRead.isEmpty()) {
-                for (CommitLog.GroupCommitRequest req : this.requestsRead) {
-                    boolean transferOK = this.haService.getPushSlaveMaxOffset().get() >= req.getNextOffset();
-                    for (int i = 0; !transferOK && i < 5; i++) {
-                        this.notifyTransferObject.waitForRunning(1000);
-                        transferOK = this.haService.getPushSlaveMaxOffset().get() >= req.getNextOffset();
-                    }
-
-                    if (!transferOK) {
-                        log.warn("transfer message to slave timeout, " + req.getNextOffset());
-                    }
-
-                    req.wakeupCustomer(transferOK);
+            if (this.requestsRead.isEmpty()) {
+                return;
+            }
+            for (CommitLog.GroupCommitRequest req : this.requestsRead) {
+                boolean transferOK = this.haService.getPushSlaveMaxOffset().get() >= req.getNextOffset();
+                for (int i = 0; !transferOK && i < 5; i++) {
+                    this.notifyTransferObject.waitForRunning(1000);
+                    transferOK = this.haService.getPushSlaveMaxOffset().get() >= req.getNextOffset();
                 }
 
-                this.requestsRead.clear();
+                if (!transferOK) {
+                    log.warn("transfer message to slave timeout, " + req.getNextOffset());
+                }
+
+                req.wakeupCustomer(transferOK);
             }
+
+            this.requestsRead.clear();
         }
     }
 

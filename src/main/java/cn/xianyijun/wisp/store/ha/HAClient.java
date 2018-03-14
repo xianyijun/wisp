@@ -46,9 +46,9 @@ public class HAClient extends ServiceThread {
 
     private boolean isTimeToReportOffset() {
         long interval =
-                haService.getDefaultMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
+                haService.getMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
 
-        return interval > haService.getDefaultMessageStore().getMessageStoreConfig()
+        return interval > haService.getMessageStore().getMessageStoreConfig()
                 .getHaSendHeartbeatInterval();
     }
 
@@ -101,7 +101,7 @@ public class HAClient extends ServiceThread {
             try {
                 int readSize = this.socketChannel.read(this.byteBufferRead);
                 if (readSize > 0) {
-                    lastWriteTimestamp = haService.getDefaultMessageStore().getSystemClock().now();
+                    lastWriteTimestamp = haService.getMessageStore().getSystemClock().now();
                     readSizeZeroTimes = 0;
                     boolean result = this.dispatchReadRequest();
                     if (!result) {
@@ -137,7 +137,7 @@ public class HAClient extends ServiceThread {
                 long masterPhyOffset = this.byteBufferRead.getLong(this.dispatchPosition);
                 int bodySize = this.byteBufferRead.getInt(this.dispatchPosition + 8);
 
-                long slavePhyOffset = haService.getDefaultMessageStore().getMaxPhyOffset();
+                long slavePhyOffset = haService.getMessageStore().getMaxPhyOffset();
 
                 if (slavePhyOffset != 0) {
                     if (slavePhyOffset != masterPhyOffset) {
@@ -152,7 +152,7 @@ public class HAClient extends ServiceThread {
                     this.byteBufferRead.position(this.dispatchPosition + msgHeaderSize);
                     this.byteBufferRead.get(bodyData);
 
-                    haService.getDefaultMessageStore().appendToCommitLog(masterPhyOffset, bodyData);
+                    haService.getMessageStore().appendToCommitLog(masterPhyOffset, bodyData);
 
                     this.byteBufferRead.position(readSocketPos);
                     this.dispatchPosition += msgHeaderSize + bodySize;
@@ -177,7 +177,7 @@ public class HAClient extends ServiceThread {
 
     private boolean reportSlaveMaxOffsetPlus() {
         boolean result = true;
-        long currentPhyOffset = haService.getDefaultMessageStore().getMaxPhyOffset();
+        long currentPhyOffset = haService.getMessageStore().getMaxPhyOffset();
         if (currentPhyOffset > this.currentReportedOffset) {
             this.currentReportedOffset = currentPhyOffset;
             result = this.reportSlaveMaxOffset(this.currentReportedOffset);
@@ -202,7 +202,7 @@ public class HAClient extends ServiceThread {
                 }
             }
 
-            this.currentReportedOffset = haService.getDefaultMessageStore().getMaxPhyOffset();
+            this.currentReportedOffset = haService.getMessageStore().getMaxPhyOffset();
 
             this.lastWriteTimestamp = System.currentTimeMillis();
         }
@@ -263,9 +263,9 @@ public class HAClient extends ServiceThread {
                         continue;
                     }
 
-                    long interval = haService.getDefaultMessageStore().getSystemClock().now()
+                    long interval = haService.getMessageStore().getSystemClock().now()
                             - this.lastWriteTimestamp;
-                    if (interval > haService.getDefaultMessageStore().getMessageStoreConfig()
+                    if (interval > haService.getMessageStore().getMessageStoreConfig()
                             .getHaHousekeepingInterval()) {
                         this.closeMaster();
                     }

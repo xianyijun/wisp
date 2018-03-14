@@ -50,10 +50,10 @@ public  class WriteSocketService extends ServiceThread {
 
                 if (-1 == this.nextTransferFromWhere) {
                     if (0 == this.haConnection.getSlaveRequestOffset()) {
-                        long masterOffset = this.haConnection.getHaService().getDefaultMessageStore().getCommitLog().getMaxOffset();
+                        long masterOffset = this.haConnection.getHaService().getMessageStore().getCommitLog().getMaxOffset();
                         masterOffset =
                                 masterOffset
-                                        - (masterOffset % this.haConnection.getHaService().getDefaultMessageStore().getMessageStoreConfig()
+                                        - (masterOffset % this.haConnection.getHaService().getMessageStore().getMessageStoreConfig()
                                         .getMappedFileSizeCommitLog());
 
                         if (masterOffset < 0) {
@@ -71,9 +71,9 @@ public  class WriteSocketService extends ServiceThread {
 
                 if (this.lastWriteOver) {
 
-                    long interval = this.haConnection.getHaService().getDefaultMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
+                    long interval = this.haConnection.getHaService().getMessageStore().getSystemClock().now() - this.lastWriteTimestamp;
 
-                    if (interval > this.haConnection.getHaService().getDefaultMessageStore().getMessageStoreConfig()
+                    if (interval > this.haConnection.getHaService().getMessageStore().getMessageStoreConfig()
                             .getHaSendHeartbeatInterval()) {
 
                         // Build Header
@@ -95,11 +95,11 @@ public  class WriteSocketService extends ServiceThread {
                     }
                 }
 
-                SelectMappedBufferResult selectResult = this.haConnection.getHaService().getDefaultMessageStore().getCommitLogData(this.nextTransferFromWhere);
+                SelectMappedBufferResult selectResult = this.haConnection.getHaService().getMessageStore().getCommitLogData(this.nextTransferFromWhere);
                 if (selectResult != null) {
                     int size = selectResult.getSize();
-                    if (size > this.haConnection.getHaService().getDefaultMessageStore().getMessageStoreConfig().getHaTransferBatchSize()) {
-                        size = this.haConnection.getHaService().getDefaultMessageStore().getMessageStoreConfig().getHaTransferBatchSize();
+                    if (size > this.haConnection.getHaService().getMessageStore().getMessageStoreConfig().getHaTransferBatchSize()) {
+                        size = this.haConnection.getHaService().getMessageStore().getMessageStoreConfig().getHaTransferBatchSize();
                     }
 
                     long thisOffset = this.nextTransferFromWhere;
@@ -121,7 +121,6 @@ public  class WriteSocketService extends ServiceThread {
                     this.haConnection.getHaService().getWaitNotifyObject().allWaitForRunning(100);
                 }
             } catch (Exception e) {
-
                 log.error(this.getServiceName() + " service has exception.", e);
                 break;
             }
@@ -158,7 +157,7 @@ public  class WriteSocketService extends ServiceThread {
             int writeSize = this.socketChannel.write(this.byteBufferHeader);
             if (writeSize > 0) {
                 writeSizeZeroTimes = 0;
-                this.lastWriteTimestamp = this.haConnection.getHaService().getDefaultMessageStore().getSystemClock().now();
+                this.lastWriteTimestamp = this.haConnection.getHaService().getMessageStore().getSystemClock().now();
             } else if (writeSize == 0) {
                 if (++writeSizeZeroTimes >= 3) {
                     break;
@@ -180,7 +179,7 @@ public  class WriteSocketService extends ServiceThread {
                 int writeSize = this.socketChannel.write(this.selectMappedBufferResult.getByteBuffer());
                 if (writeSize > 0) {
                     writeSizeZeroTimes = 0;
-                    this.lastWriteTimestamp = this.haConnection.getHaService().getDefaultMessageStore().getSystemClock().now();
+                    this.lastWriteTimestamp = this.haConnection.getHaService().getMessageStore().getSystemClock().now();
                 } else if (writeSize == 0) {
                     if (++writeSizeZeroTimes >= 3) {
                         break;

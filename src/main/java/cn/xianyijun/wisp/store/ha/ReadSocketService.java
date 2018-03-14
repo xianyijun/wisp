@@ -47,8 +47,8 @@ public class ReadSocketService extends ServiceThread {
                     break;
                 }
 
-                long interval = this.haConnection.getHaService().getDefaultMessageStore().getSystemClock().now() - this.lastReadTimestamp;
-                if (interval > this.haConnection.getHaService().getDefaultMessageStore().getMessageStoreConfig().getHaHousekeepingInterval()) {
+                long interval = this.haConnection.getHaService().getMessageStore().getSystemClock().now() - this.lastReadTimestamp;
+                if (interval > this.haConnection.getHaService().getMessageStore().getMessageStoreConfig().getHaHousekeepingInterval()) {
                     log.warn("ha housekeeping, found this connection[" + this.haConnection.getClientAddr() + "] expired, " + interval);
                     break;
                 }
@@ -99,7 +99,7 @@ public class ReadSocketService extends ServiceThread {
                 int readSize = this.socketChannel.read(this.byteBufferRead);
                 if (readSize > 0) {
                     readSizeZeroTimes = 0;
-                    this.lastReadTimestamp = this.haConnection.getHaService().getDefaultMessageStore().getSystemClock().now();
+                    this.lastReadTimestamp = this.haConnection.getHaService().getMessageStore().getSystemClock().now();
                     if ((this.byteBufferRead.position() - this.processPosition) >= 8) {
                         int pos = this.byteBufferRead.position() - (this.byteBufferRead.position() % 8);
                         long readOffset = this.byteBufferRead.getLong(pos - 8);

@@ -19,23 +19,24 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HAService {
     private final AtomicInteger connectionCount = new AtomicInteger(0);
 
+    private final AtomicLong pushSlaveMaxOffset = new AtomicLong(0);
+
     private final List<HAConnection> connectionList = new LinkedList<>();
 
     private final AcceptSocketService acceptSocketService;
 
-    private final DefaultMessageStore defaultMessageStore;
+    private final GroupTransferService groupTransferService;
+
+    private final DefaultMessageStore messageStore;
 
     private final WaitNotifyObject waitNotifyObject = new WaitNotifyObject();
-    private final AtomicLong pushSlaveMaxOffset = new AtomicLong(0);
-
-    private final GroupTransferService groupTransferService;
 
     private final HAClient haClient;
 
-    public HAService(final DefaultMessageStore defaultMessageStore) throws IOException {
-        this.defaultMessageStore = defaultMessageStore;
+    public HAService(final DefaultMessageStore messageStore) throws IOException {
+        this.messageStore = messageStore;
         this.acceptSocketService =
-                new AcceptSocketService(this,defaultMessageStore.getMessageStoreConfig().getHaListenPort());
+                new AcceptSocketService(this,messageStore.getMessageStoreConfig().getHaListenPort());
         this.groupTransferService = new GroupTransferService(this);
         this.haClient = new HAClient(this);
     }
@@ -102,9 +103,7 @@ public class HAService {
 
     public boolean isSlaveOK(final long masterPutWhere) {
         boolean result = this.connectionCount.get() > 0;
-        result =
-                result
-                        && ((masterPutWhere - this.pushSlaveMaxOffset.get()) < this.defaultMessageStore
+        result = result && ((masterPutWhere - this.pushSlaveMaxOffset.get()) < this.messageStore
                         .getMessageStoreConfig().getHaSlaveFallbehindMax());
         return result;
     }
