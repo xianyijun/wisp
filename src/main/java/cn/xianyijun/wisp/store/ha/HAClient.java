@@ -126,7 +126,9 @@ public class HAClient extends ServiceThread {
     }
 
     private boolean dispatchReadRequest() {
-        final int msgHeaderSize = 8 + 4; // phyoffset + size
+        // phyoffset + size
+        final int msgHeaderSize = 8 + 4;
+
         int readSocketPos = this.byteBufferRead.position();
 
         while (true) {
@@ -265,10 +267,7 @@ public class HAClient extends ServiceThread {
                             - this.lastWriteTimestamp;
                     if (interval > haService.getDefaultMessageStore().getMessageStoreConfig()
                             .getHaHousekeepingInterval()) {
-                        log.warn("HAClient, housekeeping, found this connection[" + this.masterAddress
-                                + "] expired, " + interval);
                         this.closeMaster();
-                        log.warn("HAClient, master not response some time, so close connection");
                     }
                 } else {
                     this.waitForRunning(1000 * 5);
